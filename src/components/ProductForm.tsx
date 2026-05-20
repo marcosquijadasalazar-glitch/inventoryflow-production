@@ -18,6 +18,7 @@ export function ProductForm({
   onSaved: () => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: product?.name ?? "",
     sku: product?.sku ?? "",
@@ -35,13 +36,14 @@ export function ProductForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (!form.name.trim() || !form.sku.trim()) {
       toast.error("Name and SKU are required");
       return;
     }
     setSaving(true);
     try {
-      await upsertProduct({
+      const result = await upsertProduct({
         id: product?.id,
         ...form,
         cost: Number(form.cost),
@@ -53,11 +55,18 @@ export function ProductForm({
         location: form.location || null,
         supplier: form.supplier || null,
       });
+      console.log("[ProductForm] saved product:", result);
       toast.success(product ? "Product updated" : "Product added");
       onSaved();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to save");
+      console.error("[ProductForm] save failed:", e);
+      const msg =
+        [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
+          .filter(Boolean)
+          .join(" — ") || "Failed to save";
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
