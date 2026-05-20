@@ -1,7 +1,8 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Package, ArrowLeftRight, AlertTriangle, Boxes } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -10,7 +11,7 @@ const nav = [
   { to: "/alerts", label: "Alerts", icon: AlertTriangle },
 ];
 
-export function AppLayout() {
+export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
