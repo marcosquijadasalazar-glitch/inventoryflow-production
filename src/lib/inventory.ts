@@ -16,11 +16,21 @@ export async function listProducts(): Promise<Product[]> {
 export async function upsertProduct(values: TablesInsert<"products"> & { id?: string }) {
   if (values.id) {
     const { id, ...rest } = values;
-    const { error } = await supabase.from("products").update(rest).eq("id", id);
-    if (error) throw error;
+    const res = await supabase.from("products").update(rest).eq("id", id).select();
+    console.log("[products.update] response:", res);
+    if (res.error) {
+      console.error("[products.update] error:", res.error);
+      throw res.error;
+    }
+    return res.data;
   } else {
-    const { error } = await supabase.from("products").insert(values);
-    if (error) throw error;
+    const res = await supabase.from("products").insert(values).select();
+    console.log("[products.insert] response:", res);
+    if (res.error) {
+      console.error("[products.insert] error:", res.error);
+      throw res.error;
+    }
+    return res.data;
   }
 }
 
