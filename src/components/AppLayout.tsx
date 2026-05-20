@@ -45,7 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </nav>
       </aside>
       <main className="flex-1 px-4 sm:px-8 py-6 sm:py-10 max-w-full overflow-x-hidden">
-        <Outlet />
+        {children}
       </main>
       <Toaster />
     </div>
