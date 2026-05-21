@@ -392,6 +392,17 @@ function SODetailDialog({
           <DialogDescription>
             {data?.customers?.name ?? t("so.no_customer", "No customer")}{" "}
             {data?.order_date ? `· ${data.order_date}` : ""}
+            {data?.inventory_deducted_at && !data?.inventory_reversed_at && (
+              <span className="block mt-1 text-xs text-[oklch(0.4_0.12_155)]">
+                ✓ {t("so.inventory_deducted", "Inventory deducted")}
+                {data.fulfilled_date ? ` · ${data.fulfilled_date}` : ""}
+              </span>
+            )}
+            {data?.inventory_reversed_at && (
+              <span className="block mt-1 text-xs text-muted-foreground">
+                ↺ {t("so.inventory_reversed", "Inventory restored on cancellation")}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
