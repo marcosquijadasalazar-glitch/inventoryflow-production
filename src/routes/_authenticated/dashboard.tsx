@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { listProducts, listMovements } from "@/lib/inventory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const { t } = useTranslation();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
 
@@ -94,30 +96,30 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            Operations
+            {t("dashboard.section")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("dashboard.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Live overview of your warehouse inventory.
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button asChild size="lg" className="flex-1 sm:flex-none shadow-soft">
             <Link to="/scanner">
               <ScanLine className="h-5 w-5" />
-              Scan Barcode
+              {t("common.scanBarcode")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/movements">
               <ArrowLeftRight className="h-4 w-4" />
-              Record movement
+              {t("dashboard.recordMovement")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/products">
               <Package className="h-4 w-4" />
-              Manage products
+              {t("dashboard.manageProducts")}
             </Link>
           </Button>
         </div>
@@ -128,7 +130,7 @@ function Dashboard() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products by name, SKU, supplier…"
+            placeholder={t("dashboard.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-9 bg-surface"
@@ -146,10 +148,10 @@ function Dashboard() {
         <div className="grid grid-cols-3 gap-2">
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t("dashboard.category")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All categories</SelectItem>
+              <SelectItem value="__all">{t("products.allCategories")}</SelectItem>
               {PRODUCT_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
@@ -159,10 +161,10 @@ function Dashboard() {
           </Select>
           <Select value={location} onValueChange={setLocation}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Location" />
+              <SelectValue placeholder={t("dashboard.location")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All locations</SelectItem>
+              <SelectItem value="__all">{t("products.allLocations")}</SelectItem>
               {locations.map((l) => (
                 <SelectItem key={l} value={l}>
                   {l}
@@ -172,14 +174,14 @@ function Dashboard() {
           </Select>
           <Select value={status} onValueChange={(v) => setStatus(v as any)}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t("dashboard.status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All statuses</SelectItem>
-              <SelectItem value="healthy">In stock</SelectItem>
-              <SelectItem value="low">Low stock</SelectItem>
-              <SelectItem value="out">Out of stock</SelectItem>
-              <SelectItem value="overstocked">Overstocked</SelectItem>
+              <SelectItem value="__all">{t("dashboard.allStatuses")}</SelectItem>
+              <SelectItem value="healthy">{t("stock.healthy")}</SelectItem>
+              <SelectItem value="low">{t("stock.low")}</SelectItem>
+              <SelectItem value="out">{t("stock.out")}</SelectItem>
+              <SelectItem value="overstocked">{t("stock.overstocked")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -194,7 +196,7 @@ function Dashboard() {
               setStatus("__all");
             }}
           >
-            Reset
+            {t("common.reset")}
           </Button>
         )}
       </div>
@@ -202,35 +204,35 @@ function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat
           icon={Package}
-          label="Total Products"
+          label={t("dashboard.totalProducts")}
           value={products.isLoading ? null : total.toString()}
-          sub={`${totalUnits.toLocaleString()} units on hand`}
+          sub={t("dashboard.unitsOnHand", { count: totalUnits.toLocaleString() as any })}
           trend="up"
         />
         <Stat
           icon={DollarSign}
-          label="Inventory Value"
+          label={t("dashboard.inventoryValue")}
           value={
             products.isLoading
               ? null
               : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
           }
-          sub="Total stock value"
+          sub={t("dashboard.totalStockValue")}
           trend="up"
           accent="primary"
         />
         <Stat
           icon={AlertTriangle}
-          label="Low Stock"
+          label={t("dashboard.lowStock")}
           value={products.isLoading ? null : lowStock.length.toString()}
-          sub={`${outOfStock.length} out of stock`}
+          sub={t("dashboard.outOfStockSub", { count: outOfStock.length })}
           accent={lowStock.length + outOfStock.length > 0 ? "warning" : "default"}
         />
         <Stat
           icon={Activity}
-          label="Inventory Health"
+          label={t("dashboard.inventoryHealth")}
           value={products.isLoading ? null : `${healthScore}%`}
-          sub={`${healthy.length} of ${total} products healthy`}
+          sub={t("dashboard.healthSub", { healthy: healthy.length, total })}
           accent={healthScore >= 80 ? "success" : healthScore >= 50 ? "warning" : "danger"}
         />
       </div>
@@ -243,11 +245,11 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <ArrowLeftRight className="h-4 w-4 text-primary" />
-              <CardTitle className="text-base">Recent Movements</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.recentMovements")}</CardTitle>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/movements">
-                View all <ArrowUpRight className="h-3.5 w-3.5" />
+                {t("dashboard.viewAll")} <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           </CardHeader>
@@ -294,7 +296,7 @@ function Dashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {m.products?.name ?? "Unknown product"}
+                            {m.products?.name ?? t("dashboard.unknownProduct")}
                             <span className="text-muted-foreground font-normal ml-1.5 font-mono text-xs">
                               {m.products?.sku ?? "—"}
                             </span>
@@ -327,15 +329,15 @@ function Dashboard() {
             ) : (
               <EmptyState
                 icon={ArrowLeftRight}
-                title="No movements"
+                title={t("dashboard.noMovements")}
                 description={
                   activeFilters > 0
-                    ? "No movements match the current filters."
-                    : "Stock additions and removals will appear here."
+                    ? t("dashboard.noMovementsFiltered")
+                    : t("dashboard.noMovementsDesc")
                 }
                 action={
                   <Button size="sm" asChild>
-                    <Link to="/movements">Record movement</Link>
+                    <Link to="/movements">{t("dashboard.recordMovement")}</Link>
                   </Button>
                 }
               />
@@ -347,12 +349,12 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-[oklch(0.55_0.16_70)]" />
-              <CardTitle className="text-base">Needs Attention</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.needsAttention")}</CardTitle>
             </div>
             {lowStock.length + outOfStock.length > 0 && (
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/alerts">
-                  All <ArrowUpRight className="h-3.5 w-3.5" />
+                  {t("dashboard.all")} <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             )}
@@ -390,7 +392,7 @@ function Dashboard() {
                           {p.stock}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          min {p.min_stock}
+                          {t("dashboard.min")} {p.min_stock}
                         </p>
                       </div>
                     </li>
@@ -400,8 +402,8 @@ function Dashboard() {
             ) : (
               <EmptyState
                 icon={Activity}
-                title="All healthy"
-                description="No products below their minimum stock level."
+                title={t("dashboard.allHealthy")}
+                description={t("dashboard.allHealthyDesc")}
               />
             )}
           </CardContent>

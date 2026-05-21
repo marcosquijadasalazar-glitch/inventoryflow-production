@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { getStockStatus, stockStatusMeta } from "@/lib/stock";
 import type { Product } from "@/lib/inventory";
@@ -9,6 +10,7 @@ export function StockBadge({
   product: Pick<Product, "stock" | "min_stock">;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const status = getStockStatus(product);
   const meta = stockStatusMeta[status];
   return (
@@ -20,7 +22,7 @@ export function StockBadge({
       )}
     >
       <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
-      {meta.label}
+      {t(`stock.${status}`, meta.label)}
     </span>
   );
 }

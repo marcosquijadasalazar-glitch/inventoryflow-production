@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,18 +104,19 @@ type SortKey =
 
 type SavedView = "low-stock" | "out-of-stock" | "recent" | "high-value";
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "newest", label: "Newest products" },
-  { value: "oldest", label: "Oldest products" },
-  { value: "name-asc", label: "Name A → Z" },
-  { value: "name-desc", label: "Name Z → A" },
-  { value: "stock-asc", label: "Stock: low → high" },
-  { value: "stock-desc", label: "Stock: high → low" },
-  { value: "category", label: "Category" },
-  { value: "location", label: "Location" },
+const SORT_OPTIONS: { value: SortKey; key: string }[] = [
+  { value: "newest", key: "products.sort.newest" },
+  { value: "oldest", key: "products.sort.oldest" },
+  { value: "name-asc", key: "products.sort.nameAsc" },
+  { value: "name-desc", key: "products.sort.nameDesc" },
+  { value: "stock-asc", key: "products.sort.stockAsc" },
+  { value: "stock-desc", key: "products.sort.stockDesc" },
+  { value: "category", key: "products.sort.category" },
+  { value: "location", key: "products.sort.location" },
 ];
 
 function ProductsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["products"],
@@ -308,7 +310,7 @@ function ProductsPage() {
     if (!deleteId) return;
     try {
       await deleteProduct(deleteId);
-      toast.success("Product deleted");
+      toast.success(t("products.deleted"));
       refresh();
     } catch (e: any) {
       toast.error(e.message);
@@ -321,7 +323,7 @@ function ProductsPage() {
     const ids = Array.from(selected);
     try {
       await Promise.all(ids.map((id) => deleteProduct(id)));
-      toast.success(`${ids.length} product${ids.length === 1 ? "" : "s"} deleted`);
+      toast.success(t("products.deletedMany", { count: ids.length }));
       setSelected(new Set());
       refresh();
     } catch (e: any) {
@@ -339,7 +341,7 @@ function ProductsPage() {
       await Promise.all(
         items.map((p) => upsertProduct({ ...p, category: bulkCategory })),
       );
-      toast.success(`Updated category on ${items.length} products`);
+      toast.success(t("products.updatedCategory", { count: items.length }));
       refresh();
       setBulkCategoryOpen(false);
       setBulkCategory("");
@@ -356,7 +358,7 @@ function ProductsPage() {
       await Promise.all(
         items.map((p) => upsertProduct({ ...p, location: bulkLocation })),
       );
-      toast.success(`Updated location on ${items.length} products`);
+      toast.success(t("products.updatedLocation", { count: items.length }));
       refresh();
       setBulkLocationOpen(false);
       setBulkLocation("");
@@ -367,15 +369,15 @@ function ProductsPage() {
 
   const exportSelected = () => {
     const items = (data ?? []).filter((p) => selected.has(p.id));
-    if (items.length === 0) return toast.error("Select products to export");
+    if (items.length === 0) return toast.error(t("products.selectToExport"));
     downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items));
-    toast.success(`Exported ${items.length} products`);
+    toast.success(t("products.exported", { count: items.length }));
   };
 
   const exportAll = () => {
-    if (!filtered.length) return toast.error("Nothing to export");
+    if (!filtered.length) return toast.error(t("products.nothingToExport"));
     downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered));
-    toast.success(`Exported ${filtered.length} products`);
+    toast.success(t("products.exported", { count: filtered.length }));
   };
 
   const filterPanel = (
@@ -408,19 +410,19 @@ function ProductsPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            Catalog
+            {t("products.section")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("products.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage SKUs, stock levels and supplier details.
+            {t("products.subtitle")}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportAll}>
-            <Download className="h-4 w-4" /> Export
+            <Download className="h-4 w-4" /> {t("common.export")}
           </Button>
           <Button variant="outline" onClick={() => setScanOpen(true)}>
-            <ScanLine className="h-4 w-4" /> Scan Barcode
+            <ScanLine className="h-4 w-4" /> {t("common.scanBarcode")}
           </Button>
           <Button
             onClick={() => {
@@ -430,7 +432,7 @@ function ProductsPage() {
             }}
             className="shadow-soft"
           >
-            <Plus className="h-4 w-4" /> Add Product
+            <Plus className="h-4 w-4" /> {t("products.addProduct")}
           </Button>
         </div>
       </div>
@@ -438,12 +440,12 @@ function ProductsPage() {
       {/* Saved views */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground mr-1">
-          Quick views:
+          {t("products.quickViews")}
         </span>
-        <ViewChip label="Low stock" onClick={() => applyView("low-stock")} />
-        <ViewChip label="Out of stock" onClick={() => applyView("out-of-stock")} />
-        <ViewChip label="Recently added" onClick={() => applyView("recent")} />
-        <ViewChip label="High value inventory" onClick={() => applyView("high-value")} />
+        <ViewChip label={t("products.view.lowStock")} onClick={() => applyView("low-stock")} />
+        <ViewChip label={t("products.view.outOfStock")} onClick={() => applyView("out-of-stock")} />
+        <ViewChip label={t("products.view.recent")} onClick={() => applyView("recent")} />
+        <ViewChip label={t("products.view.highValue")} onClick={() => applyView("high-value")} />
       </div>
 
       {/* Search + filter bar */}
@@ -451,7 +453,7 @@ function ProductsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, SKU, barcode, supplier, location, category…"
+            placeholder={t("products.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-9 bg-surface"
@@ -474,7 +476,7 @@ function ProductsPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="relative">
                   <SlidersHorizontal className="h-4 w-4" />
-                  Filters
+                  {t("products.filters")}
                   {activeFilterCount > 0 && (
                     <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold inline-flex items-center justify-center">
                       {activeFilterCount}
@@ -503,7 +505,7 @@ function ProductsPage() {
               </SheetTrigger>
               <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto bg-surface">
                 <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
+                  <SheetTitle>{t("products.filters")}</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">{filterPanel}</div>
               </SheetContent>
@@ -517,7 +519,7 @@ function ProductsPage() {
             <SelectContent>
               {SORT_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.key)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -530,31 +532,31 @@ function ProductsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {category !== "__all" && (
             <FilterChip
-              label={`Category: ${category}`}
+              label={t("products.chip.category", { value: category })}
               onRemove={() => setCategory("__all")}
             />
           )}
           {supplier !== "__all" && (
             <FilterChip
-              label={`Supplier: ${supplier}`}
+              label={t("products.chip.supplier", { value: supplier })}
               onRemove={() => setSupplier("__all")}
             />
           )}
           {location !== "__all" && (
             <FilterChip
-              label={`Location: ${location}`}
+              label={t("products.chip.location", { value: location })}
               onRemove={() => setLocation("__all")}
             />
           )}
           {status !== "__all" && (
             <FilterChip
-              label={`Status: ${status}`}
+              label={t("products.chip.status", { value: t(`stock.${status}`) })}
               onRemove={() => setStatus("__all")}
             />
           )}
           {(priceMin || priceMax) && (
             <FilterChip
-              label={`Price: ${priceMin || "0"} – ${priceMax || "∞"}`}
+              label={t("products.chip.price", { min: priceMin || "0", max: priceMax || "∞" })}
               onRemove={() => {
                 setPriceMin("");
                 setPriceMax("");
@@ -563,7 +565,7 @@ function ProductsPage() {
           )}
           {(costMin || costMax) && (
             <FilterChip
-              label={`Cost: ${costMin || "0"} – ${costMax || "∞"}`}
+              label={t("products.chip.cost", { min: costMin || "0", max: costMax || "∞" })}
               onRemove={() => {
                 setCostMin("");
                 setCostMax("");
@@ -571,7 +573,7 @@ function ProductsPage() {
             />
           )}
           <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Reset all
+            {t("products.resetAll")}
           </Button>
         </div>
       )}
@@ -580,24 +582,24 @@ function ProductsPage() {
       {selected.size > 0 && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
           <p className="text-sm font-medium">
-            {selected.size} selected
+            {t("products.selectedCount", { count: selected.size })}
             <button
               type="button"
               onClick={() => setSelected(new Set())}
               className="ml-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
             >
-              Clear
+              {t("products.clear")}
             </button>
           </p>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={exportSelected}>
-              <Download className="h-3.5 w-3.5" /> Export CSV
+              <Download className="h-3.5 w-3.5" /> {t("products.exportCsv")}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkCategoryOpen(true)}>
-              <Tag className="h-3.5 w-3.5" /> Category
+              <Tag className="h-3.5 w-3.5" /> {t("products.category")}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkLocationOpen(true)}>
-              <MapPin className="h-3.5 w-3.5" /> Location
+              <MapPin className="h-3.5 w-3.5" /> {t("products.location")}
             </Button>
             <Button
               size="sm"
@@ -605,7 +607,7 @@ function ProductsPage() {
               className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
               onClick={() => setBulkDeleteOpen(true)}
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
+              <Trash2 className="h-3.5 w-3.5" /> {t("products.delete")}
             </Button>
           </div>
         </div>
@@ -614,8 +616,8 @@ function ProductsPage() {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
           {data
-            ? `${filtered.length} of ${data.length} products`
-            : "Loading…"}
+            ? t("products.ofProducts", { shown: filtered.length, total: data.length })
+            : t("common.loading")}
         </span>
       </div>
 
@@ -630,15 +632,15 @@ function ProductsPage() {
                       allSelected ? true : someSelected ? ("indeterminate" as any) : false
                     }
                     onCheckedChange={toggleAll}
-                    aria-label="Select all"
+                    aria-label={t("products.selectAll")}
                   />
                 </TableHead>
-                <TableHeadCell label="Product" />
-                <TableHeadCell label="Category" />
-                <TableHeadCell label="Stock" />
-                <TableHeadCell label="Status" />
-                <TableHeadCell label="Location" />
-                <TableHeadCell label="Supplier" />
+                <TableHeadCell label={t("products.table.product")} />
+                <TableHeadCell label={t("products.table.category")} />
+                <TableHeadCell label={t("products.table.stock")} />
+                <TableHeadCell label={t("products.table.status")} />
+                <TableHeadCell label={t("products.table.location")} />
+                <TableHeadCell label={t("products.table.supplier")} />
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -666,7 +668,7 @@ function ProductsPage() {
                       <Checkbox
                         checked={selected.has(p.id)}
                         onCheckedChange={() => toggleOne(p.id)}
-                        aria-label={`Select ${p.name}`}
+                        aria-label={t("products.selectRow", { name: p.name })}
                       />
                     </TableCell>
                     <TableCell className="py-3.5">
@@ -701,7 +703,7 @@ function ProductsPage() {
                             {p.stock}
                           </span>
                           <span className="text-[11px] text-muted-foreground">
-                            / {p.min_stock} min
+                            {t("products.table.minSuffix", { min: p.min_stock })}
                           </span>
                         </div>
                         <StockHealthBar stock={p.stock} min={p.min_stock} />
@@ -734,9 +736,9 @@ function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-xs">{t("products.actions")}</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => setViewing(p)}>
-                            <Eye className="h-4 w-4" /> View details
+                            <Eye className="h-4 w-4" /> {t("products.viewDetails")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
@@ -744,25 +746,25 @@ function ProductsPage() {
                               setOpen(true);
                             }}
                           >
-                            <Pencil className="h-4 w-4" /> Edit
+                            <Pencil className="h-4 w-4" /> {t("products.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setQuickMove({ product: p, type: "add" })}
                           >
-                            <ArrowUp className="h-4 w-4" /> Add stock
+                            <ArrowUp className="h-4 w-4" /> {t("products.addStock")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setQuickMove({ product: p, type: "remove" })}
                           >
-                            <ArrowDown className="h-4 w-4" /> Remove stock
+                            <ArrowDown className="h-4 w-4" /> {t("products.removeStock")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setDeleteId(p.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" /> {t("products.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -778,17 +780,17 @@ function ProductsPage() {
                       </div>
                       <p className="font-medium">
                         {data && data.length > 0
-                          ? "No products match your filters"
-                          : "No products yet"}
+                          ? t("products.noMatch")
+                          : t("products.noneYet")}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                         {data && data.length > 0
-                          ? "Try adjusting your search or filters."
-                          : "Add your first product to start tracking inventory."}
+                          ? t("products.noMatchHint")
+                          : t("products.noneYetHint")}
                       </p>
                       {data && data.length > 0 ? (
                         <Button className="mt-4" variant="outline" onClick={resetFilters}>
-                          Reset filters
+                          {t("products.resetFilters")}
                         </Button>
                       ) : (
                         <Button
@@ -798,7 +800,7 @@ function ProductsPage() {
                             setOpen(true);
                           }}
                         >
-                          <Plus className="h-4 w-4" /> Add Product
+                          <Plus className="h-4 w-4" /> {t("products.addProduct")}
                         </Button>
                       )}
                     </div>
@@ -819,12 +821,12 @@ function ProductsPage() {
           );
           if (found) {
             setViewing(found);
-            toast.success(`Found: ${found.name}`);
+            toast.success(t("products.scanFound", { name: found.name }));
           } else {
             setPrefillBarcode(code);
             setEditing(null);
             setOpen(true);
-            toast.message("No product matches that barcode — create one");
+            toast.message(t("products.scanCreate"));
           }
         }}
       />
@@ -861,19 +863,18 @@ function ProductsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this product?</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.deleteOne")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All inventory movements for this product will
-              also be removed.
+              {t("products.deleteOneDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={onDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -882,18 +883,18 @@ function ProductsPage() {
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selected.size} products?</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.deleteMany", { count: selected.size })}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the selected products and their movement history.
+              {t("products.deleteManyDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={onBulkDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete all
+              {t("products.deleteAll")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -902,14 +903,14 @@ function ProductsPage() {
       <AlertDialog open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Update category</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.updateCategory")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Apply a category to {selected.size} selected products.
+              {t("products.updateCategoryDesc", { count: selected.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Select value={bulkCategory} onValueChange={setBulkCategory}>
             <SelectTrigger>
-              <SelectValue placeholder="Select category" />
+              <SelectValue placeholder={t("products.selectCategory")} />
             </SelectTrigger>
             <SelectContent>
               {PRODUCT_CATEGORIES.map((c) => (
@@ -920,9 +921,9 @@ function ProductsPage() {
             </SelectContent>
           </Select>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={onBulkCategory} disabled={!bulkCategory}>
-              Apply
+              {t("products.apply")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -931,20 +932,20 @@ function ProductsPage() {
       <AlertDialog open={bulkLocationOpen} onOpenChange={setBulkLocationOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Update location</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.updateLocation")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Apply a location to {selected.size} selected products.
+              {t("products.updateLocationDesc", { count: selected.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={bulkLocation}
             onChange={(e) => setBulkLocation(e.target.value)}
-            placeholder="e.g. Aisle B · Bin 04"
+            placeholder={t("products.locationPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={onBulkLocation} disabled={!bulkLocation.trim()}>
-              Apply
+              {t("products.apply")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1011,15 +1012,16 @@ function FilterPanel(props: {
   setCostMax: (v: string) => void;
   reset: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="p-4 space-y-4">
-      <FilterRow label="Category">
+      <FilterRow label={t("products.category")}>
         <Select value={props.category} onValueChange={props.setCategory}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All categories</SelectItem>
+            <SelectItem value="__all">{t("products.allCategories")}</SelectItem>
             {props.categories.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
@@ -1029,13 +1031,13 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Supplier">
+      <FilterRow label={t("products.supplier")}>
         <Select value={props.supplier} onValueChange={props.setSupplier}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All suppliers</SelectItem>
+            <SelectItem value="__all">{t("products.allSuppliers")}</SelectItem>
             {props.suppliers.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -1045,13 +1047,13 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Location">
+      <FilterRow label={t("products.location")}>
         <Select value={props.location} onValueChange={props.setLocation}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All locations</SelectItem>
+            <SelectItem value="__all">{t("products.allLocations")}</SelectItem>
             {props.locations.map((l) => (
               <SelectItem key={l} value={l}>
                 {l}
@@ -1061,26 +1063,26 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Stock status">
+      <FilterRow label={t("products.stockStatus")}>
         <Select value={props.status} onValueChange={props.setStatus}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All</SelectItem>
-            <SelectItem value="healthy">In stock</SelectItem>
-            <SelectItem value="low">Low stock</SelectItem>
-            <SelectItem value="out">Out of stock</SelectItem>
-            <SelectItem value="overstocked">Overstocked</SelectItem>
+            <SelectItem value="__all">{t("products.all")}</SelectItem>
+            <SelectItem value="healthy">{t("stock.healthy")}</SelectItem>
+            <SelectItem value="low">{t("stock.low")}</SelectItem>
+            <SelectItem value="out">{t("stock.out")}</SelectItem>
+            <SelectItem value="overstocked">{t("stock.overstocked")}</SelectItem>
           </SelectContent>
         </Select>
       </FilterRow>
 
-      <FilterRow label="Price range">
+      <FilterRow label={t("products.priceRange")}>
         <div className="flex items-center gap-2">
           <Input
             type="number"
-            placeholder="Min"
+            placeholder={t("products.min")}
             value={props.priceMin}
             onChange={(e) => props.setPriceMin(e.target.value)}
             className="bg-surface"
@@ -1088,7 +1090,7 @@ function FilterPanel(props: {
           <span className="text-muted-foreground">–</span>
           <Input
             type="number"
-            placeholder="Max"
+            placeholder={t("products.max")}
             value={props.priceMax}
             onChange={(e) => props.setPriceMax(e.target.value)}
             className="bg-surface"
@@ -1096,11 +1098,11 @@ function FilterPanel(props: {
         </div>
       </FilterRow>
 
-      <FilterRow label="Cost range">
+      <FilterRow label={t("products.costRange")}>
         <div className="flex items-center gap-2">
           <Input
             type="number"
-            placeholder="Min"
+            placeholder={t("products.min")}
             value={props.costMin}
             onChange={(e) => props.setCostMin(e.target.value)}
             className="bg-surface"
@@ -1108,7 +1110,7 @@ function FilterPanel(props: {
           <span className="text-muted-foreground">–</span>
           <Input
             type="number"
-            placeholder="Max"
+            placeholder={t("products.max")}
             value={props.costMax}
             onChange={(e) => props.setCostMax(e.target.value)}
             className="bg-surface"
@@ -1118,7 +1120,7 @@ function FilterPanel(props: {
 
       <div className="flex justify-end pt-2 border-t border-border">
         <Button variant="ghost" size="sm" onClick={props.reset}>
-          Reset filters
+          {t("products.resetFilters")}
         </Button>
       </div>
     </div>
