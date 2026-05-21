@@ -57,6 +57,7 @@ import {
   Tag,
   MapPin,
   Filter,
+  ScanLine,
 } from "lucide-react";
 import {
   deleteProduct,
@@ -68,6 +69,7 @@ import { ProductForm } from "@/components/ProductForm";
 import { QuickMovementDialog } from "@/components/QuickMovementDialog";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { StockBadge, StockHealthBar } from "@/components/StockBadge";
+import { BarcodeScanDialog } from "@/components/BarcodeScanDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
@@ -122,6 +124,8 @@ function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [prefillBarcode, setPrefillBarcode] = useState<string | null>(null);
   const [quickMove, setQuickMove] = useState<{
     product: Product;
     type: "add" | "remove";
@@ -411,13 +415,17 @@ function ProductsPage() {
             Manage SKUs, stock levels and supplier details.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportAll}>
             <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="outline" onClick={() => setScanOpen(true)}>
+            <ScanLine className="h-4 w-4" /> Scan Barcode
           </Button>
           <Button
             onClick={() => {
               setEditing(null);
+              setPrefillBarcode(null);
               setOpen(true);
             }}
             className="shadow-soft"
@@ -802,11 +810,38 @@ function ProductsPage() {
         </div>
       </div>
 
+      <BarcodeScanDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onScan={(code: string) => {
+          const found = data?.find(
+            (p) => (p.barcode ?? "").trim() === code.trim(),
+          );
+          if (found) {
+            setViewing(found);
+            toast.success(`Found: ${found.name}`);
+          } else {
+            setPrefillBarcode(code);
+            setEditing(null);
+            setOpen(true);
+            toast.message("No product matches that barcode — create one");
+          }
+        }}
+      />
+
       {open && (
         <ProductForm
           open={open}
-          onOpenChange={setOpen}
-          product={editing}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setPrefillBarcode(null);
+          }}
+          product={
+            editing ??
+            (prefillBarcode
+              ? ({ barcode: prefillBarcode } as unknown as Product)
+              : null)
+          }
           onSaved={refresh}
         />
       )}

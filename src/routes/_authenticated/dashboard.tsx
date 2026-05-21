@@ -14,6 +14,7 @@ import {
   Activity,
   Search,
   X,
+  ScanLine,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,14 +100,20 @@ function Dashboard() {
             Live overview of your warehouse inventory.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button asChild size="lg" className="flex-1 sm:flex-none shadow-soft">
+            <Link to="/scanner">
+              <ScanLine className="h-5 w-5" />
+              Scan Barcode
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/movements">
               <ArrowLeftRight className="h-4 w-4" />
               Record movement
             </Link>
           </Button>
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link to="/products">
               <Package className="h-4 w-4" />
               Manage products
