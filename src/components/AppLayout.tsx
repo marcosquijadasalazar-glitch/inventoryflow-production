@@ -7,8 +7,10 @@ import {
   Boxes,
   Menu,
   X,
-  Search,
   LogOut,
+  History,
+  ScanLine,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -16,13 +18,22 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ScanBarcodeButton } from "./ScanBarcodeButton";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/products", label: "Products", icon: Package },
-  { to: "/movements", label: "Movements", icon: ArrowLeftRight },
-  { to: "/alerts", label: "Alerts", icon: AlertTriangle },
-];
+function useNavItems() {
+  const { t } = useTranslation();
+  return [
+    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { to: "/products", label: t("nav.products"), icon: Package },
+    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight },
+    { to: "/history", label: t("nav.history"), icon: History },
+    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
+    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },
+    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon },
+  ];
+}
 
 function NavItem({
   to,
@@ -80,11 +91,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const nav = useNavItems();
   const isActive = (to: string) => path === to || path.startsWith(to + "/");
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Signed out");
+    toast.success(t("nav.signOut"));
     navigate({ to: "/login", replace: true });
   };
 
@@ -126,6 +139,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             >
               <LogOut className="h-3.5 w-3.5" />
             </Button>
+          </div>
+          <div className="pt-1">
+            <LanguageSwitcher compact />
           </div>
         </div>
       </aside>
@@ -191,14 +207,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop top bar */}
         <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-8 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Search className="h-4 w-4" />
-            <span>Search products, SKUs, suppliers…</span>
-            <kbd className="ml-2 hidden lg:inline-flex pointer-events-none h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-              ⌘K
-            </kbd>
+          <div className="flex items-center gap-2">
+            <ScanBarcodeButton />
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <LanguageSwitcher compact />
             <span className="hidden lg:inline truncate max-w-[200px]">{user?.email}</span>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold">
               {initials}
@@ -208,8 +221,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               size="icon"
               className="h-7 w-7"
               onClick={handleSignOut}
-              aria-label="Sign out"
-              title="Sign out"
+              aria-label={t("nav.signOut")}
+              title={t("nav.signOut")}
             >
               <LogOut className="h-3.5 w-3.5" />
             </Button>

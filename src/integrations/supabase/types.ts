@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_settings: {
+        Row: {
+          address: string | null
+          company_name: string | null
+          created_at: string
+          email: string | null
+          footer_notes: string | null
+          id: string
+          logo_url: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          footer_notes?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          footer_notes?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_movements: {
         Row: {
           created_at: string
@@ -97,6 +133,57 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_history: {
+        Row: {
+          barcode: string | null
+          created_at: string
+          id: string
+          new_stock: number | null
+          previous_stock: number | null
+          product_id: string | null
+          product_name: string | null
+          quantity_change: number | null
+          reason: string | null
+          sku: string | null
+          source: Database["public"]["Enums"]["transaction_source"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          new_stock?: number | null
+          previous_stock?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          quantity_change?: number | null
+          reason?: string | null
+          sku?: string | null
+          source?: Database["public"]["Enums"]["transaction_source"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          new_stock?: number | null
+          previous_stock?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          quantity_change?: number | null
+          reason?: string | null
+          sku?: string | null
+          source?: Database["public"]["Enums"]["transaction_source"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -106,6 +193,15 @@ export type Database = {
     }
     Enums: {
       movement_type: "add" | "remove" | "adjustment"
+      transaction_source: "manual" | "barcode_scan" | "adjustment" | "system"
+      transaction_type:
+        | "product_created"
+        | "product_updated"
+        | "product_deleted"
+        | "stock_added"
+        | "stock_removed"
+        | "stock_adjusted"
+        | "low_stock"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -234,6 +330,16 @@ export const Constants = {
   public: {
     Enums: {
       movement_type: ["add", "remove", "adjustment"],
+      transaction_source: ["manual", "barcode_scan", "adjustment", "system"],
+      transaction_type: [
+        "product_created",
+        "product_updated",
+        "product_deleted",
+        "stock_added",
+        "stock_removed",
+        "stock_adjusted",
+        "low_stock",
+      ],
     },
   },
 } as const

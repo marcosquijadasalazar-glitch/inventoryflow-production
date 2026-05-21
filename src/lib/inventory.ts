@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { logProductTransaction } from "./history";
 
 export type Product = Tables<"products">;
 export type Movement = Tables<"inventory_movements">;
@@ -16,27 +17,48 @@ export async function listProducts(): Promise<Product[]> {
 export async function upsertProduct(values: TablesInsert<"products"> & { id?: string }) {
   if (values.id) {
     const { id, ...rest } = values;
+    const { data: prev } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
     const res = await supabase.from("products").update(rest).eq("id", id).select();
-    console.log("[products.update] response:", res);
     if (res.error) {
       console.error("[products.update] error:", res.error);
       throw res.error;
     }
+    const updated = res.data?.[0];
+    if (updated) {
+      await logProductTransaction("product_updated", updated as Product, {
+        previous: (prev ?? null) as Product | null,
+      });
+    }
     return res.data;
   } else {
     const res = await supabase.from("products").insert(values).select();
-    console.log("[products.insert] response:", res);
     if (res.error) {
       console.error("[products.insert] error:", res.error);
       throw res.error;
+    }
+    const created = res.data?.[0];
+    if (created) {
+      await logProductTransaction("product_created", created as Product);
     }
     return res.data;
   }
 }
 
 export async function deleteProduct(id: string) {
+  const { data: prev } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) throw error;
+  if (prev) {
+    await logProductTransaction("product_deleted", prev as Product);
+  }
 }
 
 export async function listMovements(): Promise<(Movement & { products: Pick<Product, "name" | "sku"> | null })[]> {
