@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import { OperationsWidgets } from "@/components/OperationsWidgets";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -233,6 +234,9 @@ function Dashboard() {
           accent={healthScore >= 80 ? "success" : healthScore >= 50 ? "warning" : "danger"}
         />
       </div>
+
+      <OperationsWidgets />
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border shadow-soft">
