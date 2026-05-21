@@ -7,8 +7,10 @@ import {
   Boxes,
   Menu,
   X,
-  Search,
   LogOut,
+  History,
+  ScanLine,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -16,13 +18,22 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ScanBarcodeButton } from "./ScanBarcodeButton";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/products", label: "Products", icon: Package },
-  { to: "/movements", label: "Movements", icon: ArrowLeftRight },
-  { to: "/alerts", label: "Alerts", icon: AlertTriangle },
-];
+function useNavItems() {
+  const { t } = useTranslation();
+  return [
+    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { to: "/products", label: t("nav.products"), icon: Package },
+    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight },
+    { to: "/history", label: t("nav.history"), icon: History },
+    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
+    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },
+    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon },
+  ];
+}
 
 function NavItem({
   to,
