@@ -204,35 +204,35 @@ function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat
           icon={Package}
-          label="Total Products"
+          label={t("dashboard.totalProducts")}
           value={products.isLoading ? null : total.toString()}
-          sub={`${totalUnits.toLocaleString()} units on hand`}
+          sub={t("dashboard.unitsOnHand", { count: totalUnits.toLocaleString() as any })}
           trend="up"
         />
         <Stat
           icon={DollarSign}
-          label="Inventory Value"
+          label={t("dashboard.inventoryValue")}
           value={
             products.isLoading
               ? null
               : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
           }
-          sub="Total stock value"
+          sub={t("dashboard.totalStockValue")}
           trend="up"
           accent="primary"
         />
         <Stat
           icon={AlertTriangle}
-          label="Low Stock"
+          label={t("dashboard.lowStock")}
           value={products.isLoading ? null : lowStock.length.toString()}
-          sub={`${outOfStock.length} out of stock`}
+          sub={t("dashboard.outOfStockSub", { count: outOfStock.length })}
           accent={lowStock.length + outOfStock.length > 0 ? "warning" : "default"}
         />
         <Stat
           icon={Activity}
-          label="Inventory Health"
+          label={t("dashboard.inventoryHealth")}
           value={products.isLoading ? null : `${healthScore}%`}
-          sub={`${healthy.length} of ${total} products healthy`}
+          sub={t("dashboard.healthSub", { healthy: healthy.length, total })}
           accent={healthScore >= 80 ? "success" : healthScore >= 50 ? "warning" : "danger"}
         />
       </div>
