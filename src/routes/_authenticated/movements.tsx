@@ -330,18 +330,33 @@ function MovementsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 md:col-span-2">
                 <Label>{t("movements.product")}</Label>
-                <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger className="bg-surface">
-                    <SelectValue placeholder={t("movements.selectProduct")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.data?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.sku}) · {p.stock}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={productId} onValueChange={setProductId}>
+                    <SelectTrigger className="bg-surface">
+                      <SelectValue placeholder={t("movements.selectProduct")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.data?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.sku}) · {p.stock}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <ScanFieldButton
+                    onScan={(code) => {
+                      const found = products.data?.find(
+                        (p) => (p.barcode ?? "").trim() === code.trim(),
+                      );
+                      if (found) {
+                        setProductId(found.id);
+                        toast.success(`${found.name}`);
+                      } else {
+                        toast.error(t("scanner.productNotFound"));
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label>{t("movements.quantity")}</Label>
