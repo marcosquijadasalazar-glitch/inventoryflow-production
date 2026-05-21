@@ -96,30 +96,30 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            Operations
+            {t("dashboard.section")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("dashboard.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Live overview of your warehouse inventory.
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button asChild size="lg" className="flex-1 sm:flex-none shadow-soft">
             <Link to="/scanner">
               <ScanLine className="h-5 w-5" />
-              Scan Barcode
+              {t("common.scanBarcode")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/movements">
               <ArrowLeftRight className="h-4 w-4" />
-              Record movement
+              {t("dashboard.recordMovement")}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/products">
               <Package className="h-4 w-4" />
-              Manage products
+              {t("dashboard.manageProducts")}
             </Link>
           </Button>
         </div>
