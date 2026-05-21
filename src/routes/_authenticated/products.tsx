@@ -532,31 +532,31 @@ function ProductsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {category !== "__all" && (
             <FilterChip
-              label={`Category: ${category}`}
+              label={t("products.chip.category", { value: category })}
               onRemove={() => setCategory("__all")}
             />
           )}
           {supplier !== "__all" && (
             <FilterChip
-              label={`Supplier: ${supplier}`}
+              label={t("products.chip.supplier", { value: supplier })}
               onRemove={() => setSupplier("__all")}
             />
           )}
           {location !== "__all" && (
             <FilterChip
-              label={`Location: ${location}`}
+              label={t("products.chip.location", { value: location })}
               onRemove={() => setLocation("__all")}
             />
           )}
           {status !== "__all" && (
             <FilterChip
-              label={`Status: ${status}`}
+              label={t("products.chip.status", { value: t(`stock.${status}`) })}
               onRemove={() => setStatus("__all")}
             />
           )}
           {(priceMin || priceMax) && (
             <FilterChip
-              label={`Price: ${priceMin || "0"} – ${priceMax || "∞"}`}
+              label={t("products.chip.price", { min: priceMin || "0", max: priceMax || "∞" })}
               onRemove={() => {
                 setPriceMin("");
                 setPriceMax("");
@@ -565,7 +565,7 @@ function ProductsPage() {
           )}
           {(costMin || costMax) && (
             <FilterChip
-              label={`Cost: ${costMin || "0"} – ${costMax || "∞"}`}
+              label={t("products.chip.cost", { min: costMin || "0", max: costMax || "∞" })}
               onRemove={() => {
                 setCostMin("");
                 setCostMax("");
@@ -573,7 +573,7 @@ function ProductsPage() {
             />
           )}
           <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Reset all
+            {t("products.resetAll")}
           </Button>
         </div>
       )}
