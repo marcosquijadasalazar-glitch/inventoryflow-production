@@ -524,8 +524,63 @@ export type Database = {
           },
         ]
       }
+      sales_order_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          new_status: string | null
+          notes: string | null
+          organization_id: string | null
+          payment_date: string
+          payment_method: string
+          performed_by: string | null
+          performed_by_email: string | null
+          previous_status: string | null
+          sales_order_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          payment_date?: string
+          payment_method: string
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          sales_order_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          new_status?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          payment_date?: string
+          payment_method?: string
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          sales_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_payments_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_orders: {
         Row: {
+          amount_paid: number
+          balance_due: number
           created_at: string
           created_by: string | null
           customer_id: string | null
@@ -544,6 +599,8 @@ export type Database = {
           total: number
         }
         Insert: {
+          amount_paid?: number
+          balance_due?: number
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -562,6 +619,8 @@ export type Database = {
           total?: number
         }
         Update: {
+          amount_paid?: number
+          balance_due?: number
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
