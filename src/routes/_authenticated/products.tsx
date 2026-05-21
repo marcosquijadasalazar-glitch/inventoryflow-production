@@ -668,7 +668,7 @@ function ProductsPage() {
                       <Checkbox
                         checked={selected.has(p.id)}
                         onCheckedChange={() => toggleOne(p.id)}
-                        aria-label={`Select ${p.name}`}
+                        aria-label={t("products.selectRow", { name: p.name })}
                       />
                     </TableCell>
                     <TableCell className="py-3.5">
