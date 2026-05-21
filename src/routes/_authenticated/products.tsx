@@ -505,7 +505,7 @@ function ProductsPage() {
               </SheetTrigger>
               <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto bg-surface">
                 <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
+                  <SheetTitle>{t("products.filters")}</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">{filterPanel}</div>
               </SheetContent>
