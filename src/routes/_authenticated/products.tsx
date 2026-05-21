@@ -863,19 +863,18 @@ function ProductsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this product?</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.deleteOne")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All inventory movements for this product will
-              also be removed.
+              {t("products.deleteOneDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={onDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -884,18 +883,18 @@ function ProductsPage() {
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selected.size} products?</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.deleteMany", { count: selected.size })}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the selected products and their movement history.
+              {t("products.deleteManyDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={onBulkDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete all
+              {t("products.deleteAll")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -904,14 +903,14 @@ function ProductsPage() {
       <AlertDialog open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Update category</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.updateCategory")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Apply a category to {selected.size} selected products.
+              {t("products.updateCategoryDesc", { count: selected.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Select value={bulkCategory} onValueChange={setBulkCategory}>
             <SelectTrigger>
-              <SelectValue placeholder="Select category" />
+              <SelectValue placeholder={t("products.selectCategory")} />
             </SelectTrigger>
             <SelectContent>
               {PRODUCT_CATEGORIES.map((c) => (
@@ -922,9 +921,9 @@ function ProductsPage() {
             </SelectContent>
           </Select>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={onBulkCategory} disabled={!bulkCategory}>
-              Apply
+              {t("products.apply")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -933,20 +932,20 @@ function ProductsPage() {
       <AlertDialog open={bulkLocationOpen} onOpenChange={setBulkLocationOpen}>
         <AlertDialogContent className="bg-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Update location</AlertDialogTitle>
+            <AlertDialogTitle>{t("products.updateLocation")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Apply a location to {selected.size} selected products.
+              {t("products.updateLocationDesc", { count: selected.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
             value={bulkLocation}
             onChange={(e) => setBulkLocation(e.target.value)}
-            placeholder="e.g. Aisle B · Bin 04"
+            placeholder={t("products.locationPlaceholder")}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={onBulkLocation} disabled={!bulkLocation.trim()}>
-              Apply
+              {t("products.apply")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
