@@ -21,6 +21,7 @@ import { upsertProduct, type Product } from "@/lib/inventory";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { ScanFieldButton } from "@/components/ScanFieldButton";
 
 export function ProductForm({
   open,
