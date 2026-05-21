@@ -14,6 +14,7 @@ import {
   type CompanySettings,
 } from "@/lib/settings";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { CategoryManagerCard } from "@/components/CategoryManagerCard";
 import { Building2, Upload, Trash2, Settings as Cog } from "lucide-react";
 import { toast } from "sonner";
 
@@ -180,6 +181,8 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CategoryManagerCard />
 
       <Card>
         <CardHeader>

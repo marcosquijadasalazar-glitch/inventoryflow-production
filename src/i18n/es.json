@@ -502,6 +502,31 @@
     "low": "Stock bajo",
     "healthy": "En stock",
     "overstocked": "Sobre stock"
+  },
+  "categories": {
+    "title": "Categorías de productos",
+    "subtitle": "Administra las categorías que tu equipo puede asignar a los productos.",
+    "addNew": "Agregar categoría",
+    "createNew": "Crear nueva categoría",
+    "newPlaceholder": "Nombre de la nueva categoría",
+    "selectPlaceholder": "Selecciona una categoría",
+    "namePlaceholder": "Nombre de la categoría",
+    "name": "Nombre",
+    "status": "Estado",
+    "active": "Activa",
+    "archived": "Archivada",
+    "archive": "Archivar",
+    "restore": "Restaurar",
+    "rename": "Renombrar",
+    "nameRequired": "El nombre de la categoría es obligatorio",
+    "duplicate": "Ya existe una categoría con este nombre",
+    "created": "Categoría creada",
+    "updated": "Categoría actualizada",
+    "archivedToast": "Categoría archivada",
+    "restoredToast": "Categoría restaurada",
+    "empty": "Aún no hay categorías. Agrega la primera arriba.",
+    "inUse": "En uso por productos"
   }
 }
+
 
