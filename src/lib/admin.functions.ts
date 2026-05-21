@@ -6,13 +6,53 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 async function assertSuperAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("role, email")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (data?.role !== "super_admin") {
     throw new Error("Forbidden: super admin only");
   }
+  return data;
+}
+
+async function writeAudit(input: {
+  action_type: string;
+  target_type: "user" | "organization";
+  target_id: string;
+  target_label?: string | null;
+  performed_by: string;
+  performed_by_email?: string | null;
+  previous_status?: string | null;
+  new_status?: string | null;
+  reason?: string | null;
+  metadata?: Record<string, unknown> | null;
+}) {
+  await supabaseAdmin.from("admin_audit_log" as never).insert(input as never);
+}
+
+type Status = "active" | "inactive" | "suspended" | "archived";
+
+function deriveOrgStatus(o: {
+  is_active?: boolean | null;
+  active_status?: boolean | null;
+  suspended_at?: string | null;
+  archived_at?: string | null;
+}): Status {
+  if (o.archived_at) return "archived";
+  if (o.suspended_at) return "suspended";
+  if (o.is_active === false || o.active_status === false) return "inactive";
+  return "active";
+}
+function deriveUserStatus(u: {
+  is_active?: boolean | null;
+  suspended_at?: string | null;
+  archived_at?: string | null;
+}): Status {
+  if (u.archived_at) return "archived";
+  if (u.suspended_at) return "suspended";
+  if (u.is_active === false) return "inactive";
+  return "active";
 }
 
 export const adminListOrganizations = createServerFn({ method: "GET" })
@@ -25,7 +65,6 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    // counts in parallel
     const [users, products] = await Promise.all([
       supabaseAdmin.from("profiles").select("organization_id"),
       supabaseAdmin.from("products").select("organization_id"),
@@ -42,8 +81,9 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       productsByOrg.set(p.organization_id, (productsByOrg.get(p.organization_id) ?? 0) + 1);
     });
 
-    return (orgs ?? []).map((o) => ({
+    return (orgs ?? []).map((o: any) => ({
       ...o,
+      status: deriveOrgStatus(o),
       user_count: usersByOrg.get(o.id) ?? 0,
       product_count: productsByOrg.get(o.id) ?? 0,
     }));
@@ -78,7 +118,7 @@ export const adminCreateOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CreateOrgSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await assertSuperAdmin(context.userId);
+    const me = await assertSuperAdmin(context.userId);
     const { data: org, error } = await supabaseAdmin
       .from("organizations")
       .insert({
@@ -89,6 +129,15 @@ export const adminCreateOrganization = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
+    await writeAudit({
+      action_type: "create",
+      target_type: "organization",
+      target_id: org.id,
+      target_label: org.company_name,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      new_status: "active",
+    });
     return org;
   });
 
@@ -101,12 +150,73 @@ export const adminToggleOrganization = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ToggleSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await assertSuperAdmin(context.userId);
+    const me = await assertSuperAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("organizations")
+      .select("*")
+      .eq("id", data.organization_id)
+      .maybeSingle();
+    const prev = existing ? deriveOrgStatus(existing as any) : null;
     const { error } = await supabaseAdmin
       .from("organizations")
-      .update({ active_status: data.active_status })
+      .update({ active_status: data.active_status, is_active: data.active_status } as never)
       .eq("id", data.organization_id);
     if (error) throw new Error(error.message);
+    await writeAudit({
+      action_type: data.active_status ? "reactivate" : "deactivate",
+      target_type: "organization",
+      target_id: data.organization_id,
+      target_label: (existing as any)?.company_name ?? null,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      previous_status: prev,
+      new_status: data.active_status ? "active" : "inactive",
+    });
+    return { ok: true };
+  });
+
+const OrgStatusSchema = z.object({
+  organization_id: z.string().uuid(),
+  status: z.enum(["active", "inactive", "suspended", "archived"]),
+  reason: z.string().max(500).optional().nullable(),
+});
+
+export const adminSetOrganizationStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => OrgStatusSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const me = await assertSuperAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("organizations")
+      .select("*")
+      .eq("id", data.organization_id)
+      .maybeSingle();
+    if (!existing) throw new Error("Organization not found");
+    const prev = deriveOrgStatus(existing as any);
+
+    const patch: Record<string, unknown> = {
+      is_active: data.status === "active",
+      active_status: data.status === "active",
+      suspended_at: data.status === "suspended" ? new Date().toISOString() : null,
+      archived_at: data.status === "archived" ? new Date().toISOString() : null,
+    };
+    const { error } = await supabaseAdmin
+      .from("organizations")
+      .update(patch as never)
+      .eq("id", data.organization_id);
+    if (error) throw new Error(error.message);
+
+    await writeAudit({
+      action_type: `org_${data.status}`,
+      target_type: "organization",
+      target_id: data.organization_id,
+      target_label: (existing as any).company_name ?? null,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      previous_status: prev,
+      new_status: data.status,
+      reason: data.reason ?? null,
+    });
     return { ok: true };
   });
 
@@ -119,12 +229,27 @@ export const adminUpdateOrgPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => UpdatePlanSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await assertSuperAdmin(context.userId);
+    const me = await assertSuperAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("organizations")
+      .select("plan_type, company_name")
+      .eq("id", data.organization_id)
+      .maybeSingle();
     const { error } = await supabaseAdmin
       .from("organizations")
       .update({ plan_type: data.plan_type })
       .eq("id", data.organization_id);
     if (error) throw new Error(error.message);
+    await writeAudit({
+      action_type: "change_plan",
+      target_type: "organization",
+      target_id: data.organization_id,
+      target_label: (existing as any)?.company_name ?? null,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      previous_status: (existing as any)?.plan_type ?? null,
+      new_status: data.plan_type,
+    });
     return { ok: true };
   });
 
@@ -139,12 +264,12 @@ export const adminListUsers = createServerFn({ method: "POST" })
     await assertSuperAdmin(context.userId);
     let q = supabaseAdmin
       .from("profiles")
-      .select("id, user_id, email, full_name, role, organization_id, created_at")
+      .select("*")
       .order("created_at", { ascending: false });
     if (data.organization_id) q = q.eq("organization_id", data.organization_id);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    return (rows ?? []).map((u: any) => ({ ...u, status: deriveUserStatus(u) }));
   });
 
 const CreateUserSchema = z.object({
@@ -159,7 +284,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CreateUserSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await assertSuperAdmin(context.userId);
+    const me = await assertSuperAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -174,7 +299,6 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     const uid = created.user?.id;
     if (!uid) throw new Error("Failed to create user");
 
-    // Ensure profile row reflects intended role/org (trigger may have raced).
     const { error: upErr } = await supabaseAdmin
       .from("profiles")
       .upsert(
@@ -188,6 +312,16 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         { onConflict: "user_id" },
       );
     if (upErr) throw new Error(upErr.message);
+
+    await writeAudit({
+      action_type: "create",
+      target_type: "user",
+      target_id: uid,
+      target_label: data.email,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      new_status: "active",
+    });
     return { user_id: uid };
   });
 
@@ -201,7 +335,12 @@ export const adminAssignUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AssignSchema.parse(input))
   .handler(async ({ context, data }) => {
-    await assertSuperAdmin(context.userId);
+    const me = await assertSuperAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("organization_id, role, email")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
     const patch: { organization_id: string | null; role?: typeof data.role } = {
       organization_id: data.organization_id,
     };
@@ -211,5 +350,138 @@ export const adminAssignUser = createServerFn({ method: "POST" })
       .update(patch)
       .eq("user_id", data.user_id);
     if (error) throw new Error(error.message);
+
+    if (data.role && (existing as any)?.role !== data.role) {
+      await writeAudit({
+        action_type: "change_role",
+        target_type: "user",
+        target_id: data.user_id,
+        target_label: (existing as any)?.email ?? null,
+        performed_by: context.userId,
+        performed_by_email: me?.email ?? null,
+        previous_status: (existing as any)?.role ?? null,
+        new_status: data.role,
+      });
+    }
+    if ((existing as any)?.organization_id !== data.organization_id) {
+      await writeAudit({
+        action_type: "change_organization",
+        target_type: "user",
+        target_id: data.user_id,
+        target_label: (existing as any)?.email ?? null,
+        performed_by: context.userId,
+        performed_by_email: me?.email ?? null,
+        previous_status: (existing as any)?.organization_id ?? null,
+        new_status: data.organization_id,
+      });
+    }
     return { ok: true };
+  });
+
+const UserStatusSchema = z.object({
+  user_id: z.string().uuid(),
+  status: z.enum(["active", "inactive", "suspended", "archived"]),
+  reason: z.string().max(500).optional().nullable(),
+});
+
+export const adminSetUserStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => UserStatusSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const me = await assertSuperAdmin(context.userId);
+    if (data.user_id === context.userId) {
+      throw new Error("You cannot change your own status");
+    }
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+    if (!existing) throw new Error("User profile not found");
+    const prev = deriveUserStatus(existing as any);
+
+    const patch: Record<string, unknown> = {
+      is_active: data.status === "active",
+      suspended_at: data.status === "suspended" ? new Date().toISOString() : null,
+      archived_at: data.status === "archived" ? new Date().toISOString() : null,
+    };
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update(patch as never)
+      .eq("user_id", data.user_id);
+    if (error) throw new Error(error.message);
+
+    await writeAudit({
+      action_type: `user_${data.status}`,
+      target_type: "user",
+      target_id: data.user_id,
+      target_label: (existing as any).email ?? null,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      previous_status: prev,
+      new_status: data.status,
+      reason: data.reason ?? null,
+    });
+    return { ok: true };
+  });
+
+export const adminListAuditLog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("admin_audit_log" as never)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Array<{
+      id: string;
+      action_type: string;
+      target_type: string;
+      target_id: string;
+      target_label: string | null;
+      performed_by_email: string | null;
+      previous_status: string | null;
+      new_status: string | null;
+      reason: string | null;
+      created_at: string;
+    }>;
+  });
+
+// Access status for current user (used by gate)
+export const getMyAccessStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    if (!profile) {
+      return { ok: true as const, reason: null, scope: "no_profile" as const };
+    }
+    const p = profile as any;
+    if (p.role === "super_admin") {
+      return { ok: true as const, reason: null, scope: "super_admin" as const };
+    }
+    const userStatus = deriveUserStatus(p);
+    if (userStatus !== "active") {
+      return { ok: false as const, reason: userStatus, scope: "user" as const };
+    }
+    if (p.organization_id) {
+      const { data: org } = await supabaseAdmin
+        .from("organizations")
+        .select("*")
+        .eq("id", p.organization_id)
+        .maybeSingle();
+      if (org) {
+        const orgStatus = deriveOrgStatus(org as any);
+        if (orgStatus !== "active") {
+          return { ok: false as const, reason: orgStatus, scope: "organization" as const };
+        }
+      }
+    }
+    return { ok: true as const, reason: null, scope: "ok" as const };
   });
