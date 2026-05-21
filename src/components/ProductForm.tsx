@@ -119,11 +119,14 @@ export function ProductForm({
                 />
               </Field>
               <Field label="Barcode">
-                <Input
-                  value={form.barcode ?? ""}
-                  onChange={(e) => set("barcode", e.target.value)}
-                  placeholder="0000000000"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={form.barcode ?? ""}
+                    onChange={(e) => set("barcode", e.target.value)}
+                    placeholder="0000000000"
+                  />
+                  <ScanFieldButton onScan={(code) => set("barcode", code)} />
+                </div>
               </Field>
               <Field label="Category" full>
                 <Select
