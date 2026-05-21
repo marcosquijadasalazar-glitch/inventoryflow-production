@@ -813,7 +813,7 @@ function ProductsPage() {
       <BarcodeScanDialog
         open={scanOpen}
         onOpenChange={setScanOpen}
-        onScan={(code) => {
+        onScan={(code: string) => {
           const found = data?.find(
             (p) => (p.barcode ?? "").trim() === code.trim(),
           );
