@@ -1012,15 +1012,16 @@ function FilterPanel(props: {
   setCostMax: (v: string) => void;
   reset: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="p-4 space-y-4">
-      <FilterRow label="Category">
+      <FilterRow label={t("products.category")}>
         <Select value={props.category} onValueChange={props.setCategory}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All categories</SelectItem>
+            <SelectItem value="__all">{t("products.allCategories")}</SelectItem>
             {props.categories.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
@@ -1030,13 +1031,13 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Supplier">
+      <FilterRow label={t("products.supplier")}>
         <Select value={props.supplier} onValueChange={props.setSupplier}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All suppliers</SelectItem>
+            <SelectItem value="__all">{t("products.allSuppliers")}</SelectItem>
             {props.suppliers.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -1046,13 +1047,13 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Location">
+      <FilterRow label={t("products.location")}>
         <Select value={props.location} onValueChange={props.setLocation}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All locations</SelectItem>
+            <SelectItem value="__all">{t("products.allLocations")}</SelectItem>
             {props.locations.map((l) => (
               <SelectItem key={l} value={l}>
                 {l}
@@ -1062,26 +1063,26 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label="Stock status">
+      <FilterRow label={t("products.stockStatus")}>
         <Select value={props.status} onValueChange={props.setStatus}>
           <SelectTrigger className="bg-surface">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__all">All</SelectItem>
-            <SelectItem value="healthy">In stock</SelectItem>
-            <SelectItem value="low">Low stock</SelectItem>
-            <SelectItem value="out">Out of stock</SelectItem>
-            <SelectItem value="overstocked">Overstocked</SelectItem>
+            <SelectItem value="__all">{t("products.all")}</SelectItem>
+            <SelectItem value="healthy">{t("stock.healthy")}</SelectItem>
+            <SelectItem value="low">{t("stock.low")}</SelectItem>
+            <SelectItem value="out">{t("stock.out")}</SelectItem>
+            <SelectItem value="overstocked">{t("stock.overstocked")}</SelectItem>
           </SelectContent>
         </Select>
       </FilterRow>
 
-      <FilterRow label="Price range">
+      <FilterRow label={t("products.priceRange")}>
         <div className="flex items-center gap-2">
           <Input
             type="number"
-            placeholder="Min"
+            placeholder={t("products.min")}
             value={props.priceMin}
             onChange={(e) => props.setPriceMin(e.target.value)}
             className="bg-surface"
@@ -1089,7 +1090,7 @@ function FilterPanel(props: {
           <span className="text-muted-foreground">–</span>
           <Input
             type="number"
-            placeholder="Max"
+            placeholder={t("products.max")}
             value={props.priceMax}
             onChange={(e) => props.setPriceMax(e.target.value)}
             className="bg-surface"
@@ -1097,11 +1098,11 @@ function FilterPanel(props: {
         </div>
       </FilterRow>
 
-      <FilterRow label="Cost range">
+      <FilterRow label={t("products.costRange")}>
         <div className="flex items-center gap-2">
           <Input
             type="number"
-            placeholder="Min"
+            placeholder={t("products.min")}
             value={props.costMin}
             onChange={(e) => props.setCostMin(e.target.value)}
             className="bg-surface"
@@ -1109,7 +1110,7 @@ function FilterPanel(props: {
           <span className="text-muted-foreground">–</span>
           <Input
             type="number"
-            placeholder="Max"
+            placeholder={t("products.max")}
             value={props.costMax}
             onChange={(e) => props.setCostMax(e.target.value)}
             className="bg-surface"
@@ -1119,7 +1120,7 @@ function FilterPanel(props: {
 
       <div className="flex justify-end pt-2 border-t border-border">
         <Button variant="ghost" size="sm" onClick={props.reset}>
-          Reset filters
+          {t("products.resetFilters")}
         </Button>
       </div>
     </div>
