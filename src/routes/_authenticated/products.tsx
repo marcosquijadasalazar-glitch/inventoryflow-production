@@ -104,18 +104,19 @@ type SortKey =
 
 type SavedView = "low-stock" | "out-of-stock" | "recent" | "high-value";
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "newest", label: "Newest products" },
-  { value: "oldest", label: "Oldest products" },
-  { value: "name-asc", label: "Name A → Z" },
-  { value: "name-desc", label: "Name Z → A" },
-  { value: "stock-asc", label: "Stock: low → high" },
-  { value: "stock-desc", label: "Stock: high → low" },
-  { value: "category", label: "Category" },
-  { value: "location", label: "Location" },
+const SORT_OPTIONS: { value: SortKey; key: string }[] = [
+  { value: "newest", key: "products.sort.newest" },
+  { value: "oldest", key: "products.sort.oldest" },
+  { value: "name-asc", key: "products.sort.nameAsc" },
+  { value: "name-desc", key: "products.sort.nameDesc" },
+  { value: "stock-asc", key: "products.sort.stockAsc" },
+  { value: "stock-desc", key: "products.sort.stockDesc" },
+  { value: "category", key: "products.sort.category" },
+  { value: "location", key: "products.sort.location" },
 ];
 
 function ProductsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["products"],
