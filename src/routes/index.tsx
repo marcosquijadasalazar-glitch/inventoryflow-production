@@ -493,10 +493,13 @@ function SiteFooter() {
             © {new Date().getFullYear()} InventoryFlow. All rights reserved.
           </span>
         </div>
-        <div className="flex items-center gap-5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-x-5 gap-y-2 flex-wrap text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#pricing" className="hover:text-foreground">Pricing</a>
           <Link to="/login" className="hover:text-foreground">Login</Link>
+          <Link to="/terms" className="hover:text-foreground">Terms</Link>
+          <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+          <Link to="/service-agreement" className="hover:text-foreground">Service Agreement</Link>
         </div>
       </div>
     </footer>
