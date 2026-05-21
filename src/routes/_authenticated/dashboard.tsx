@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const { t } = useTranslation();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
 
