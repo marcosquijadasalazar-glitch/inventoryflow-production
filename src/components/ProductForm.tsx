@@ -175,22 +175,61 @@ export function ProductForm({
                   <ScanFieldButton onScan={(code) => set("barcode", code)} />
                 </div>
               </Field>
-              <Field label="Category" full>
+              <Field label={t("products.category")} full>
                 <Select
                   value={form.category || ""}
-                  onValueChange={(v) => set("category", v)}
+                  onValueChange={handleCategoryChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={t("categories.selectPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRODUCT_CATEGORIES.map((c) => (
+                    {categories.map((c: string) => (
                       <SelectItem key={c} value={c}>
                         {c}
                       </SelectItem>
                     ))}
+                    <SelectItem value={NEW_CATEGORY_VALUE}>
+                      + {t("categories.createNew")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {showNewCategory && (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      autoFocus
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder={t("categories.newPlaceholder")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          submitNewCategory();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={submitNewCategory}
+                      disabled={creatingCategory}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      {creatingCategory ? t("common.loading") : t("common.add")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowNewCategory(false);
+                        setNewCategory("");
+                      }}
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </div>
+                )}
               </Field>
             </Section>
 
