@@ -102,6 +102,8 @@ export type SalesOrder = {
   balance_due: number;
   payment_status: PaymentStatus;
   payment_method: string | null;
+  inventory_deducted_at: string | null;
+  inventory_reversed_at: string | null;
   created_at: string;
   customers?: { name: string; email?: string | null; phone?: string | null; address?: string | null } | null;
   items?: SOItem[];
@@ -462,15 +464,57 @@ export async function createSalesOrder(input: {
   }
   // If creating as confirmed/fulfilled, decrement stock right away
   if (input.status === "fulfilled" || input.status === "confirmed") {
-    await fulfillSalesOrder(so.id);
+    await deductSalesOrderStock(so.id, input.status === "fulfilled");
   }
   return so as SalesOrder;
 }
 
-export async function fulfillSalesOrder(id: string) {
+/**
+ * Validate that all line items have enough stock available.
+ * Throws if any product would go negative (unless allowNegative=true).
+ */
+export async function validateSalesOrderStock(soId: string): Promise<{ product_id: string; name: string; available: number; needed: number }[]> {
+  const so = await getSalesOrder(soId);
+  if (!so) throw new Error("SO not found");
+  const shortages: { product_id: string; name: string; available: number; needed: number }[] = [];
+  for (const it of so.items ?? []) {
+    if (!it.product_id || it.quantity <= 0) continue;
+    const { data: p } = await sb.from("products").select("id,name,stock").eq("id", it.product_id).maybeSingle();
+    if (!p) continue;
+    if ((p.stock ?? 0) < it.quantity) {
+      shortages.push({ product_id: p.id, name: p.name, available: p.stock ?? 0, needed: it.quantity });
+    }
+  }
+  return shortages;
+}
+
+/**
+ * Deduct stock for a sales order. Idempotent: skips if already deducted.
+ * If markFulfilled=true, sets status to "fulfilled". Otherwise keeps current status.
+ */
+export async function deductSalesOrderStock(id: string, markFulfilled: boolean, opts?: { allowNegative?: boolean }) {
   const so = await getSalesOrder(id);
   if (!so) throw new Error("SO not found");
-  if (so.status === "fulfilled") return;
+  if (so.inventory_deducted_at) {
+    // Already deducted — just update status flag if needed
+    if (markFulfilled && so.status !== "fulfilled") {
+      await sb
+        .from("sales_orders")
+        .update({ status: "fulfilled", fulfilled_date: new Date().toISOString().slice(0, 10) })
+        .eq("id", id);
+    }
+    return;
+  }
+
+  if (!opts?.allowNegative) {
+    const shortages = await validateSalesOrderStock(id);
+    if (shortages.length) {
+      throw new Error(
+        `Insufficient stock: ${shortages.map((s) => `${s.name} (need ${s.needed}, have ${s.available})`).join(", ")}`,
+      );
+    }
+  }
+
   for (const it of so.items ?? []) {
     if (!it.product_id || it.quantity <= 0) continue;
     await sb.from("inventory_movements").insert({
@@ -480,16 +524,66 @@ export async function fulfillSalesOrder(id: string) {
       note: `[so-fulfill] ${so.so_number}`,
     });
   }
+
+  const update: any = {
+    inventory_deducted_at: new Date().toISOString(),
+    inventory_reversed_at: null,
+  };
+  if (markFulfilled) {
+    update.status = "fulfilled";
+    update.fulfilled_date = new Date().toISOString().slice(0, 10);
+  }
+  await sb.from("sales_orders").update(update).eq("id", id);
+}
+
+/** Reverse inventory deduction for a sales order (used on cancellation). Idempotent. */
+export async function reverseSalesOrderStock(id: string) {
+  const so = await getSalesOrder(id);
+  if (!so) throw new Error("SO not found");
+  if (!so.inventory_deducted_at || so.inventory_reversed_at) return;
+  for (const it of so.items ?? []) {
+    if (!it.product_id || it.quantity <= 0) continue;
+    await sb.from("inventory_movements").insert({
+      product_id: it.product_id,
+      type: "add",
+      quantity: it.quantity,
+      note: `[so-reverse] ${so.so_number}`,
+    });
+  }
   await sb
     .from("sales_orders")
-    .update({
-      status: "fulfilled",
-      fulfilled_date: new Date().toISOString().slice(0, 10),
-    })
+    .update({ inventory_reversed_at: new Date().toISOString() })
     .eq("id", id);
 }
 
+/** Backward-compatible alias: confirm/fulfill the SO and deduct stock. */
+export async function fulfillSalesOrder(id: string) {
+  await deductSalesOrderStock(id, true);
+}
+
+export async function confirmSalesOrder(id: string) {
+  await deductSalesOrderStock(id, false);
+  await sb.from("sales_orders").update({ status: "confirmed" }).eq("id", id);
+}
+
+export async function cancelSalesOrder(id: string) {
+  await reverseSalesOrderStock(id);
+  await sb.from("sales_orders").update({ status: "cancelled" }).eq("id", id);
+}
+
 export async function updateSOStatus(id: string, status: SOStatus) {
+  if (status === "cancelled") {
+    await cancelSalesOrder(id);
+    return;
+  }
+  if (status === "fulfilled") {
+    await fulfillSalesOrder(id);
+    return;
+  }
+  if (status === "confirmed") {
+    await confirmSalesOrder(id);
+    return;
+  }
   const { error } = await sb.from("sales_orders").update({ status }).eq("id", id);
   if (error) throw error;
 }
