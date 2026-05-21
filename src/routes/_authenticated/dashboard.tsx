@@ -245,11 +245,11 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <ArrowLeftRight className="h-4 w-4 text-primary" />
-              <CardTitle className="text-base">Recent Movements</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.recentMovements")}</CardTitle>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/movements">
-                View all <ArrowUpRight className="h-3.5 w-3.5" />
+                {t("dashboard.viewAll")} <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           </CardHeader>
