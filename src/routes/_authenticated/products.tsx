@@ -410,19 +410,19 @@ function ProductsPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            Catalog
+            {t("products.section")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("products.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage SKUs, stock levels and supplier details.
+            {t("products.subtitle")}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportAll}>
-            <Download className="h-4 w-4" /> Export
+            <Download className="h-4 w-4" /> {t("common.export")}
           </Button>
           <Button variant="outline" onClick={() => setScanOpen(true)}>
-            <ScanLine className="h-4 w-4" /> Scan Barcode
+            <ScanLine className="h-4 w-4" /> {t("common.scanBarcode")}
           </Button>
           <Button
             onClick={() => {
@@ -432,7 +432,7 @@ function ProductsPage() {
             }}
             className="shadow-soft"
           >
-            <Plus className="h-4 w-4" /> Add Product
+            <Plus className="h-4 w-4" /> {t("products.addProduct")}
           </Button>
         </div>
       </div>
@@ -440,12 +440,12 @@ function ProductsPage() {
       {/* Saved views */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground mr-1">
-          Quick views:
+          {t("products.quickViews")}
         </span>
-        <ViewChip label="Low stock" onClick={() => applyView("low-stock")} />
-        <ViewChip label="Out of stock" onClick={() => applyView("out-of-stock")} />
-        <ViewChip label="Recently added" onClick={() => applyView("recent")} />
-        <ViewChip label="High value inventory" onClick={() => applyView("high-value")} />
+        <ViewChip label={t("products.view.lowStock")} onClick={() => applyView("low-stock")} />
+        <ViewChip label={t("products.view.outOfStock")} onClick={() => applyView("out-of-stock")} />
+        <ViewChip label={t("products.view.recent")} onClick={() => applyView("recent")} />
+        <ViewChip label={t("products.view.highValue")} onClick={() => applyView("high-value")} />
       </div>
 
       {/* Search + filter bar */}
