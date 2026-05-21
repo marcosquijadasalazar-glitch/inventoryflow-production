@@ -41,8 +41,13 @@ export function ProductForm({
   product?: Product | null;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [showNewCategory, setShowNewCategory] = useState(false);
   const [form, setForm] = useState({
     name: product?.name ?? "",
     sku: product?.sku ?? "",
@@ -56,7 +61,42 @@ export function ProductForm({
     supplier: product?.supplier ?? "",
   });
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["product-categories"],
+    queryFn: listActiveCategoryNames,
+  });
+
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleCategoryChange = (v: string) => {
+    if (v === NEW_CATEGORY_VALUE) {
+      setShowNewCategory(true);
+      return;
+    }
+    setShowNewCategory(false);
+    set("category", v);
+  };
+
+  const submitNewCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) {
+      toast.error(t("categories.nameRequired"));
+      return;
+    }
+    setCreatingCategory(true);
+    try {
+      const created = await createProductCategory(name);
+      await qc.invalidateQueries({ queryKey: ["product-categories"] });
+      set("category", created.name);
+      setNewCategory("");
+      setShowNewCategory(false);
+      toast.success(t("categories.created"));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
