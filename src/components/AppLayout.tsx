@@ -22,10 +22,12 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScanBarcodeButton } from "./ScanBarcodeButton";
+import { useProfile } from "@/lib/profile";
 
 function useNavItems() {
   const { t } = useTranslation();
-  return [
+  const profile = useProfile();
+  const items = [
     { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { to: "/products", label: t("nav.products"), icon: Package },
     { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight },
@@ -34,6 +36,10 @@ function useNavItems() {
     { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },
     { to: "/settings", label: t("nav.settings"), icon: SettingsIcon },
   ];
+  if (profile.data?.role === "super_admin") {
+    items.push({ to: "/admin", label: "Admin", icon: Shield });
+  }
+  return items;
 }
 
 function NavItem({
