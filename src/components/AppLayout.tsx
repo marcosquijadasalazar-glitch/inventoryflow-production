@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Package,
@@ -8,11 +8,14 @@ import {
   Menu,
   X,
   Search,
+  LogOut,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -75,7 +78,17 @@ function Brand() {
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const isActive = (to: string) => (to === "/" ? path === "/" : path.startsWith(to));
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login", replace: true });
+  };
+
+  const initials = (user?.email ?? "??").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
