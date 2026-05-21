@@ -4,6 +4,9 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import en from "./en.json";
 import es from "./es.json";
 
+const isDev =
+  typeof import.meta !== "undefined" && (import.meta as any).env?.DEV;
+
 if (!i18n.isInitialized) {
   i18n
     .use(LanguageDetector)
@@ -13,6 +16,15 @@ if (!i18n.isInitialized) {
       fallbackLng: "en",
       supportedLngs: ["en", "es"],
       interpolation: { escapeValue: false },
+      saveMissing: isDev,
+      missingKeyHandler: isDev
+        ? (lngs, ns, key) => {
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[i18n] missing translation: "${key}" for ${Array.isArray(lngs) ? lngs.join(",") : lngs}`,
+            );
+          }
+        : undefined,
       detection: {
         order: ["localStorage", "navigator"],
         lookupLocalStorage: "inventoryflow.lang",
