@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "InventoryFlow — Warehouse Operations" },
       { name: "description", content: "Modern warehouse inventory management." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "InventoryFlow" },
+      { property: "og:title", content: "InventoryFlow — Warehouse Operations" },
       { property: "og:description", content: "Modern warehouse inventory management." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "InventoryFlow — Warehouse Operations" },
+      { name: "twitter:description", content: "Modern warehouse inventory management." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1f81c2f-1462-45ac-90d7-2f870485ec32/id-preview-a74d30cf--1a31306d-4a52-490c-bcd9-1f6eaf7675b6.lovable.app-1779323062450.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1f81c2f-1462-45ac-90d7-2f870485ec32/id-preview-a74d30cf--1a31306d-4a52-490c-bcd9-1f6eaf7675b6.lovable.app-1779323062450.png" },
     ],
     links: [
       {
