@@ -736,9 +736,9 @@ function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-xs">{t("products.actions")}</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => setViewing(p)}>
-                            <Eye className="h-4 w-4" /> View details
+                            <Eye className="h-4 w-4" /> {t("products.viewDetails")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
@@ -746,25 +746,25 @@ function ProductsPage() {
                               setOpen(true);
                             }}
                           >
-                            <Pencil className="h-4 w-4" /> Edit
+                            <Pencil className="h-4 w-4" /> {t("products.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setQuickMove({ product: p, type: "add" })}
                           >
-                            <ArrowUp className="h-4 w-4" /> Add stock
+                            <ArrowUp className="h-4 w-4" /> {t("products.addStock")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setQuickMove({ product: p, type: "remove" })}
                           >
-                            <ArrowDown className="h-4 w-4" /> Remove stock
+                            <ArrowDown className="h-4 w-4" /> {t("products.removeStock")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setDeleteId(p.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" /> Delete
+                            <Trash2 className="h-4 w-4" /> {t("products.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
