@@ -476,7 +476,7 @@ function ProductsPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="relative">
                   <SlidersHorizontal className="h-4 w-4" />
-                  Filters
+                  {t("products.filters")}
                   {activeFilterCount > 0 && (
                     <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold inline-flex items-center justify-center">
                       {activeFilterCount}
