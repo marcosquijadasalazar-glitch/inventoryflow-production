@@ -69,6 +69,7 @@ import { ProductForm } from "@/components/ProductForm";
 import { QuickMovementDialog } from "@/components/QuickMovementDialog";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { StockBadge, StockHealthBar } from "@/components/StockBadge";
+import { BarcodeScanDialog } from "@/components/BarcodeScanDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
