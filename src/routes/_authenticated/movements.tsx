@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,12 +30,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/movements")({
-  component: () => (
-    <AppLayout>
-      <MovementsPage />
-    </AppLayout>
-  ),
+export const Route = createFileRoute("/_authenticated/movements")({
+  component: MovementsPage,
 });
 
 type MovementType = "add" | "remove" | "adjustment";

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Package,
@@ -8,11 +8,14 @@ import {
   Menu,
   X,
   Search,
+  LogOut,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -75,7 +78,17 @@ function Brand() {
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const isActive = (to: string) => (to === "/" ? path === "/" : path.startsWith(to));
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login", replace: true });
+  };
+
+  const initials = (user?.email ?? "??").slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
@@ -89,19 +102,30 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <NavItem key={n.to} {...n} active={isActive(n.to)} />
           ))}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
-          <div className="rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/15 p-3">
-            <p className="text-xs font-medium text-foreground">Operations running</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-              All systems healthy. Synced just now.
-            </p>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-              </span>
-              <span className="text-[11px] text-muted-foreground">Live</span>
+        <div className="p-3 border-t border-sidebar-border space-y-2">
+          <div className="flex items-center justify-between gap-2 rounded-lg bg-sidebar-accent/60 px-2.5 py-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium truncate">{user?.email ?? "Signed in"}</p>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  Active session
+                </p>
+              </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleSignOut}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
       </aside>
@@ -143,6 +167,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 />
               ))}
             </nav>
+            <div className="p-3 border-t border-sidebar-border">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleSignOut();
+                }}
+              >
+                <LogOut className="h-4 w-4" /> Sign out
+              </Button>
+              {user?.email && (
+                <p className="text-[11px] text-muted-foreground mt-2 truncate text-center">
+                  {user.email}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -158,10 +199,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </kbd>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="hidden lg:inline">Warehouse · Main</span>
+            <span className="hidden lg:inline truncate max-w-[200px]">{user?.email}</span>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold">
-              IF
+              {initials}
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleSignOut}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </header>
 

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AppLayout } from "@/components/AppLayout";
+// route mounted under _authenticated layout (provides AppLayout)
 import { listProducts, listMovements } from "@/lib/inventory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,12 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { getStockStatus } from "@/lib/stock";
 
-export const Route = createFileRoute("/")({
-  component: () => (
-    <AppLayout>
-      <Dashboard />
-    </AppLayout>
-  ),
+export const Route = createFileRoute("/_authenticated/")({
+  component: Dashboard,
 });
 
 function Dashboard() {
