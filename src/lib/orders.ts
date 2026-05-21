@@ -441,33 +441,6 @@ export async function createSalesOrder(input: {
       payment_method: input.payment_method,
       status: input.status,
     })
-  customer_id: string | null;
-  order_date: string | null;
-  notes: string | null;
-  tax: number;
-  discount: number;
-  payment_status: PaymentStatus;
-  payment_method: string | null;
-  items: SOItem[];
-  status: SOStatus;
-}) {
-  const subtotal = input.items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-  const total = subtotal + (input.tax ?? 0) - (input.discount ?? 0);
-  const { data: so, error } = await sb
-    .from("sales_orders")
-    .insert({
-      so_number: genNumber("SO"),
-      customer_id: input.customer_id,
-      order_date: input.order_date,
-      notes: input.notes,
-      subtotal,
-      tax: input.tax,
-      discount: input.discount,
-      total,
-      payment_status: input.payment_status,
-      payment_method: input.payment_method,
-      status: input.status,
-    })
     .select()
     .single();
   if (error) throw error;
