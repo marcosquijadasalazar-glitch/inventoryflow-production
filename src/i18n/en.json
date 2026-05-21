@@ -502,6 +502,31 @@
     "low": "Low stock",
     "healthy": "In stock",
     "overstocked": "Overstocked"
+  },
+  "categories": {
+    "title": "Product Categories",
+    "subtitle": "Manage the categories your team can assign to products.",
+    "addNew": "Add category",
+    "createNew": "Create new category",
+    "newPlaceholder": "New category name",
+    "selectPlaceholder": "Select a category",
+    "namePlaceholder": "Category name",
+    "name": "Name",
+    "status": "Status",
+    "active": "Active",
+    "archived": "Archived",
+    "archive": "Archive",
+    "restore": "Restore",
+    "rename": "Rename",
+    "nameRequired": "Category name is required",
+    "duplicate": "A category with this name already exists",
+    "created": "Category created",
+    "updated": "Category updated",
+    "archivedToast": "Category archived",
+    "restoredToast": "Category restored",
+    "empty": "No categories yet. Add your first one above.",
+    "inUse": "In use by products"
   }
 }
+
 
