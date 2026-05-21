@@ -780,17 +780,17 @@ function ProductsPage() {
                       </div>
                       <p className="font-medium">
                         {data && data.length > 0
-                          ? "No products match your filters"
-                          : "No products yet"}
+                          ? t("products.noMatch")
+                          : t("products.noneYet")}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                         {data && data.length > 0
-                          ? "Try adjusting your search or filters."
-                          : "Add your first product to start tracking inventory."}
+                          ? t("products.noMatchHint")
+                          : t("products.noneYetHint")}
                       </p>
                       {data && data.length > 0 ? (
                         <Button className="mt-4" variant="outline" onClick={resetFilters}>
-                          Reset filters
+                          {t("products.resetFilters")}
                         </Button>
                       ) : (
                         <Button
@@ -800,7 +800,7 @@ function ProductsPage() {
                             setOpen(true);
                           }}
                         >
-                          <Plus className="h-4 w-4" /> Add Product
+                          <Plus className="h-4 w-4" /> {t("products.addProduct")}
                         </Button>
                       )}
                     </div>
