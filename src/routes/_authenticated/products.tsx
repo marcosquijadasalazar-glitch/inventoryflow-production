@@ -122,6 +122,8 @@ function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [prefillBarcode, setPrefillBarcode] = useState<string | null>(null);
   const [quickMove, setQuickMove] = useState<{
     product: Product;
     type: "add" | "remove";
