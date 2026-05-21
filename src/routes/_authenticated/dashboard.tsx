@@ -130,7 +130,7 @@ function Dashboard() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products by name, SKU, supplier…"
+            placeholder={t("dashboard.searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="pl-9 bg-surface"
@@ -148,10 +148,10 @@ function Dashboard() {
         <div className="grid grid-cols-3 gap-2">
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t("dashboard.category")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All categories</SelectItem>
+              <SelectItem value="__all">{t("products.allCategories")}</SelectItem>
               {PRODUCT_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
@@ -161,10 +161,10 @@ function Dashboard() {
           </Select>
           <Select value={location} onValueChange={setLocation}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Location" />
+              <SelectValue placeholder={t("dashboard.location")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All locations</SelectItem>
+              <SelectItem value="__all">{t("products.allLocations")}</SelectItem>
               {locations.map((l) => (
                 <SelectItem key={l} value={l}>
                   {l}
@@ -174,14 +174,14 @@ function Dashboard() {
           </Select>
           <Select value={status} onValueChange={(v) => setStatus(v as any)}>
             <SelectTrigger className="bg-surface min-w-[120px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t("dashboard.status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all">All statuses</SelectItem>
-              <SelectItem value="healthy">In stock</SelectItem>
-              <SelectItem value="low">Low stock</SelectItem>
-              <SelectItem value="out">Out of stock</SelectItem>
-              <SelectItem value="overstocked">Overstocked</SelectItem>
+              <SelectItem value="__all">{t("dashboard.allStatuses")}</SelectItem>
+              <SelectItem value="healthy">{t("stock.healthy")}</SelectItem>
+              <SelectItem value="low">{t("stock.low")}</SelectItem>
+              <SelectItem value="out">{t("stock.out")}</SelectItem>
+              <SelectItem value="overstocked">{t("stock.overstocked")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -196,7 +196,7 @@ function Dashboard() {
               setStatus("__all");
             }}
           >
-            Reset
+            {t("common.reset")}
           </Button>
         )}
       </div>
