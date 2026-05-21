@@ -30,7 +30,7 @@ import { formatDistanceToNow } from "date-fns";
 import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
