@@ -49,6 +49,11 @@
     "signOut": "Sign out",
     "language": "Language"
   },
+  "access": {
+    "blockedTitle": "Access unavailable",
+    "blockedBody": "Your account or company access is currently inactive. Please contact your administrator.",
+    "statusLabel": "Status"
+  },
   "landing": {
     "login": "Log in",
     "startTrial": "Start Free Trial",

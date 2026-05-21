@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          performed_by: string | null
+          performed_by_email: string | null
+          previous_status: string | null
+          reason: string | null
+          target_id: string
+          target_label: string | null
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          reason?: string | null
+          target_id: string
+          target_label?: string | null
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          performed_by?: string | null
+          performed_by_email?: string | null
+          previous_status?: string | null
+          reason?: string | null
+          target_id?: string
+          target_label?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           address: string | null
@@ -109,32 +154,44 @@ export type Database = {
       organizations: {
         Row: {
           active_status: boolean
+          archived_at: string | null
           business_type: string | null
           company_name: string
           created_at: string
           id: string
+          is_active: boolean
           logo_url: string | null
           plan_type: Database["public"]["Enums"]["org_plan"]
+          subscription_status: string
+          suspended_at: string | null
           updated_at: string
         }
         Insert: {
           active_status?: boolean
+          archived_at?: string | null
           business_type?: string | null
           company_name: string
           created_at?: string
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          subscription_status?: string
+          suspended_at?: string | null
           updated_at?: string
         }
         Update: {
           active_status?: boolean
+          archived_at?: string | null
           business_type?: string | null
           company_name?: string
           created_at?: string
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          subscription_status?: string
+          suspended_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -200,32 +257,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          archived_at: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           organization_id: string | null
           role: Database["public"]["Enums"]["app_role"]
+          suspended_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          suspended_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          suspended_at?: string | null
           updated_at?: string
           user_id?: string
         }
