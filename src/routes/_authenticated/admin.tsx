@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
   Card,
@@ -36,19 +36,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
-import { Shield, Building2, Users, Package, Plus, UserPlus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Shield,
+  Building2,
+  Users,
+  Package,
+  Plus,
+  UserPlus,
+  MoreHorizontal,
+  History,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
 import {
   adminListOrganizations,
   adminGetStats,
   adminCreateOrganization,
-  adminToggleOrganization,
   adminUpdateOrgPlan,
   adminListUsers,
   adminCreateUser,
   adminAssignUser,
+  adminSetOrganizationStatus,
+  adminSetUserStatus,
+  adminListAuditLog,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -57,6 +75,23 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const PLANS = ["free", "starter", "pro", "enterprise"] as const;
 const ROLES = ["super_admin", "owner", "manager", "employee"] as const;
+const STATUSES = ["active", "inactive", "suspended", "archived"] as const;
+type Status = (typeof STATUSES)[number];
+
+function StatusBadge({ status }: { status: Status }) {
+  const map: Record<Status, { label: string; cls: string }> = {
+    active: { label: "Active", cls: "bg-success/15 text-success border-success/30" },
+    inactive: { label: "Inactive", cls: "bg-muted text-muted-foreground" },
+    suspended: { label: "Suspended", cls: "bg-warning/15 text-warning border-warning/30" },
+    archived: { label: "Archived", cls: "bg-destructive/15 text-destructive border-destructive/30" },
+  };
+  const s = map[status] ?? map.inactive;
+  return (
+    <Badge variant="outline" className={s.cls}>
+      {s.label}
+    </Badge>
+  );
+}
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -72,25 +107,32 @@ function AdminPage() {
   const listOrgs = useServerFn(adminListOrganizations);
   const getStats = useServerFn(adminGetStats);
   const listUsers = useServerFn(adminListUsers);
+  const listAudit = useServerFn(adminListAuditLog);
 
-  const orgs = useQuery({
-    queryKey: ["admin", "orgs"],
-    queryFn: () => listOrgs({}),
-    enabled: profile.data?.role === "super_admin",
-  });
-  const stats = useQuery({
-    queryKey: ["admin", "stats"],
-    queryFn: () => getStats({}),
-    enabled: profile.data?.role === "super_admin",
-  });
+  const enabled = profile.data?.role === "super_admin";
+
+  const orgs = useQuery({ queryKey: ["admin", "orgs"], queryFn: () => listOrgs({}), enabled });
+  const stats = useQuery({ queryKey: ["admin", "stats"], queryFn: () => getStats({}), enabled });
   const users = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => listUsers({ data: {} }),
-    enabled: profile.data?.role === "super_admin",
+    enabled,
+  });
+  const audit = useQuery({
+    queryKey: ["admin", "audit"],
+    queryFn: () => listAudit({}),
+    enabled,
   });
 
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
   const [createUserOpen, setCreateUserOpen] = useState(false);
+
+  const refetchAll = () => {
+    orgs.refetch();
+    users.refetch();
+    stats.refetch();
+    audit.refetch();
+  };
 
   if (profile.isLoading) {
     return (
@@ -114,7 +156,7 @@ function AdminPage() {
             Super Admin
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage companies, plans, and user accounts across the platform.
+            Manage companies, users, statuses, and audit history.
           </p>
         </div>
         <div className="flex gap-2">
@@ -136,11 +178,7 @@ function AdminPage() {
         />
         <StatCard icon={Users} label="Users" value={stats.data?.users} />
         <StatCard icon={Package} label="Products" value={stats.data?.products} />
-        <StatCard
-          icon={Package}
-          label="Movements"
-          value={stats.data?.movements}
-        />
+        <StatCard icon={Package} label="Movements" value={stats.data?.movements} />
       </div>
 
       <Card>
@@ -150,14 +188,7 @@ function AdminPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <OrgsTable
-            orgs={orgs.data ?? []}
-            loading={orgs.isLoading}
-            onChanged={() => {
-              orgs.refetch();
-              stats.refetch();
-            }}
-          />
+          <OrgsTable orgs={orgs.data ?? []} loading={orgs.isLoading} onChanged={refetchAll} />
         </CardContent>
       </Card>
 
@@ -172,30 +203,32 @@ function AdminPage() {
             users={users.data ?? []}
             orgs={orgs.data ?? []}
             loading={users.isLoading}
-            onChanged={() => {
-              users.refetch();
-              stats.refetch();
-            }}
+            onChanged={refetchAll}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" /> Admin audit log
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <AuditTable rows={audit.data ?? []} loading={audit.isLoading} />
         </CardContent>
       </Card>
 
       <CreateOrgDialog
         open={createOrgOpen}
         onOpenChange={setCreateOrgOpen}
-        onCreated={() => {
-          orgs.refetch();
-          stats.refetch();
-        }}
+        onCreated={refetchAll}
       />
       <CreateUserDialog
         open={createUserOpen}
         onOpenChange={setCreateUserOpen}
         orgs={orgs.data ?? []}
-        onCreated={() => {
-          users.refetch();
-          stats.refetch();
-        }}
+        onCreated={refetchAll}
       />
     </div>
   );
@@ -234,6 +267,11 @@ type OrgRow = {
   business_type: string | null;
   plan_type: (typeof PLANS)[number];
   active_status: boolean;
+  is_active: boolean;
+  suspended_at: string | null;
+  archived_at: string | null;
+  subscription_status: string | null;
+  status: Status;
   user_count: number;
   product_count: number;
   created_at: string;
@@ -248,14 +286,14 @@ function OrgsTable({
   loading: boolean;
   onChanged: () => void;
 }) {
-  const toggle = useServerFn(adminToggleOrganization);
+  const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
 
-  const toggleMut = useMutation({
-    mutationFn: (vars: { id: string; active: boolean }) =>
-      toggle({ data: { organization_id: vars.id, active_status: vars.active } }),
+  const statusMut = useMutation({
+    mutationFn: (vars: { id: string; status: Status }) =>
+      setStatus({ data: { organization_id: vars.id, status: vars.status } }),
     onSuccess: () => {
-      toast.success("Company updated");
+      toast.success("Company status updated");
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
@@ -270,14 +308,9 @@ function OrgsTable({
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (loading) {
-    return <Skeleton className="h-32 w-full" />;
-  }
-  if (orgs.length === 0) {
-    return (
-      <p className="p-6 text-sm text-muted-foreground">No companies yet.</p>
-    );
-  }
+  if (loading) return <Skeleton className="h-32 w-full" />;
+  if (orgs.length === 0)
+    return <p className="p-6 text-sm text-muted-foreground">No companies yet.</p>;
 
   return (
     <div className="overflow-x-auto">
@@ -286,10 +319,10 @@ function OrgsTable({
           <TableRow>
             <TableHead>Company</TableHead>
             <TableHead>Plan</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Users</TableHead>
             <TableHead className="text-right">Products</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Active</TableHead>
+            <TableHead className="w-16"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -298,17 +331,13 @@ function OrgsTable({
               <TableCell>
                 <div className="font-medium">{o.company_name}</div>
                 {o.business_type && (
-                  <div className="text-xs text-muted-foreground">
-                    {o.business_type}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{o.business_type}</div>
                 )}
               </TableCell>
               <TableCell>
                 <Select
                   value={o.plan_type}
-                  onValueChange={(v) =>
-                    planMut.mutate({ id: o.id, plan: v as any })
-                  }
+                  onValueChange={(v) => planMut.mutate({ id: o.id, plan: v as any })}
                 >
                   <SelectTrigger className="h-8 w-[130px]">
                     <SelectValue />
@@ -322,20 +351,44 @@ function OrgsTable({
                   </SelectContent>
                 </Select>
               </TableCell>
+              <TableCell>
+                <StatusBadge status={o.status} />
+              </TableCell>
               <TableCell className="text-right font-mono">{o.user_count}</TableCell>
               <TableCell className="text-right font-mono">{o.product_count}</TableCell>
-              <TableCell>
-                <Badge variant={o.active_status ? "default" : "outline"}>
-                  {o.active_status ? "Active" : "Disabled"}
-                </Badge>
-              </TableCell>
               <TableCell className="text-right">
-                <Switch
-                  checked={o.active_status}
-                  onCheckedChange={(v) =>
-                    toggleMut.mutate({ id: o.id, active: v })
-                  }
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Status</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ id: o.id, status: "active" })}
+                    >
+                      Reactivate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ id: o.id, status: "inactive" })}
+                    >
+                      Deactivate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ id: o.id, status: "suspended" })}
+                    >
+                      Suspend
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => statusMut.mutate({ id: o.id, status: "archived" })}
+                    >
+                      Archive
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}
@@ -352,6 +405,10 @@ type UserRow = {
   full_name: string | null;
   role: (typeof ROLES)[number];
   organization_id: string | null;
+  is_active: boolean;
+  suspended_at: string | null;
+  archived_at: string | null;
+  status: Status;
   created_at: string;
 };
 
@@ -367,6 +424,8 @@ function UsersTable({
   onChanged: () => void;
 }) {
   const assign = useServerFn(adminAssignUser);
+  const setStatus = useServerFn(adminSetUserStatus);
+
   const assignMut = useMutation({
     mutationFn: (vars: {
       user_id: string;
@@ -375,6 +434,15 @@ function UsersTable({
     }) => assign({ data: vars }),
     onSuccess: () => {
       toast.success("User updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const statusMut = useMutation({
+    mutationFn: (vars: { user_id: string; status: Status }) =>
+      setStatus({ data: { user_id: vars.user_id, status: vars.status } }),
+    onSuccess: () => {
+      toast.success("User status updated");
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
@@ -398,6 +466,8 @@ function UsersTable({
             <TableHead>User</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Company</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-16"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -459,6 +529,104 @@ function UsersTable({
                   </SelectContent>
                 </Select>
               </TableCell>
+              <TableCell>
+                <StatusBadge status={u.status} />
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Status</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}
+                    >
+                      Reactivate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "inactive" })}
+                    >
+                      Deactivate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "suspended" })}
+                    >
+                      Suspend
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "archived" })}
+                    >
+                      Archive
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function AuditTable({
+  rows,
+  loading,
+}: {
+  rows: Array<{
+    id: string;
+    action_type: string;
+    target_type: string;
+    target_label: string | null;
+    performed_by_email: string | null;
+    previous_status: string | null;
+    new_status: string | null;
+    reason: string | null;
+    created_at: string;
+  }>;
+  loading: boolean;
+}) {
+  if (loading) return <Skeleton className="h-32 w-full" />;
+  if (rows.length === 0)
+    return <p className="p-6 text-sm text-muted-foreground">No admin actions yet.</p>;
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>When</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Target</TableHead>
+            <TableHead>Change</TableHead>
+            <TableHead>By</TableHead>
+            <TableHead>Reason</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow key={r.id}>
+              <TableCell className="text-xs whitespace-nowrap">
+                {new Date(r.created_at).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">{r.action_type}</Badge>
+              </TableCell>
+              <TableCell>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {r.target_type}
+                </div>
+                <div className="text-sm">{r.target_label ?? "—"}</div>
+              </TableCell>
+              <TableCell className="text-xs font-mono">
+                {(r.previous_status ?? "—") + " → " + (r.new_status ?? "—")}
+              </TableCell>
+              <TableCell className="text-xs">{r.performed_by_email ?? "—"}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">{r.reason ?? "—"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
