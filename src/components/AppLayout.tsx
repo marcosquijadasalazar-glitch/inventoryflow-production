@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/products", label: "Products", icon: Package },
   { to: "/movements", label: "Movements", icon: ArrowLeftRight },
   { to: "/alerts", label: "Alerts", icon: AlertTriangle },
