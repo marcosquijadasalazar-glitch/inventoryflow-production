@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/products", label: "Products", icon: Package },
   { to: "/movements", label: "Movements", icon: ArrowLeftRight },
   { to: "/alerts", label: "Alerts", icon: AlertTriangle },
@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const isActive = (to: string) => (to === "/" ? path === "/" : path.startsWith(to));
+  const isActive = (to: string) => path === to || path.startsWith(to + "/");
 
   const handleSignOut = async () => {
     await signOut();
