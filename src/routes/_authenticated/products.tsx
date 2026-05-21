@@ -632,15 +632,15 @@ function ProductsPage() {
                       allSelected ? true : someSelected ? ("indeterminate" as any) : false
                     }
                     onCheckedChange={toggleAll}
-                    aria-label="Select all"
+                    aria-label={t("products.selectAll")}
                   />
                 </TableHead>
-                <TableHeadCell label="Product" />
-                <TableHeadCell label="Category" />
-                <TableHeadCell label="Stock" />
-                <TableHeadCell label="Status" />
-                <TableHeadCell label="Location" />
-                <TableHeadCell label="Supplier" />
+                <TableHeadCell label={t("products.table.product")} />
+                <TableHeadCell label={t("products.table.category")} />
+                <TableHeadCell label={t("products.table.stock")} />
+                <TableHeadCell label={t("products.table.status")} />
+                <TableHeadCell label={t("products.table.location")} />
+                <TableHeadCell label={t("products.table.supplier")} />
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
