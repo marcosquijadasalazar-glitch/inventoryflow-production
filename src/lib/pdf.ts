@@ -367,3 +367,115 @@ export async function exportPackingSlipPdf(opts: {
   drawFooter(doc, settings);
   save(doc, `packing-slip-${Date.now()}.pdf`);
 }
+
+export async function exportSalesOrderInvoicePdf(opts: {
+  so: {
+    so_number: string;
+    order_date: string | null;
+    notes: string | null;
+    subtotal: number;
+    tax: number;
+    discount: number;
+    total: number;
+    amount_paid: number;
+    balance_due: number;
+    payment_status: string;
+    payment_method: string | null;
+    customers?: { name: string; email?: string | null; phone?: string | null; address?: string | null } | null;
+    items?: {
+      product_name: string | null;
+      sku: string | null;
+      quantity: number;
+      unit_price: number;
+      line_total: number;
+    }[];
+  };
+  settings: CompanySettings | null;
+  autoPrint?: boolean;
+}) {
+  const { so, settings, autoPrint } = opts;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  await drawHeader(doc, "Invoice", settings);
+
+  doc.setFontSize(10);
+  doc.setTextColor(20);
+  let y = 150;
+  doc.setFont("helvetica", "bold");
+  doc.text(`Invoice #: ${so.so_number}`, 40, y);
+  doc.setFont("helvetica", "normal");
+  if (so.order_date) doc.text(`Date: ${so.order_date}`, 300, y);
+  y += 16;
+
+  if (so.customers) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Bill to:", 40, y);
+    doc.setFont("helvetica", "normal");
+    y += 14;
+    doc.text(so.customers.name, 40, y);
+    y += 12;
+    const lines = [so.customers.email, so.customers.phone, so.customers.address].filter(Boolean) as string[];
+    for (const l of lines) {
+      doc.text(l, 40, y);
+      y += 12;
+    }
+  }
+
+  autoTable(doc, {
+    startY: y + 10,
+    head: [["SKU", "Product", "Qty", "Unit", "Line"]],
+    body: (so.items ?? []).map((i) => [
+      i.sku ?? "",
+      i.product_name ?? "",
+      String(i.quantity),
+      dollars(i.unit_price),
+      dollars(i.line_total),
+    ]),
+    styles: { fontSize: 10, cellPadding: 6 },
+    headStyles: { fillColor: [40, 40, 60], textColor: 255 },
+    columnStyles: {
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+    },
+    margin: { left: 40, right: 40 },
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY + 20;
+  const rightX = 555;
+  const labelX = 380;
+  let ty = finalY;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Subtotal", labelX, ty); doc.text(dollars(so.subtotal), rightX, ty, { align: "right" }); ty += 14;
+  if (so.tax) { doc.text("Tax", labelX, ty); doc.text(dollars(so.tax), rightX, ty, { align: "right" }); ty += 14; }
+  if (so.discount) { doc.text("Discount", labelX, ty); doc.text(`-${dollars(so.discount)}`, rightX, ty, { align: "right" }); ty += 14; }
+  doc.setFont("helvetica", "bold");
+  doc.text("Total", labelX, ty); doc.text(dollars(so.total), rightX, ty, { align: "right" }); ty += 18;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(80);
+  doc.text("Amount paid", labelX, ty); doc.text(dollars(so.amount_paid), rightX, ty, { align: "right" }); ty += 14;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(so.balance_due > 0 ? 180 : 20, so.balance_due > 0 ? 40 : 20, 40);
+  doc.text("Balance due", labelX, ty); doc.text(dollars(so.balance_due), rightX, ty, { align: "right" }); ty += 18;
+
+  doc.setTextColor(20);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Payment status: ${so.payment_status.toUpperCase()}`, 40, ty);
+  if (so.payment_method) doc.text(`Method: ${so.payment_method}`, 300, ty);
+  ty += 14;
+  if (so.notes) {
+    ty += 6;
+    doc.setTextColor(100);
+    doc.text(`Notes: ${so.notes}`, 40, ty);
+    doc.setTextColor(20);
+  }
+
+  drawFooter(doc, settings);
+  if (autoPrint) {
+    doc.autoPrint();
+    window.open(doc.output("bloburl"), "_blank");
+  } else {
+    save(doc, `invoice-${so.so_number}.pdf`);
+  }
+}
