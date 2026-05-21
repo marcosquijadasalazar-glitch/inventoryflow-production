@@ -413,13 +413,17 @@ function ProductsPage() {
             Manage SKUs, stock levels and supplier details.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportAll}>
             <Download className="h-4 w-4" /> Export
+          </Button>
+          <Button variant="outline" onClick={() => setScanOpen(true)}>
+            <ScanLine className="h-4 w-4" /> Scan Barcode
           </Button>
           <Button
             onClick={() => {
               setEditing(null);
+              setPrefillBarcode(null);
               setOpen(true);
             }}
             className="shadow-soft"
