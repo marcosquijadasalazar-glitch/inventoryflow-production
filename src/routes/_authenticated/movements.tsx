@@ -35,6 +35,7 @@ import {
   exportMovementsPdf,
 } from "@/lib/movements-export";
 import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
+import { ScanFieldButton } from "@/components/ScanFieldButton";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import {
