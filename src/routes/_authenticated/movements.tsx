@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/movements")({
+export const Route = createFileRoute("/_authenticated/movements")({
   component: () => (
     <AppLayout>
       <MovementsPage />
