@@ -9,7 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ServiceAgreementRouteImport } from './routes/service-agreement'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -28,9 +31,24 @@ import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAdminRecoveryRouteImport } from './routes/_authenticated/admin-recovery'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiceAgreementRoute = ServiceAgreementRouteImport.update({
+  id: '/service-agreement',
+  path: '/service-agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -126,7 +144,10 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
@@ -145,7 +166,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
@@ -166,7 +190,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
@@ -187,7 +214,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/privacy'
+    | '/service-agreement'
     | '/signup'
+    | '/terms'
     | '/admin'
     | '/admin-recovery'
     | '/alerts'
@@ -206,7 +236,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/privacy'
+    | '/service-agreement'
     | '/signup'
+    | '/terms'
     | '/admin'
     | '/admin-recovery'
     | '/alerts'
@@ -226,7 +259,10 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/privacy'
+    | '/service-agreement'
     | '/signup'
+    | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/admin-recovery'
     | '/_authenticated/alerts'
@@ -247,16 +283,40 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ServiceAgreementRoute: typeof ServiceAgreementRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service-agreement': {
+      id: '/service-agreement'
+      path: '/service-agreement'
+      fullPath: '/service-agreement'
+      preLoaderRoute: typeof ServiceAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -423,7 +483,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  ServiceAgreementRoute: ServiceAgreementRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
