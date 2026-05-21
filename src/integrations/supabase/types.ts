@@ -587,6 +587,8 @@ export type Database = {
           discount: number
           fulfilled_date: string | null
           id: string
+          inventory_deducted_at: string | null
+          inventory_reversed_at: string | null
           notes: string | null
           order_date: string | null
           organization_id: string | null
@@ -607,6 +609,8 @@ export type Database = {
           discount?: number
           fulfilled_date?: string | null
           id?: string
+          inventory_deducted_at?: string | null
+          inventory_reversed_at?: string | null
           notes?: string | null
           order_date?: string | null
           organization_id?: string | null
@@ -627,6 +631,8 @@ export type Database = {
           discount?: number
           fulfilled_date?: string | null
           id?: string
+          inventory_deducted_at?: string | null
+          inventory_reversed_at?: string | null
           notes?: string | null
           order_date?: string | null
           organization_id?: string | null
