@@ -11,6 +11,7 @@ import {
   History,
   ScanLine,
   Settings as SettingsIcon,
+  Shield,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
