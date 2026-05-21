@@ -296,7 +296,7 @@ function Dashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {m.products?.name ?? "Unknown product"}
+                            {m.products?.name ?? t("dashboard.unknownProduct")}
                             <span className="text-muted-foreground font-normal ml-1.5 font-mono text-xs">
                               {m.products?.sku ?? "—"}
                             </span>
