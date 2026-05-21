@@ -57,6 +57,7 @@ import {
   Tag,
   MapPin,
   Filter,
+  ScanLine,
 } from "lucide-react";
 import {
   deleteProduct,
