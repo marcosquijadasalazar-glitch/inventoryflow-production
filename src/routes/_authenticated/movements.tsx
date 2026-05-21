@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ import {
   Minus,
   Sliders,
   ArrowLeftRight,
+  Search,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +44,8 @@ const typeOptions: { value: MovementType; label: string; icon: any; desc: string
   { value: "adjustment", label: "Adjustment", icon: Sliders, desc: "Set exact stock" },
 ];
 
+type SortKey = "newest" | "oldest" | "qty-desc" | "qty-asc";
+
 function MovementsPage() {
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
@@ -52,6 +56,14 @@ function MovementsPage() {
   const [quantity, setQuantity] = useState<string>("1");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // History filters
+  const [fType, setFType] = useState<"__all" | MovementType>("__all");
+  const [fProduct, setFProduct] = useState("__all");
+  const [fNote, setFNote] = useState("");
+  const [fFrom, setFFrom] = useState("");
+  const [fTo, setFTo] = useState("");
+  const [sort, setSort] = useState<SortKey>("newest");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +88,53 @@ function MovementsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const filtered = useMemo(() => {
+    if (!movements.data) return [];
+    const noteQ = fNote.trim().toLowerCase();
+    const fromT = fFrom ? new Date(fFrom).getTime() : -Infinity;
+    const toT = fTo ? new Date(fTo).getTime() + 86_400_000 : Infinity;
+    let res = movements.data.filter((m) => {
+      if (fType !== "__all" && m.type !== fType) return false;
+      if (fProduct !== "__all" && m.product_id !== fProduct) return false;
+      if (noteQ && !(m.note ?? "").toLowerCase().includes(noteQ)) return false;
+      const t = new Date(m.created_at).getTime();
+      if (t < fromT || t > toT) return false;
+      return true;
+    });
+    res = [...res].sort((a, b) => {
+      switch (sort) {
+        case "newest":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        case "qty-desc":
+          return b.quantity - a.quantity;
+        case "qty-asc":
+          return a.quantity - b.quantity;
+      }
+    });
+    return res;
+  }, [movements.data, fType, fProduct, fNote, fFrom, fTo, sort]);
+
+  const activeFilters =
+    (fType !== "__all" ? 1 : 0) +
+    (fProduct !== "__all" ? 1 : 0) +
+    (fNote ? 1 : 0) +
+    (fFrom || fTo ? 1 : 0);
+
+  const resetFilters = () => {
+    setFType("__all");
+    setFProduct("__all");
+    setFNote("");
+    setFFrom("");
+    setFTo("");
+    setSort("newest");
   };
 
   return (
@@ -160,7 +219,7 @@ function MovementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Note (optional)</Label>
+              <Label>Reason / note (optional)</Label>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -190,8 +249,82 @@ function MovementsPage() {
       </Card>
 
       <Card className="border-border shadow-soft">
-        <CardHeader>
-          <CardTitle className="text-base">History</CardTitle>
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">History</CardTitle>
+            <span className="text-xs text-muted-foreground">
+              {movements.data
+                ? `${filtered.length} of ${movements.data.length}`
+                : ""}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <Select value={fType} onValueChange={(v) => setFType(v as any)}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">All types</SelectItem>
+                <SelectItem value="add">Add stock</SelectItem>
+                <SelectItem value="remove">Remove stock</SelectItem>
+                <SelectItem value="adjustment">Adjustment</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fProduct} onValueChange={setFProduct}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue placeholder="Product" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">All products</SelectItem>
+                {products.data?.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={fFrom}
+              onChange={(e) => setFFrom(e.target.value)}
+              className="bg-surface"
+              placeholder="From"
+            />
+            <Input
+              type="date"
+              value={fTo}
+              onChange={(e) => setFTo(e.target.value)}
+              className="bg-surface"
+              placeholder="To"
+            />
+            <div className="relative col-span-2 md:col-span-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={fNote}
+                onChange={(e) => setFNote(e.target.value)}
+                placeholder="Reason…"
+                className="pl-8 bg-surface"
+              />
+            </div>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="qty-desc">Largest quantity</SelectItem>
+                <SelectItem value="qty-asc">Smallest quantity</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {activeFilters > 0 && (
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X className="h-3.5 w-3.5" /> Reset filters
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {movements.isLoading ? (
@@ -209,9 +342,9 @@ function MovementsPage() {
                 </div>
               ))}
             </div>
-          ) : movements.data && movements.data.length > 0 ? (
+          ) : filtered.length > 0 ? (
             <ul className="divide-y divide-border">
-              {movements.data.map((m) => {
+              {filtered.map((m) => {
                 const isAdd = m.type === "add";
                 const isRemove = m.type === "remove";
                 return (
@@ -274,10 +407,21 @@ function MovementsPage() {
               <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
                 <ArrowLeftRight className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="font-medium">No movements yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Record your first movement using the form above.
+              <p className="font-medium">
+                {(movements.data?.length ?? 0) > 0
+                  ? "No movements match your filters"
+                  : "No movements yet"}
               </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {(movements.data?.length ?? 0) > 0
+                  ? "Try adjusting the filters above."
+                  : "Record your first movement using the form above."}
+              </p>
+              {activeFilters > 0 && (
+                <Button className="mt-4" variant="outline" onClick={resetFilters}>
+                  Reset filters
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
