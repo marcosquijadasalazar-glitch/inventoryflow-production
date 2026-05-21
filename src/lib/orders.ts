@@ -290,7 +290,7 @@ export async function updatePOStatus(id: string, status: POStatus) {
 export async function listSalesOrders(): Promise<SalesOrder[]> {
   const { data, error } = await sb
     .from("sales_orders")
-    .select("*, customers(name)")
+    .select("*, customers(name, email, phone, address)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -299,7 +299,7 @@ export async function listSalesOrders(): Promise<SalesOrder[]> {
 export async function getSalesOrder(id: string): Promise<SalesOrder | null> {
   const { data, error } = await sb
     .from("sales_orders")
-    .select("*, customers(name)")
+    .select("*, customers(name, email, phone, address)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -311,7 +311,136 @@ export async function getSalesOrder(id: string): Promise<SalesOrder | null> {
   return { ...data, items: items ?? [] };
 }
 
+export async function listSalesPayments(soId: string): Promise<SalesOrderPayment[]> {
+  const { data, error } = await sb
+    .from("sales_order_payments")
+    .select("*")
+    .eq("sales_order_id", soId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+function computePaymentStatus(amountPaid: number, total: number): PaymentStatus {
+  if (amountPaid <= 0) return "unpaid";
+  if (amountPaid >= total) return "paid";
+  return "partial";
+}
+
+export async function recordSalesPayment(input: {
+  sales_order_id: string;
+  amount: number;
+  payment_method: string;
+  payment_date?: string | null;
+  notes?: string | null;
+}) {
+  if (input.amount <= 0) throw new Error("Amount must be greater than 0");
+  const so = await getSalesOrder(input.sales_order_id);
+  if (!so) throw new Error("SO not found");
+  const prevPaid = Number(so.amount_paid ?? 0);
+  const total = Number(so.total ?? 0);
+  const newPaid = Math.min(prevPaid + input.amount, total + input.amount); // allow overpay; balance can go negative
+  const newBalance = Math.max(total - newPaid, 0);
+  const prevStatus = so.payment_status;
+  const newStatus = computePaymentStatus(newPaid, total);
+
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id ?? null;
+  const uemail = userData.user?.email ?? null;
+
+  const { error: payErr } = await sb.from("sales_order_payments").insert({
+    sales_order_id: input.sales_order_id,
+    amount: input.amount,
+    payment_method: input.payment_method,
+    payment_date: input.payment_date ?? new Date().toISOString().slice(0, 10),
+    notes: input.notes ?? null,
+    previous_status: prevStatus,
+    new_status: newStatus,
+    performed_by: uid,
+    performed_by_email: uemail,
+  });
+  if (payErr) throw payErr;
+
+  const { error: updErr } = await sb
+    .from("sales_orders")
+    .update({
+      amount_paid: newPaid,
+      balance_due: newBalance,
+      payment_status: newStatus,
+      payment_method: input.payment_method,
+    })
+    .eq("id", input.sales_order_id);
+  if (updErr) throw updErr;
+
+  // Audit trail in transaction_history (best-effort)
+  try {
+    await sb.from("transaction_history").insert({
+      type: "stock_adjusted",
+      source: "manual",
+      product_id: null,
+      product_name: `Payment · ${so.so_number}`,
+      sku: so.so_number,
+      reason: `[so-payment] ${input.payment_method} $${input.amount.toFixed(2)} (${prevStatus} → ${newStatus})${input.notes ? ` · ${input.notes}` : ""}`,
+      user_id: uid,
+      user_email: uemail,
+    });
+  } catch {}
+
+  return { newPaid, newBalance, newStatus, prevStatus };
+}
+
+export async function markSalesOrderPaid(soId: string, method: string = "other") {
+  const so = await getSalesOrder(soId);
+  if (!so) throw new Error("SO not found");
+  const remaining = Math.max(Number(so.total) - Number(so.amount_paid ?? 0), 0);
+  if (remaining <= 0) {
+    // Already paid — just normalize status
+    await sb
+      .from("sales_orders")
+      .update({ payment_status: "paid", balance_due: 0 })
+      .eq("id", soId);
+    return;
+  }
+  return recordSalesPayment({
+    sales_order_id: soId,
+    amount: remaining,
+    payment_method: method,
+    notes: "Marked as paid",
+  });
+}
+
 export async function createSalesOrder(input: {
+  customer_id: string | null;
+  order_date: string | null;
+  notes: string | null;
+  tax: number;
+  discount: number;
+  payment_status: PaymentStatus;
+  payment_method: string | null;
+  items: SOItem[];
+  status: SOStatus;
+}) {
+  const subtotal = input.items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const total = subtotal + (input.tax ?? 0) - (input.discount ?? 0);
+  const amountPaid = input.payment_status === "paid" ? total : 0;
+  const balanceDue = total - amountPaid;
+  const { data: so, error } = await sb
+    .from("sales_orders")
+    .insert({
+      so_number: genNumber("SO"),
+      customer_id: input.customer_id,
+      order_date: input.order_date,
+      notes: input.notes,
+      subtotal,
+      tax: input.tax,
+      discount: input.discount,
+      total,
+      amount_paid: amountPaid,
+      balance_due: balanceDue,
+      payment_status: input.payment_status,
+      payment_method: input.payment_method,
+      status: input.status,
+    })
   customer_id: string | null;
   order_date: string | null;
   notes: string | null;
