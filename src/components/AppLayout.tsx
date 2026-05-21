@@ -12,6 +12,10 @@ import {
   ScanLine,
   Settings as SettingsIcon,
   Shield,
+  ShoppingCart,
+  Receipt,
+  ArrowRightLeft,
+  Wrench,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -31,6 +35,10 @@ function useNavItems() {
     { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { to: "/products", label: t("nav.products"), icon: Package },
     { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight },
+    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart },
+    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt },
+    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft },
+    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench },
     { to: "/history", label: t("nav.history"), icon: History },
     { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
     { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },

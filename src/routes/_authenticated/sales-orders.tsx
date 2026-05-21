@@ -219,9 +219,8 @@ function CreateSODialog({ open, onClose }: { open: boolean; onClose: () => void 
         unit_cost: Number(p.cost) || 0,
         line_total: Number(p.price) || 0,
         margin: (Number(p.price) || 0) - (Number(p.cost) || 0),
-        // @ts-expect-error attach stock for UI validation
         __stock: p.stock,
-      } as SOItem,
+      } as SOItem & { __stock: number },
     ]);
   };
 
