@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-// route mounted under _authenticated layout (provides AppLayout)
+import { useMemo, useState } from "react";
 import { listProducts, listMovements } from "@/lib/inventory";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,12 +12,23 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Activity,
+  Search,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { getStockStatus } from "@/lib/stock";
+import { getStockStatus, type StockStatus } from "@/lib/stock";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
@@ -27,15 +38,54 @@ function Dashboard() {
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
 
-  const total = products.data?.length ?? 0;
-  const lowStock = products.data?.filter((p) => getStockStatus(p) === "low") ?? [];
-  const outOfStock = products.data?.filter((p) => getStockStatus(p) === "out") ?? [];
-  const healthy = products.data?.filter((p) => getStockStatus(p) === "healthy") ?? [];
-  const inventoryValue =
-    products.data?.reduce((sum, p) => sum + Number(p.cost) * p.stock, 0) ?? 0;
-  const totalUnits = products.data?.reduce((s, p) => s + p.stock, 0) ?? 0;
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("__all");
+  const [location, setLocation] = useState("__all");
+  const [status, setStatus] = useState<"__all" | StockStatus>("__all");
 
+  const locations = useMemo(() => {
+    const s = new Set<string>();
+    products.data?.forEach((p) => p.location && s.add(p.location));
+    return Array.from(s).sort();
+  }, [products.data]);
+
+  const filtered = useMemo(() => {
+    if (!products.data) return [];
+    const q = query.trim().toLowerCase();
+    return products.data.filter((p) => {
+      if (q) {
+        const hay = [p.name, p.sku, p.barcode, p.supplier, p.location, p.category]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (category !== "__all" && (p.category ?? "") !== category) return false;
+      if (location !== "__all" && (p.location ?? "") !== location) return false;
+      if (status !== "__all" && getStockStatus(p) !== status) return false;
+      return true;
+    });
+  }, [products.data, query, category, location, status]);
+
+  const total = filtered.length;
+  const lowStock = filtered.filter((p) => getStockStatus(p) === "low");
+  const outOfStock = filtered.filter((p) => getStockStatus(p) === "out");
+  const healthy = filtered.filter((p) => getStockStatus(p) === "healthy");
+  const inventoryValue = filtered.reduce((s, p) => s + Number(p.cost) * p.stock, 0);
+  const totalUnits = filtered.reduce((s, p) => s + p.stock, 0);
   const healthScore = total > 0 ? Math.round((healthy.length / total) * 100) : 100;
+
+  const activeFilters =
+    (category !== "__all" ? 1 : 0) +
+    (location !== "__all" ? 1 : 0) +
+    (status !== "__all" ? 1 : 0) +
+    (query ? 1 : 0);
+
+  const filteredIds = useMemo(() => new Set(filtered.map((p) => p.id)), [filtered]);
+  const filteredMovements = useMemo(() => {
+    if (activeFilters === 0) return movements.data;
+    return movements.data?.filter((m) => filteredIds.has(m.product_id));
+  }, [movements.data, filteredIds, activeFilters]);
 
   return (
     <div className="space-y-8">
@@ -63,6 +113,82 @@ function Dashboard() {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Quick search + filters */}
+      <div className="flex flex-col lg:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search products by name, SKU, supplier…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9 bg-surface"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md grid place-content-center text-muted-foreground hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="bg-surface min-w-[120px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">All categories</SelectItem>
+              {PRODUCT_CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger className="bg-surface min-w-[120px]">
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">All locations</SelectItem>
+              {locations.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+            <SelectTrigger className="bg-surface min-w-[120px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">All statuses</SelectItem>
+              <SelectItem value="healthy">In stock</SelectItem>
+              <SelectItem value="low">Low stock</SelectItem>
+              <SelectItem value="out">Out of stock</SelectItem>
+              <SelectItem value="overstocked">Overstocked</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {activeFilters > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setQuery("");
+              setCategory("__all");
+              setLocation("__all");
+              setStatus("__all");
+            }}
+          >
+            Reset
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -127,9 +253,9 @@ function Dashboard() {
                   </div>
                 ))}
               </div>
-            ) : movements.data && movements.data.length > 0 ? (
+            ) : filteredMovements && filteredMovements.length > 0 ? (
               <ul className="divide-y divide-border">
-                {movements.data.slice(0, 7).map((m) => {
+                {filteredMovements.slice(0, 7).map((m) => {
                   const isAdd = m.type === "add";
                   const isRemove = m.type === "remove";
                   return (
@@ -190,11 +316,15 @@ function Dashboard() {
             ) : (
               <EmptyState
                 icon={ArrowLeftRight}
-                title="No movements yet"
-                description="Stock additions and removals will appear here."
+                title="No movements"
+                description={
+                  activeFilters > 0
+                    ? "No movements match the current filters."
+                    : "Stock additions and removals will appear here."
+                }
                 action={
                   <Button size="sm" asChild>
-                    <Link to="/movements">Record first movement</Link>
+                    <Link to="/movements">Record movement</Link>
                   </Button>
                 }
               />
@@ -226,7 +356,7 @@ function Dashboard() {
             ) : [...outOfStock, ...lowStock].length > 0 ? (
               <ul className="space-y-2">
                 {[...outOfStock, ...lowStock].slice(0, 6).map((p) => {
-                  const status = getStockStatus(p);
+                  const s = getStockStatus(p);
                   return (
                     <li
                       key={p.id}
@@ -241,7 +371,7 @@ function Dashboard() {
                       <div className="text-right shrink-0 ml-3">
                         <p
                           className={
-                            status === "out"
+                            s === "out"
                               ? "text-sm font-semibold text-destructive"
                               : "text-sm font-semibold text-[oklch(0.55_0.16_70)]"
                           }

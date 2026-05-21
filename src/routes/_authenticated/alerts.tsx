@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import {
   Table,
@@ -9,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { listProducts } from "@/lib/inventory";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { listProducts, listMovements } from "@/lib/inventory";
 import { AlertTriangle, CheckCircle2, Package, ArrowLeftRight } from "lucide-react";
 import { getStockStatus } from "@/lib/stock";
 import { StockBadge, StockHealthBar } from "@/components/StockBadge";
@@ -21,11 +23,52 @@ export const Route = createFileRoute("/_authenticated/alerts")({
   component: AlertsPage,
 });
 
+type AlertFilter = "all" | "low" | "out" | "stale" | "high-value-low";
+
+const STALE_DAYS = 30;
+
 function AlertsPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["products"], queryFn: listProducts });
-  const out = data?.filter((p) => getStockStatus(p) === "out") ?? [];
-  const low = data?.filter((p) => getStockStatus(p) === "low") ?? [];
-  const all = [...out, ...low];
+  const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
+  const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
+  const [filter, setFilter] = useState<AlertFilter>("all");
+
+  const lastMoveByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    movements.data?.forEach((m) => {
+      const t = new Date(m.created_at).getTime();
+      const cur = map.get(m.product_id) ?? 0;
+      if (t > cur) map.set(m.product_id, t);
+    });
+    return map;
+  }, [movements.data]);
+
+  const data = products.data ?? [];
+  const out = data.filter((p) => getStockStatus(p) === "out");
+  const low = data.filter((p) => getStockStatus(p) === "low");
+  const allAttention = [...out, ...low];
+  const staleCutoff = Date.now() - STALE_DAYS * 86_400_000;
+  const stale = data.filter((p) => {
+    const last = lastMoveByProduct.get(p.id);
+    return !last || last < staleCutoff;
+  });
+  const highValueLow = low
+    .concat(out)
+    .filter((p) => Number(p.price) * Math.max(p.min_stock, 1) >= 500);
+
+  const list = useMemo(() => {
+    switch (filter) {
+      case "low":
+        return low;
+      case "out":
+        return out;
+      case "stale":
+        return stale;
+      case "high-value-low":
+        return highValueLow;
+      default:
+        return allAttention;
+    }
+  }, [filter, low, out, stale, highValueLow, allAttention]);
 
   return (
     <div className="space-y-6">
@@ -35,11 +78,11 @@ function AlertsPage() {
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">Stock Alerts</h1>
         <p className="text-muted-foreground mt-1">
-          Products at or below their minimum stock threshold.
+          Products needing review based on stock thresholds and activity.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <SummaryCard
           label="Out of stock"
           value={out.length}
@@ -53,12 +96,30 @@ function AlertsPage() {
           icon={AlertTriangle}
         />
         <SummaryCard
-          label="Healthy products"
-          value={(data?.length ?? 0) - all.length}
-          accent="success"
-          icon={CheckCircle2}
+          label="No recent movement"
+          value={stale.length}
+          accent="muted"
+          icon={ArrowLeftRight}
+        />
+        <SummaryCard
+          label="High value low stock"
+          value={highValueLow.length}
+          accent="warning"
+          icon={AlertTriangle}
         />
       </div>
+
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as AlertFilter)}>
+        <TabsList className="bg-surface-muted">
+          <TabsTrigger value="all">All ({allAttention.length})</TabsTrigger>
+          <TabsTrigger value="low">Low stock ({low.length})</TabsTrigger>
+          <TabsTrigger value="out">Out of stock ({out.length})</TabsTrigger>
+          <TabsTrigger value="stale">No movement ({stale.length})</TabsTrigger>
+          <TabsTrigger value="high-value-low">
+            High value ({highValueLow.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <div className="border border-border rounded-xl overflow-hidden bg-surface shadow-soft">
         <div className="overflow-x-auto">
@@ -83,7 +144,7 @@ function AlertsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {products.isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i} className="border-border">
                     {Array.from({ length: 5 }).map((_, j) => (
@@ -93,8 +154,8 @@ function AlertsPage() {
                     ))}
                   </TableRow>
                 ))
-              ) : all.length > 0 ? (
-                all.map((p) => (
+              ) : list.length > 0 ? (
+                list.map((p) => (
                   <TableRow
                     key={p.id}
                     className="border-border hover:bg-surface-muted/50 transition-colors"
@@ -150,7 +211,7 @@ function AlertsPage() {
                       </div>
                       <p className="font-medium">All clear</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        All products are above their minimum stock levels.
+                        No products in this category right now.
                       </p>
                     </div>
                   </TableCell>
@@ -172,13 +233,14 @@ function SummaryCard({
 }: {
   label: string;
   value: number;
-  accent: "danger" | "warning" | "success";
+  accent: "danger" | "warning" | "success" | "muted";
   icon: any;
 }) {
   const styles = {
     danger: "bg-destructive/10 text-destructive",
     warning: "bg-warning/15 text-[oklch(0.5_0.14_70)]",
     success: "bg-success/10 text-[oklch(0.4_0.12_155)]",
+    muted: "bg-muted text-muted-foreground",
   }[accent];
   return (
     <Card className="border-border shadow-soft">
