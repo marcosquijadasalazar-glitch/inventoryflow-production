@@ -98,11 +98,28 @@ export type SalesOrder = {
   tax: number;
   discount: number;
   total: number;
+  amount_paid: number;
+  balance_due: number;
   payment_status: PaymentStatus;
   payment_method: string | null;
   created_at: string;
-  customers?: { name: string } | null;
+  customers?: { name: string; email?: string | null; phone?: string | null; address?: string | null } | null;
   items?: SOItem[];
+};
+
+export type SalesOrderPayment = {
+  id: string;
+  sales_order_id: string;
+  organization_id: string | null;
+  amount: number;
+  payment_method: string;
+  payment_date: string;
+  notes: string | null;
+  previous_status: string | null;
+  new_status: string | null;
+  performed_by: string | null;
+  performed_by_email: string | null;
+  created_at: string;
 };
 
 export type TransferOrder = {
