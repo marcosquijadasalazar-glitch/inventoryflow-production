@@ -703,7 +703,7 @@ function ProductsPage() {
                             {p.stock}
                           </span>
                           <span className="text-[11px] text-muted-foreground">
-                            / {p.min_stock} min
+                            {t("products.table.minSuffix", { min: p.min_stock })}
                           </span>
                         </div>
                         <StockHealthBar stock={p.stock} min={p.min_stock} />
