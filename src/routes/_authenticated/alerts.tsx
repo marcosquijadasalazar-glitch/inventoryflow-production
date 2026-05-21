@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AppLayout } from "@/components/AppLayout";
+
 import {
   Table,
   TableBody,
@@ -18,11 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/alerts")({
-  component: () => (
-    <AppLayout>
-      <AlertsPage />
-    </AppLayout>
-  ),
+  component: AlertsPage,
 });
 
 function AlertsPage() {

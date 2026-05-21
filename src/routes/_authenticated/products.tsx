@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,11 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/products")({
-  component: () => (
-    <AppLayout>
-      <ProductsPage />
-    </AppLayout>
-  ),
+  component: ProductsPage,
 });
 
 function ProductsPage() {
