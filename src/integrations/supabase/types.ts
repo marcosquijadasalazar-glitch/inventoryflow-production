@@ -106,6 +106,39 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       inventory_movements: {
         Row: {
           created_at: string
@@ -305,6 +338,260 @@ export type Database = {
           },
         ]
       }
+      purchase_order_items: {
+        Row: {
+          barcode: string | null
+          id: string
+          line_total: number
+          product_id: string | null
+          product_name: string | null
+          purchase_order_id: string
+          quantity_ordered: number
+          quantity_received: number
+          sku: string | null
+          unit_cost: number
+        }
+        Insert: {
+          barcode?: string | null
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          product_name?: string | null
+          purchase_order_id: string
+          quantity_ordered?: number
+          quantity_received?: number
+          sku?: string | null
+          unit_cost?: number
+        }
+        Update: {
+          barcode?: string | null
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          product_name?: string | null
+          purchase_order_id?: string
+          quantity_ordered?: number
+          quantity_received?: number
+          sku?: string | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expected_date: string | null
+          id: string
+          notes: string | null
+          order_date: string | null
+          organization_id: string | null
+          po_number: string
+          received_date: string | null
+          status: Database["public"]["Enums"]["po_status"]
+          subtotal: number
+          supplier_id: string | null
+          tax: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          organization_id?: string | null
+          po_number: string
+          received_date?: string | null
+          status?: Database["public"]["Enums"]["po_status"]
+          subtotal?: number
+          supplier_id?: string | null
+          tax?: number
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          organization_id?: string | null
+          po_number?: string
+          received_date?: string | null
+          status?: Database["public"]["Enums"]["po_status"]
+          subtotal?: number
+          supplier_id?: string | null
+          tax?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_order_items: {
+        Row: {
+          barcode: string | null
+          id: string
+          line_total: number
+          margin: number
+          product_id: string | null
+          product_name: string | null
+          quantity: number
+          sales_order_id: string
+          sku: string | null
+          unit_cost: number
+          unit_price: number
+        }
+        Insert: {
+          barcode?: string | null
+          id?: string
+          line_total?: number
+          margin?: number
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          sales_order_id: string
+          sku?: string | null
+          unit_cost?: number
+          unit_price?: number
+        }
+        Update: {
+          barcode?: string | null
+          id?: string
+          line_total?: number
+          margin?: number
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          sales_order_id?: string
+          sku?: string | null
+          unit_cost?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_items_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          discount: number
+          fulfilled_date: string | null
+          id: string
+          notes: string | null
+          order_date: string | null
+          organization_id: string | null
+          payment_method: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          so_number: string
+          status: Database["public"]["Enums"]["so_status"]
+          subtotal: number
+          tax: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          discount?: number
+          fulfilled_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          so_number: string
+          status?: Database["public"]["Enums"]["so_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          discount?: number
+          fulfilled_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          organization_id?: string | null
+          payment_method?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          so_number?: string
+          status?: Database["public"]["Enums"]["so_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       transaction_history: {
         Row: {
           barcode: string | null
@@ -367,6 +654,86 @@ export type Database = {
           },
         ]
       }
+      transfer_order_items: {
+        Row: {
+          barcode: string | null
+          id: string
+          product_id: string | null
+          product_name: string | null
+          quantity: number
+          sku: string | null
+          transfer_order_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          sku?: string | null
+          transfer_order_id: string
+        }
+        Update: {
+          barcode?: string | null
+          id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          sku?: string | null
+          transfer_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_order_items_transfer_order_id_fkey"
+            columns: ["transfer_order_id"]
+            isOneToOne: false
+            referencedRelation: "transfer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfer_orders: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          created_by: string | null
+          from_location: string | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          status: Database["public"]["Enums"]["transfer_status"]
+          to_location: string | null
+          transfer_date: string | null
+          transfer_number: string
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_location?: string | null
+          transfer_date?: string | null
+          transfer_number: string
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_location?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_location?: string | null
+          transfer_date?: string | null
+          transfer_number?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -383,7 +750,20 @@ export type Database = {
       app_role: "super_admin" | "owner" | "manager" | "employee"
       movement_type: "add" | "remove" | "adjustment"
       org_plan: "free" | "starter" | "pro" | "enterprise"
-      transaction_source: "manual" | "barcode_scan" | "adjustment" | "system"
+      payment_status: "unpaid" | "paid" | "partial" | "refunded"
+      po_status:
+        | "draft"
+        | "ordered"
+        | "partially_received"
+        | "received"
+        | "cancelled"
+      so_status: "draft" | "confirmed" | "fulfilled" | "cancelled" | "refunded"
+      transaction_source:
+        | "manual"
+        | "barcode_scan"
+        | "adjustment"
+        | "system"
+        | "internal_use"
       transaction_type:
         | "product_created"
         | "product_updated"
@@ -392,6 +772,7 @@ export type Database = {
         | "stock_removed"
         | "stock_adjusted"
         | "low_stock"
+      transfer_status: "draft" | "in_transit" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -522,7 +903,22 @@ export const Constants = {
       app_role: ["super_admin", "owner", "manager", "employee"],
       movement_type: ["add", "remove", "adjustment"],
       org_plan: ["free", "starter", "pro", "enterprise"],
-      transaction_source: ["manual", "barcode_scan", "adjustment", "system"],
+      payment_status: ["unpaid", "paid", "partial", "refunded"],
+      po_status: [
+        "draft",
+        "ordered",
+        "partially_received",
+        "received",
+        "cancelled",
+      ],
+      so_status: ["draft", "confirmed", "fulfilled", "cancelled", "refunded"],
+      transaction_source: [
+        "manual",
+        "barcode_scan",
+        "adjustment",
+        "system",
+        "internal_use",
+      ],
       transaction_type: [
         "product_created",
         "product_updated",
@@ -532,6 +928,7 @@ export const Constants = {
         "stock_adjusted",
         "low_stock",
       ],
+      transfer_status: ["draft", "in_transit", "completed", "cancelled"],
     },
   },
 } as const
