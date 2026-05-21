@@ -167,6 +167,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 />
               ))}
             </nav>
+            <div className="p-3 border-t border-sidebar-border">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleSignOut();
+                }}
+              >
+                <LogOut className="h-4 w-4" /> Sign out
+              </Button>
+              {user?.email && (
+                <p className="text-[11px] text-muted-foreground mt-2 truncate text-center">
+                  {user.email}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -182,10 +199,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </kbd>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="hidden lg:inline">Warehouse · Main</span>
+            <span className="hidden lg:inline truncate max-w-[200px]">{user?.email}</span>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold">
-              IF
+              {initials}
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleSignOut}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </header>
 
