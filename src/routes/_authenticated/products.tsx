@@ -310,7 +310,7 @@ function ProductsPage() {
     if (!deleteId) return;
     try {
       await deleteProduct(deleteId);
-      toast.success("Product deleted");
+      toast.success(t("products.deleted"));
       refresh();
     } catch (e: any) {
       toast.error(e.message);
@@ -323,7 +323,7 @@ function ProductsPage() {
     const ids = Array.from(selected);
     try {
       await Promise.all(ids.map((id) => deleteProduct(id)));
-      toast.success(`${ids.length} product${ids.length === 1 ? "" : "s"} deleted`);
+      toast.success(t("products.deletedMany", { count: ids.length }));
       setSelected(new Set());
       refresh();
     } catch (e: any) {
@@ -341,7 +341,7 @@ function ProductsPage() {
       await Promise.all(
         items.map((p) => upsertProduct({ ...p, category: bulkCategory })),
       );
-      toast.success(`Updated category on ${items.length} products`);
+      toast.success(t("products.updatedCategory", { count: items.length }));
       refresh();
       setBulkCategoryOpen(false);
       setBulkCategory("");
@@ -358,7 +358,7 @@ function ProductsPage() {
       await Promise.all(
         items.map((p) => upsertProduct({ ...p, location: bulkLocation })),
       );
-      toast.success(`Updated location on ${items.length} products`);
+      toast.success(t("products.updatedLocation", { count: items.length }));
       refresh();
       setBulkLocationOpen(false);
       setBulkLocation("");
@@ -369,15 +369,15 @@ function ProductsPage() {
 
   const exportSelected = () => {
     const items = (data ?? []).filter((p) => selected.has(p.id));
-    if (items.length === 0) return toast.error("Select products to export");
+    if (items.length === 0) return toast.error(t("products.selectToExport"));
     downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items));
-    toast.success(`Exported ${items.length} products`);
+    toast.success(t("products.exported", { count: items.length }));
   };
 
   const exportAll = () => {
-    if (!filtered.length) return toast.error("Nothing to export");
+    if (!filtered.length) return toast.error(t("products.nothingToExport"));
     downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered));
-    toast.success(`Exported ${filtered.length} products`);
+    toast.success(t("products.exported", { count: filtered.length }));
   };
 
   const filterPanel = (
