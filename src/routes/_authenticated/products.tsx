@@ -809,11 +809,38 @@ function ProductsPage() {
         </div>
       </div>
 
+      <BarcodeScanDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onScan={(code) => {
+          const found = data?.find(
+            (p) => (p.barcode ?? "").trim() === code.trim(),
+          );
+          if (found) {
+            setViewing(found);
+            toast.success(`Found: ${found.name}`);
+          } else {
+            setPrefillBarcode(code);
+            setEditing(null);
+            setOpen(true);
+            toast.message("No product matches that barcode — create one");
+          }
+        }}
+      />
+
       {open && (
         <ProductForm
           open={open}
-          onOpenChange={setOpen}
-          product={editing}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (!o) setPrefillBarcode(null);
+          }}
+          product={
+            editing ??
+            (prefillBarcode
+              ? ({ barcode: prefillBarcode } as unknown as Product)
+              : null)
+          }
           onSaved={refresh}
         />
       )}
