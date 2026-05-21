@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -11,45 +18,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { upsertProduct, type Product } from "@/lib/inventory";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
-
-type FieldDef = {
-  key: string;
-  label: string;
-  type?: string;
-  full?: boolean;
-  placeholder?: string;
-  prefix?: string;
-};
-
-const sections: { title: string; fields: FieldDef[] }[] = [
-  {
-    title: "Basic info",
-    fields: [
-      { key: "name", label: "Product name", full: true, placeholder: "e.g. USB-C Cable 1m" },
-      { key: "sku", label: "SKU", placeholder: "SKU-001" },
-      { key: "barcode", label: "Barcode", placeholder: "0000000000" },
-      { key: "category", label: "Category", placeholder: "Electronics" },
-    ],
-  },
-  {
-    title: "Pricing",
-    fields: [
-      { key: "cost", label: "Cost", type: "number", prefix: "$" },
-      { key: "price", label: "Price", type: "number", prefix: "$" },
-    ],
-  },
-  {
-    title: "Stock & logistics",
-    fields: [
-      { key: "stock", label: "Current stock", type: "number" },
-      { key: "min_stock", label: "Min stock", type: "number" },
-      { key: "location", label: "Location", placeholder: "Aisle A · Bin 12" },
-      { key: "supplier", label: "Supplier", placeholder: "Supplier name" },
-    ],
-  },
-];
 
 export function ProductForm({
   open,
@@ -88,7 +59,7 @@ export function ProductForm({
     }
     setSaving(true);
     try {
-      const result = await upsertProduct({
+      await upsertProduct({
         id: product?.id,
         ...form,
         cost: Number(form.cost),
@@ -100,12 +71,10 @@ export function ProductForm({
         location: form.location || null,
         supplier: form.supplier || null,
       });
-      console.log("[ProductForm] saved product:", result);
       toast.success(product ? "Product updated" : "Product added");
       onSaved();
       onOpenChange(false);
     } catch (e: any) {
-      console.error("[ProductForm] save failed:", e);
       const msg =
         [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
           .filter(Boolean)
@@ -133,38 +102,96 @@ export function ProductForm({
 
         <form onSubmit={submit} className="flex flex-col">
           <div className="px-6 py-5 space-y-6 max-h-[60vh] overflow-y-auto">
-            {sections.map((section) => (
-              <div key={section.title} className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {section.title}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {section.fields.map((f) => (
-                    <div
-                      key={f.key}
-                      className={f.full ? "sm:col-span-2 space-y-1.5" : "space-y-1.5"}
-                    >
-                      <Label htmlFor={f.key}>{f.label}</Label>
-                      <div className="relative">
-                        {f.prefix && (
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                            {f.prefix}
-                          </span>
-                        )}
-                        <Input
-                          id={f.key}
-                          type={f.type ?? "text"}
-                          placeholder={f.placeholder}
-                          value={(form as any)[f.key] ?? ""}
-                          onChange={(e) => set(f.key, e.target.value)}
-                          className={f.prefix ? "pl-7" : undefined}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <Section title="Basic info">
+              <Field label="Product name" full>
+                <Input
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  placeholder="e.g. USB-C Cable 1m"
+                />
+              </Field>
+              <Field label="SKU">
+                <Input
+                  value={form.sku}
+                  onChange={(e) => set("sku", e.target.value)}
+                  placeholder="SKU-001"
+                />
+              </Field>
+              <Field label="Barcode">
+                <Input
+                  value={form.barcode ?? ""}
+                  onChange={(e) => set("barcode", e.target.value)}
+                  placeholder="0000000000"
+                />
+              </Field>
+              <Field label="Category" full>
+                <Select
+                  value={form.category || ""}
+                  onValueChange={(v) => set("category", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </Section>
+
+            <Section title="Pricing">
+              <Field label="Cost">
+                <PrefixedInput
+                  prefix="$"
+                  type="number"
+                  value={form.cost}
+                  onChange={(v) => set("cost", v)}
+                />
+              </Field>
+              <Field label="Price">
+                <PrefixedInput
+                  prefix="$"
+                  type="number"
+                  value={form.price}
+                  onChange={(v) => set("price", v)}
+                />
+              </Field>
+            </Section>
+
+            <Section title="Stock & logistics">
+              <Field label="Current stock">
+                <Input
+                  type="number"
+                  value={form.stock}
+                  onChange={(e) => set("stock", e.target.value)}
+                />
+              </Field>
+              <Field label="Min stock">
+                <Input
+                  type="number"
+                  value={form.min_stock}
+                  onChange={(e) => set("min_stock", e.target.value)}
+                />
+              </Field>
+              <Field label="Location">
+                <Input
+                  value={form.location ?? ""}
+                  onChange={(e) => set("location", e.target.value)}
+                  placeholder="Aisle A · Bin 12"
+                />
+              </Field>
+              <Field label="Supplier">
+                <Input
+                  value={form.supplier ?? ""}
+                  onChange={(e) => set("supplier", e.target.value)}
+                  placeholder="Supplier name"
+                />
+              </Field>
+            </Section>
 
             {errorMsg && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
@@ -184,20 +211,65 @@ export function ProductForm({
               Cancel
             </Button>
             <Button type="submit" disabled={saving} className="shadow-soft">
-              {saving ? (
-                <>
-                  <span className="h-3.5 w-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                  Saving…
-                </>
-              ) : product ? (
-                "Save changes"
-              ) : (
-                "Add product"
-              )}
+              {saving ? "Saving…" : product ? "Save changes" : "Add product"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  children,
+  full,
+}: {
+  label: string;
+  children: React.ReactNode;
+  full?: boolean;
+}) {
+  return (
+    <div className={full ? "sm:col-span-2 space-y-1.5" : "space-y-1.5"}>
+      <Label>{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function PrefixedInput({
+  prefix,
+  value,
+  onChange,
+  type,
+}: {
+  prefix: string;
+  value: any;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+        {prefix}
+      </span>
+      <Input
+        type={type ?? "text"}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-7"
+      />
+    </div>
   );
 }
