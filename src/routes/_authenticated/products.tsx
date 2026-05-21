@@ -821,12 +821,12 @@ function ProductsPage() {
           );
           if (found) {
             setViewing(found);
-            toast.success(`Found: ${found.name}`);
+            toast.success(t("products.scanFound", { name: found.name }));
           } else {
             setPrefillBarcode(code);
             setEditing(null);
             setOpen(true);
-            toast.message("No product matches that barcode — create one");
+            toast.message(t("products.scanCreate"));
           }
         }}
       />
