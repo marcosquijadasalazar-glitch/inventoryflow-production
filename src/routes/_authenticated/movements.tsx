@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,24 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { listProducts, listMovements, createMovement } from "@/lib/inventory";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  listProducts,
+  listMovements,
+  createMovement,
+} from "@/lib/inventory";
+import { getCompanySettings } from "@/lib/settings";
+import {
+  exportMovementsCsv,
+  exportMovementsXlsx,
+  exportMovementsPdf,
+} from "@/lib/movements-export";
+import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -29,6 +47,9 @@ import {
   ArrowLeftRight,
   Search,
   X,
+  Download,
+  Filter,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,19 +58,27 @@ export const Route = createFileRoute("/_authenticated/movements")({
 });
 
 type MovementType = "add" | "remove" | "adjustment";
+type SourceFilter = "__all" | "manual" | "barcode_scan";
+type SortKey =
+  | "newest"
+  | "oldest"
+  | "qty-desc"
+  | "qty-asc"
+  | "name-asc"
+  | "name-desc";
 
-const typeOptions: { value: MovementType; label: string; icon: any; desc: string }[] = [
-  { value: "add", label: "Add stock", icon: Plus, desc: "Restock or receive" },
-  { value: "remove", label: "Remove stock", icon: Minus, desc: "Sale or shrinkage" },
-  { value: "adjustment", label: "Adjustment", icon: Sliders, desc: "Set exact stock" },
-];
-
-type SortKey = "newest" | "oldest" | "qty-desc" | "qty-asc";
+const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
 
 function MovementsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
+  const settings = useQuery({ queryKey: ["settings"], queryFn: getCompanySettings });
 
   const [productId, setProductId] = useState<string>("");
   const [type, setType] = useState<MovementType>("add");
@@ -57,13 +86,44 @@ function MovementsPage() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // History filters
+  // Filters
+  const [search, setSearch] = useState("");
   const [fType, setFType] = useState<"__all" | MovementType>("__all");
-  const [fProduct, setFProduct] = useState("__all");
-  const [fNote, setFNote] = useState("");
+  const [fCategory, setFCategory] = useState("__all");
+  const [fSupplier, setFSupplier] = useState("__all");
+  const [fLocation, setFLocation] = useState("__all");
+  const [fSource, setFSource] = useState<SourceFilter>("__all");
   const [fFrom, setFFrom] = useState("");
   const [fTo, setFTo] = useState("");
+  const [fMinQty, setFMinQty] = useState("");
+  const [fMaxQty, setFMaxQty] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const typeOptions = useMemo(
+    () => [
+      { value: "add" as const, label: t("movements.typeAdd"), icon: Plus, desc: t("movements.addDesc") },
+      { value: "remove" as const, label: t("movements.typeRemove"), icon: Minus, desc: t("movements.removeDesc") },
+      { value: "adjustment" as const, label: t("movements.typeAdjustment"), icon: Sliders, desc: t("movements.adjustDesc") },
+    ],
+    [t],
+  );
+
+  const categories = useMemo(() => {
+    const s = new Set<string>();
+    products.data?.forEach((p) => p.category && s.add(p.category));
+    return Array.from(s).sort();
+  }, [products.data]);
+  const suppliers = useMemo(() => {
+    const s = new Set<string>();
+    products.data?.forEach((p) => p.supplier && s.add(p.supplier));
+    return Array.from(s).sort();
+  }, [products.data]);
+  const locations = useMemo(() => {
+    const s = new Set<string>();
+    products.data?.forEach((p) => p.location && s.add(p.location));
+    return Array.from(s).sort();
+  }, [products.data]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,11 +138,12 @@ function MovementsPage() {
         quantity: q,
         note: note || null,
       });
-      toast.success("Movement recorded");
+      toast.success(t("scanner.saveMovement"));
       setQuantity("1");
       setNote("");
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["history"] });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -92,66 +153,139 @@ function MovementsPage() {
 
   const filtered = useMemo(() => {
     if (!movements.data) return [];
-    const noteQ = fNote.trim().toLowerCase();
+    const q = search.trim().toLowerCase();
     const fromT = fFrom ? new Date(fFrom).getTime() : -Infinity;
     const toT = fTo ? new Date(fTo).getTime() + 86_400_000 : Infinity;
+    const minQ = fMinQty ? parseInt(fMinQty, 10) : -Infinity;
+    const maxQ = fMaxQty ? parseInt(fMaxQty, 10) : Infinity;
+
     let res = movements.data.filter((m) => {
       if (fType !== "__all" && m.type !== fType) return false;
-      if (fProduct !== "__all" && m.product_id !== fProduct) return false;
-      if (noteQ && !(m.note ?? "").toLowerCase().includes(noteQ)) return false;
+      const p = m.products;
+      if (fCategory !== "__all" && p?.category !== fCategory) return false;
+      if (fSupplier !== "__all" && p?.supplier !== fSupplier) return false;
+      if (fLocation !== "__all" && p?.location !== fLocation) return false;
+      if (fSource !== "__all") {
+        const isScan = (m.note ?? "").startsWith("[scan]");
+        if (fSource === "barcode_scan" && !isScan) return false;
+        if (fSource === "manual" && isScan) return false;
+      }
       const t = new Date(m.created_at).getTime();
       if (t < fromT || t > toT) return false;
+      if (m.quantity < minQ || m.quantity > maxQ) return false;
+      if (q) {
+        const hay = [
+          p?.name,
+          p?.sku,
+          p?.barcode,
+          p?.supplier,
+          p?.location,
+          p?.category,
+          m.note,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
+
     res = [...res].sort((a, b) => {
       switch (sort) {
         case "newest":
-          return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "oldest":
-          return (
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          );
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case "qty-desc":
           return b.quantity - a.quantity;
         case "qty-asc":
           return a.quantity - b.quantity;
+        case "name-asc":
+          return (a.products?.name ?? "").localeCompare(b.products?.name ?? "");
+        case "name-desc":
+          return (b.products?.name ?? "").localeCompare(a.products?.name ?? "");
       }
     });
     return res;
-  }, [movements.data, fType, fProduct, fNote, fFrom, fTo, sort]);
+  }, [
+    movements.data,
+    search,
+    fType,
+    fCategory,
+    fSupplier,
+    fLocation,
+    fSource,
+    fFrom,
+    fTo,
+    fMinQty,
+    fMaxQty,
+    sort,
+  ]);
 
-  const activeFilters =
+  const activeFilterCount =
     (fType !== "__all" ? 1 : 0) +
-    (fProduct !== "__all" ? 1 : 0) +
-    (fNote ? 1 : 0) +
-    (fFrom || fTo ? 1 : 0);
+    (fCategory !== "__all" ? 1 : 0) +
+    (fSupplier !== "__all" ? 1 : 0) +
+    (fLocation !== "__all" ? 1 : 0) +
+    (fSource !== "__all" ? 1 : 0) +
+    (fFrom || fTo ? 1 : 0) +
+    (fMinQty || fMaxQty ? 1 : 0) +
+    (search ? 1 : 0);
 
   const resetFilters = () => {
+    setSearch("");
     setFType("__all");
-    setFProduct("__all");
-    setFNote("");
+    setFCategory("__all");
+    setFSupplier("__all");
+    setFLocation("__all");
+    setFSource("__all");
     setFFrom("");
     setFTo("");
+    setFMinQty("");
+    setFMaxQty("");
     setSort("newest");
+  };
+
+  const applyQuickRange = (range: "today" | "week" | "month") => {
+    const now = new Date();
+    const start = startOfDay(now);
+    if (range === "week") start.setDate(start.getDate() - 7);
+    if (range === "month") start.setMonth(start.getMonth() - 1);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    setFFrom(fmt(start));
+    setFTo(fmt(now));
+  };
+
+  const handleExport = async (format: "csv" | "xlsx" | "pdf") => {
+    if (filtered.length === 0) return toast.error(t("common.noResults"));
+    try {
+      if (format === "csv") exportMovementsCsv(filtered);
+      else if (format === "xlsx") exportMovementsXlsx(filtered);
+      else await exportMovementsPdf(filtered, settings.data ?? null);
+    } catch (e: any) {
+      toast.error(e.message ?? "Export failed");
+    }
   };
 
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-          Operations
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Inventory Movements</h1>
-        <p className="text-muted-foreground mt-1">
-          Record stock additions, removals and adjustments.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
+            Operations
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {t("movements.title")}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t("movements.subtitle")}</p>
+        </div>
+        <ScanBarcodeButton />
       </div>
 
       <Card className="border-border shadow-soft overflow-hidden">
         <CardHeader className="border-b border-border bg-surface-muted/50">
-          <CardTitle className="text-base">New movement</CardTitle>
+          <CardTitle className="text-base">{t("movements.newMovement")}</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={submit} className="space-y-5">
@@ -183,7 +317,9 @@ function MovementsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{opt.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {opt.desc}
+                      </p>
                     </div>
                   </button>
                 );
@@ -192,22 +328,22 @@ function MovementsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 md:col-span-2">
-                <Label>Product</Label>
+                <Label>{t("movements.product")}</Label>
                 <Select value={productId} onValueChange={setProductId}>
                   <SelectTrigger className="bg-surface">
-                    <SelectValue placeholder="Select product" />
+                    <SelectValue placeholder={t("movements.selectProduct")} />
                   </SelectTrigger>
                   <SelectContent>
                     {products.data?.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.sku}) · {p.stock} in stock
+                        {p.name} ({p.sku}) · {p.stock}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Quantity</Label>
+                <Label>{t("movements.quantity")}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -219,12 +355,11 @@ function MovementsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Reason / note (optional)</Label>
+              <Label>{t("movements.reasonNote")}</Label>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                placeholder="Reason or reference number"
                 className="bg-surface resize-none"
               />
             </div>
@@ -234,12 +369,12 @@ function MovementsPage() {
                 {saving ? (
                   <>
                     <span className="h-3.5 w-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                    Saving…
+                    {t("common.loading")}
                   </>
                 ) : (
                   <>
                     <ArrowLeftRight className="h-4 w-4" />
-                    Record movement
+                    {t("movements.record")}
                   </>
                 )}
               </Button>
@@ -250,37 +385,190 @@ function MovementsPage() {
 
       <Card className="border-border shadow-soft">
         <CardHeader className="space-y-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">History</CardTitle>
-            <span className="text-xs text-muted-foreground">
-              {movements.data
-                ? `${filtered.length} of ${movements.data.length}`
-                : ""}
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">{t("movements.history")}</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {movements.data
+                  ? t("movements.showing", {
+                      shown: filtered.length,
+                      total: movements.data.length,
+                    })
+                  : ""}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={filtered.length === 0}>
+                    <Download className="h-3.5 w-3.5" />
+                    {t("common.export")}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExport("csv")}>
+                    {t("common.exportCsv")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("xlsx")}>
+                    {t("common.exportXlsx")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                    {t("common.exportPdf")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+
+          {/* Search + filter toggle */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("movements.searchPlaceholder")}
+                className="pl-8 bg-surface"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFiltersOpen((v) => !v)}
+              className="md:hidden"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              {filtersOpen ? t("movements.hideFilters") : t("movements.showFilters")}
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Quick chips */}
+          <div className="flex flex-wrap gap-1.5">
+            <QuickChip onClick={() => applyQuickRange("today")}>
+              {t("movements.today")}
+            </QuickChip>
+            <QuickChip onClick={() => applyQuickRange("week")}>
+              {t("movements.thisWeek")}
+            </QuickChip>
+            <QuickChip onClick={() => applyQuickRange("month")}>
+              {t("movements.thisMonth")}
+            </QuickChip>
+            <QuickChip
+              active={fType === "add"}
+              onClick={() => setFType(fType === "add" ? "__all" : "add")}
+            >
+              {t("movements.addedStock")}
+            </QuickChip>
+            <QuickChip
+              active={fType === "remove"}
+              onClick={() => setFType(fType === "remove" ? "__all" : "remove")}
+            >
+              {t("movements.removedStock")}
+            </QuickChip>
+            <QuickChip
+              active={fType === "adjustment"}
+              onClick={() =>
+                setFType(fType === "adjustment" ? "__all" : "adjustment")
+              }
+            >
+              {t("movements.adjustments")}
+            </QuickChip>
+            <QuickChip
+              active={fSource === "barcode_scan"}
+              onClick={() =>
+                setFSource(fSource === "barcode_scan" ? "__all" : "barcode_scan")
+              }
+            >
+              {t("movements.barcodeScans")}
+            </QuickChip>
+          </div>
+
+          {/* Filter grid (collapsible on mobile) */}
+          <div
+            className={cn(
+              "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2",
+              !filtersOpen && "hidden md:grid",
+            )}
+          >
             <Select value={fType} onValueChange={(v) => setFType(v as any)}>
               <SelectTrigger className="bg-surface">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t("movements.type")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all">All types</SelectItem>
-                <SelectItem value="add">Add stock</SelectItem>
-                <SelectItem value="remove">Remove stock</SelectItem>
-                <SelectItem value="adjustment">Adjustment</SelectItem>
+                <SelectItem value="__all">{t("movements.allTypes")}</SelectItem>
+                <SelectItem value="add">{t("movements.typeAdd")}</SelectItem>
+                <SelectItem value="remove">{t("movements.typeRemove")}</SelectItem>
+                <SelectItem value="adjustment">
+                  {t("movements.typeAdjustment")}
+                </SelectItem>
               </SelectContent>
             </Select>
-            <Select value={fProduct} onValueChange={setFProduct}>
+            <Select value={fCategory} onValueChange={setFCategory}>
               <SelectTrigger className="bg-surface">
-                <SelectValue placeholder="Product" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all">All products</SelectItem>
-                {products.data?.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
+                <SelectItem value="__all">{t("movements.allCategories")}</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={fSupplier} onValueChange={setFSupplier}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">{t("movements.allSuppliers")}</SelectItem>
+                {suppliers.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={fLocation} onValueChange={setFLocation}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">{t("movements.allLocations")}</SelectItem>
+                {locations.map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={fSource} onValueChange={(v) => setFSource(v as SourceFilter)}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">{t("movements.allSources")}</SelectItem>
+                <SelectItem value="manual">{t("history.sources.manual")}</SelectItem>
+                <SelectItem value="barcode_scan">
+                  {t("history.sources.barcode_scan")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="bg-surface">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{t("movements.sortNewest")}</SelectItem>
+                <SelectItem value="oldest">{t("movements.sortOldest")}</SelectItem>
+                <SelectItem value="qty-desc">{t("movements.sortQtyDesc")}</SelectItem>
+                <SelectItem value="qty-asc">{t("movements.sortQtyAsc")}</SelectItem>
+                <SelectItem value="name-asc">{t("movements.sortNameAsc")}</SelectItem>
+                <SelectItem value="name-desc">{t("movements.sortNameDesc")}</SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -288,40 +576,41 @@ function MovementsPage() {
               value={fFrom}
               onChange={(e) => setFFrom(e.target.value)}
               className="bg-surface"
-              placeholder="From"
+              aria-label={t("movements.from")}
             />
             <Input
               type="date"
               value={fTo}
               onChange={(e) => setFTo(e.target.value)}
               className="bg-surface"
-              placeholder="To"
+              aria-label={t("movements.to")}
             />
-            <div className="relative col-span-2 md:col-span-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={fNote}
-                onChange={(e) => setFNote(e.target.value)}
-                placeholder="Reason…"
-                className="pl-8 bg-surface"
-              />
-            </div>
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="bg-surface">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest first</SelectItem>
-                <SelectItem value="oldest">Oldest first</SelectItem>
-                <SelectItem value="qty-desc">Largest quantity</SelectItem>
-                <SelectItem value="qty-asc">Smallest quantity</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              type="number"
+              min={0}
+              value={fMinQty}
+              onChange={(e) => setFMinQty(e.target.value)}
+              className="bg-surface"
+              placeholder={t("movements.minQty")}
+            />
+            <Input
+              type="number"
+              min={0}
+              value={fMaxQty}
+              onChange={(e) => setFMaxQty(e.target.value)}
+              className="bg-surface"
+              placeholder={t("movements.maxQty")}
+            />
           </div>
-          {activeFilters > 0 && (
-            <div className="flex justify-end">
+
+          {activeFilterCount > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {t("movements.activeFilters", { count: activeFilterCount })}
+              </span>
               <Button variant="ghost" size="sm" onClick={resetFilters}>
-                <X className="h-3.5 w-3.5" /> Reset filters
+                <X className="h-3.5 w-3.5" />
+                {t("movements.resetFilters")}
               </Button>
             </div>
           )}
@@ -347,6 +636,10 @@ function MovementsPage() {
               {filtered.map((m) => {
                 const isAdd = m.type === "add";
                 const isRemove = m.type === "remove";
+                const isScan = (m.note ?? "").startsWith("[scan]");
+                const cleanNote = isScan
+                  ? m.note?.replace(/^\[scan\]\s*/, "")
+                  : m.note;
                 return (
                   <li
                     key={m.id}
@@ -376,12 +669,20 @@ function MovementsPage() {
                           <span className="text-muted-foreground font-normal ml-1.5 font-mono text-xs">
                             {m.products?.sku ?? "—"}
                           </span>
+                          {isScan && (
+                            <Badge
+                              variant="outline"
+                              className="ml-2 h-4 px-1.5 text-[10px] font-normal"
+                            >
+                              {t("history.sources.barcode_scan")}
+                            </Badge>
+                          )}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground truncate">
                           {formatDistanceToNow(new Date(m.created_at), {
                             addSuffix: true,
                           })}
-                          {m.note ? ` · ${m.note}` : ""}
+                          {cleanNote ? ` · ${cleanNote}` : ""}
                         </p>
                       </div>
                     </div>
@@ -409,17 +710,17 @@ function MovementsPage() {
               </div>
               <p className="font-medium">
                 {(movements.data?.length ?? 0) > 0
-                  ? "No movements match your filters"
-                  : "No movements yet"}
+                  ? t("movements.emptyTitle")
+                  : t("movements.noMovementsYet")}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {(movements.data?.length ?? 0) > 0
-                  ? "Try adjusting the filters above."
-                  : "Record your first movement using the form above."}
+                  ? t("movements.emptyHint")
+                  : t("movements.noMovementsYetHint")}
               </p>
-              {activeFilters > 0 && (
+              {activeFilterCount > 0 && (
                 <Button className="mt-4" variant="outline" onClick={resetFilters}>
-                  Reset filters
+                  {t("movements.resetFilters")}
                 </Button>
               )}
             </div>
@@ -427,5 +728,30 @@ function MovementsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function QuickChip({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "h-7 px-3 rounded-full text-xs font-medium border transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border bg-surface hover:bg-muted/50 text-foreground/80",
+      )}
+    >
+      {children}
+    </button>
   );
 }
