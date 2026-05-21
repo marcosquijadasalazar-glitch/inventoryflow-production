@@ -519,7 +519,7 @@ function ProductsPage() {
             <SelectContent>
               {SORT_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.key)}
                 </SelectItem>
               ))}
             </SelectContent>
