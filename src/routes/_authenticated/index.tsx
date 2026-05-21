@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { getStockStatus } from "@/lib/stock";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: () => (
     <AppLayout>
       <Dashboard />
