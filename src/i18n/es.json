@@ -49,6 +49,11 @@
     "signOut": "Cerrar sesión",
     "language": "Idioma"
   },
+  "access": {
+    "blockedTitle": "Acceso no disponible",
+    "blockedBody": "Tu cuenta o el acceso de tu empresa está inactivo. Contacta a tu administrador.",
+    "statusLabel": "Estado"
+  },
   "landing": {
     "login": "Iniciar sesión",
     "startTrial": "Prueba gratis",
