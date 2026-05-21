@@ -61,15 +61,25 @@ export async function deleteProduct(id: string) {
   }
 }
 
-export async function listMovements(): Promise<(Movement & { products: Pick<Product, "name" | "sku"> | null })[]> {
+export type MovementWithProduct = Movement & {
+  products: Pick<
+    Product,
+    "name" | "sku" | "barcode" | "category" | "supplier" | "location"
+  > | null;
+};
+
+export async function listMovements(): Promise<MovementWithProduct[]> {
   const { data, error } = await supabase
     .from("inventory_movements")
-    .select("*, products(name, sku)")
+    .select(
+      "*, products(name, sku, barcode, category, supplier, location)",
+    )
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(500);
   if (error) throw error;
   return (data as any) ?? [];
 }
+
 
 export async function createMovement(values: TablesInsert<"inventory_movements">) {
   const { error } = await supabase.from("inventory_movements").insert(values);
