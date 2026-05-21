@@ -392,7 +392,7 @@ function Dashboard() {
                           {p.stock}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          min {p.min_stock}
+                          {t("dashboard.min")} {p.min_stock}
                         </p>
                       </div>
                     </li>
@@ -402,8 +402,8 @@ function Dashboard() {
             ) : (
               <EmptyState
                 icon={Activity}
-                title="All healthy"
-                description="No products below their minimum stock level."
+                title={t("dashboard.allHealthy")}
+                description={t("dashboard.allHealthyDesc")}
               />
             )}
           </CardContent>
