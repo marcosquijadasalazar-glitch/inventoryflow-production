@@ -1,0 +1,701 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Building2, Users, Package, Plus, UserPlus } from "lucide-react";
+import { toast } from "sonner";
+import { useProfile } from "@/lib/profile";
+import {
+  adminListOrganizations,
+  adminGetStats,
+  adminCreateOrganization,
+  adminToggleOrganization,
+  adminUpdateOrgPlan,
+  adminListUsers,
+  adminCreateUser,
+  adminAssignUser,
+} from "@/lib/admin.functions";
+
+export const Route = createFileRoute("/_authenticated/admin")({
+  component: AdminPage,
+});
+
+const PLANS = ["free", "starter", "pro", "enterprise"] as const;
+const ROLES = ["super_admin", "owner", "manager", "employee"] as const;
+
+function AdminPage() {
+  const navigate = useNavigate();
+  const profile = useProfile();
+
+  useEffect(() => {
+    if (!profile.isLoading && profile.data && profile.data.role !== "super_admin") {
+      toast.error("Super admin access required");
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [profile.isLoading, profile.data, navigate]);
+
+  const listOrgs = useServerFn(adminListOrganizations);
+  const getStats = useServerFn(adminGetStats);
+  const listUsers = useServerFn(adminListUsers);
+
+  const orgs = useQuery({
+    queryKey: ["admin", "orgs"],
+    queryFn: () => listOrgs({}),
+    enabled: profile.data?.role === "super_admin",
+  });
+  const stats = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: () => getStats({}),
+    enabled: profile.data?.role === "super_admin",
+  });
+  const users = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: () => listUsers({ data: {} }),
+    enabled: profile.data?.role === "super_admin",
+  });
+
+  const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+
+  if (profile.isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+  if (profile.data?.role !== "super_admin") return null;
+
+  return (
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
+            Platform
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight flex items-center gap-2">
+            <Shield className="h-7 w-7 text-primary" />
+            Super Admin
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage companies, plans, and user accounts across the platform.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCreateUserOpen(true)}>
+            <UserPlus className="h-4 w-4" /> Create user
+          </Button>
+          <Button onClick={() => setCreateOrgOpen(true)}>
+            <Plus className="h-4 w-4" /> New company
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard
+          icon={Building2}
+          label="Companies"
+          value={stats.data?.organizations}
+          sub={`${stats.data?.activeOrganizations ?? 0} active`}
+        />
+        <StatCard icon={Users} label="Users" value={stats.data?.users} />
+        <StatCard icon={Package} label="Products" value={stats.data?.products} />
+        <StatCard
+          icon={Package}
+          label="Movements"
+          value={stats.data?.movements}
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" /> Companies
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <OrgsTable
+            orgs={orgs.data ?? []}
+            loading={orgs.isLoading}
+            onChanged={() => {
+              orgs.refetch();
+              stats.refetch();
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" /> Users
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <UsersTable
+            users={users.data ?? []}
+            orgs={orgs.data ?? []}
+            loading={users.isLoading}
+            onChanged={() => {
+              users.refetch();
+              stats.refetch();
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <CreateOrgDialog
+        open={createOrgOpen}
+        onOpenChange={setCreateOrgOpen}
+        onCreated={() => {
+          orgs.refetch();
+          stats.refetch();
+        }}
+      />
+      <CreateUserDialog
+        open={createUserOpen}
+        onOpenChange={setCreateUserOpen}
+        orgs={orgs.data ?? []}
+        onCreated={() => {
+          users.refetch();
+          stats.refetch();
+        }}
+      />
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: any;
+  label: string;
+  value: number | undefined;
+  sub?: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+          <Icon className="h-3.5 w-3.5" />
+          {label}
+        </div>
+        <p className="text-2xl font-semibold mt-1.5">
+          {value === undefined ? "—" : value.toLocaleString()}
+        </p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+type OrgRow = {
+  id: string;
+  company_name: string;
+  business_type: string | null;
+  plan_type: (typeof PLANS)[number];
+  active_status: boolean;
+  user_count: number;
+  product_count: number;
+  created_at: string;
+};
+
+function OrgsTable({
+  orgs,
+  loading,
+  onChanged,
+}: {
+  orgs: OrgRow[];
+  loading: boolean;
+  onChanged: () => void;
+}) {
+  const toggle = useServerFn(adminToggleOrganization);
+  const updatePlan = useServerFn(adminUpdateOrgPlan);
+
+  const toggleMut = useMutation({
+    mutationFn: (vars: { id: string; active: boolean }) =>
+      toggle({ data: { organization_id: vars.id, active_status: vars.active } }),
+    onSuccess: () => {
+      toast.success("Company updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const planMut = useMutation({
+    mutationFn: (vars: { id: string; plan: (typeof PLANS)[number] }) =>
+      updatePlan({ data: { organization_id: vars.id, plan_type: vars.plan } }),
+    onSuccess: () => {
+      toast.success("Plan updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  if (loading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
+  if (orgs.length === 0) {
+    return (
+      <p className="p-6 text-sm text-muted-foreground">No companies yet.</p>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Company</TableHead>
+            <TableHead>Plan</TableHead>
+            <TableHead className="text-right">Users</TableHead>
+            <TableHead className="text-right">Products</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Active</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orgs.map((o) => (
+            <TableRow key={o.id}>
+              <TableCell>
+                <div className="font-medium">{o.company_name}</div>
+                {o.business_type && (
+                  <div className="text-xs text-muted-foreground">
+                    {o.business_type}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={o.plan_type}
+                  onValueChange={(v) =>
+                    planMut.mutate({ id: o.id, plan: v as any })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[130px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLANS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell className="text-right font-mono">{o.user_count}</TableCell>
+              <TableCell className="text-right font-mono">{o.product_count}</TableCell>
+              <TableCell>
+                <Badge variant={o.active_status ? "default" : "outline"}>
+                  {o.active_status ? "Active" : "Disabled"}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <Switch
+                  checked={o.active_status}
+                  onCheckedChange={(v) =>
+                    toggleMut.mutate({ id: o.id, active: v })
+                  }
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+type UserRow = {
+  id: string;
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  role: (typeof ROLES)[number];
+  organization_id: string | null;
+  created_at: string;
+};
+
+function UsersTable({
+  users,
+  orgs,
+  loading,
+  onChanged,
+}: {
+  users: UserRow[];
+  orgs: OrgRow[];
+  loading: boolean;
+  onChanged: () => void;
+}) {
+  const assign = useServerFn(adminAssignUser);
+  const assignMut = useMutation({
+    mutationFn: (vars: {
+      user_id: string;
+      organization_id: string | null;
+      role?: (typeof ROLES)[number];
+    }) => assign({ data: vars }),
+    onSuccess: () => {
+      toast.success("User updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const orgMap = useMemo(() => {
+    const m = new Map<string, string>();
+    orgs.forEach((o) => m.set(o.id, o.company_name));
+    return m;
+  }, [orgs]);
+
+  if (loading) return <Skeleton className="h-32 w-full" />;
+  if (users.length === 0)
+    return <p className="p-6 text-sm text-muted-foreground">No users yet.</p>;
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Company</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell>
+                <div className="font-medium">{u.full_name ?? u.email}</div>
+                <div className="text-xs text-muted-foreground">{u.email}</div>
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={u.role}
+                  onValueChange={(v) =>
+                    assignMut.mutate({
+                      user_id: u.user_id,
+                      organization_id: u.organization_id,
+                      role: v as any,
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={u.organization_id ?? "__none"}
+                  onValueChange={(v) =>
+                    assignMut.mutate({
+                      user_id: u.user_id,
+                      organization_id: v === "__none" ? null : v,
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[200px]">
+                    <SelectValue
+                      placeholder={
+                        u.organization_id
+                          ? orgMap.get(u.organization_id) ?? "Unknown"
+                          : "Unassigned"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Unassigned</SelectItem>
+                    {orgs.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.company_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function CreateOrgDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onCreated: () => void;
+}) {
+  const create = useServerFn(adminCreateOrganization);
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [plan, setPlan] = useState<(typeof PLANS)[number]>("free");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await create({
+        data: {
+          company_name: name.trim(),
+          business_type: type.trim() || null,
+          plan_type: plan,
+        },
+      });
+      toast.success("Company created");
+      setName("");
+      setType("");
+      setPlan("free");
+      onOpenChange(false);
+      onCreated();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-surface max-w-md">
+        <DialogHeader>
+          <DialogTitle>New company</DialogTitle>
+          <DialogDescription>
+            Create a new tenant organization on the platform.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Company name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Business type</Label>
+            <Input
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              placeholder="Warehouse, retail, distributor…"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Plan</Label>
+            <Select value={plan} onValueChange={(v) => setPlan(v as any)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLANS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving || !name.trim()}>
+              {saving ? "Creating…" : "Create company"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CreateUserDialog({
+  open,
+  onOpenChange,
+  orgs,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  orgs: OrgRow[];
+  onCreated: () => void;
+}) {
+  const create = useServerFn(adminCreateUser);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<(typeof ROLES)[number]>("owner");
+  const [orgId, setOrgId] = useState<string>("__none");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || password.length < 8) {
+      toast.error("Email and 8+ char password required");
+      return;
+    }
+    setSaving(true);
+    try {
+      await create({
+        data: {
+          email: email.trim(),
+          password,
+          full_name: fullName.trim() || null,
+          role,
+          organization_id: orgId === "__none" ? null : orgId,
+        },
+      });
+      toast.success("User created");
+      setEmail("");
+      setPassword("");
+      setFullName("");
+      setRole("owner");
+      setOrgId("__none");
+      onOpenChange(false);
+      onCreated();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-surface max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create user</DialogTitle>
+          <DialogDescription>
+            Provision a new user and assign them to a company.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Full name</Label>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Company</Label>
+              <Select value={orgId} onValueChange={setOrgId}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">Unassigned</SelectItem>
+                  {orgs.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.company_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Creating…" : "Create user"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
