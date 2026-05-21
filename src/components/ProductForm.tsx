@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,10 +20,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { upsertProduct, type Product } from "@/lib/inventory";
-import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import {
+  listActiveCategoryNames,
+  createProductCategory,
+} from "@/lib/categories";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 import { ScanFieldButton } from "@/components/ScanFieldButton";
+
+const NEW_CATEGORY_VALUE = "__new__";
 
 export function ProductForm({
   open,
