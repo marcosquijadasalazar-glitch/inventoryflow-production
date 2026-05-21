@@ -582,24 +582,24 @@ function ProductsPage() {
       {selected.size > 0 && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
           <p className="text-sm font-medium">
-            {selected.size} selected
+            {t("products.selectedCount", { count: selected.size })}
             <button
               type="button"
               onClick={() => setSelected(new Set())}
               className="ml-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
             >
-              Clear
+              {t("products.clear")}
             </button>
           </p>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={exportSelected}>
-              <Download className="h-3.5 w-3.5" /> Export CSV
+              <Download className="h-3.5 w-3.5" /> {t("products.exportCsv")}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkCategoryOpen(true)}>
-              <Tag className="h-3.5 w-3.5" /> Category
+              <Tag className="h-3.5 w-3.5" /> {t("products.category")}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkLocationOpen(true)}>
-              <MapPin className="h-3.5 w-3.5" /> Location
+              <MapPin className="h-3.5 w-3.5" /> {t("products.location")}
             </Button>
             <Button
               size="sm"
@@ -607,7 +607,7 @@ function ProductsPage() {
               className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
               onClick={() => setBulkDeleteOpen(true)}
             >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
+              <Trash2 className="h-3.5 w-3.5" /> {t("products.delete")}
             </Button>
           </div>
         </div>
@@ -616,8 +616,8 @@ function ProductsPage() {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
           {data
-            ? `${filtered.length} of ${data.length} products`
-            : "Loading…"}
+            ? t("products.ofProducts", { shown: filtered.length, total: data.length })
+            : t("common.loading")}
         </span>
       </div>
 
