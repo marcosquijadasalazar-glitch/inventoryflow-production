@@ -182,6 +182,8 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
+      <CategoryManagerCard />
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("settings.language")}</CardTitle>
