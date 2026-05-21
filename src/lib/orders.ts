@@ -102,6 +102,8 @@ export type SalesOrder = {
   balance_due: number;
   payment_status: PaymentStatus;
   payment_method: string | null;
+  inventory_deducted_at: string | null;
+  inventory_reversed_at: string | null;
   created_at: string;
   customers?: { name: string; email?: string | null; phone?: string | null; address?: string | null } | null;
   items?: SOItem[];
