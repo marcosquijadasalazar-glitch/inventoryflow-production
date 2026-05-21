@@ -329,15 +329,15 @@ function Dashboard() {
             ) : (
               <EmptyState
                 icon={ArrowLeftRight}
-                title="No movements"
+                title={t("dashboard.noMovements")}
                 description={
                   activeFilters > 0
-                    ? "No movements match the current filters."
-                    : "Stock additions and removals will appear here."
+                    ? t("dashboard.noMovementsFiltered")
+                    : t("dashboard.noMovementsDesc")
                 }
                 action={
                   <Button size="sm" asChild>
-                    <Link to="/movements">Record movement</Link>
+                    <Link to="/movements">{t("dashboard.recordMovement")}</Link>
                   </Button>
                 }
               />
