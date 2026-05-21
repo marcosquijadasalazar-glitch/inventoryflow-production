@@ -23,6 +23,7 @@ export type Database = {
           footer_notes: string | null
           id: string
           logo_url: string | null
+          organization_id: string | null
           phone: string | null
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           footer_notes?: string | null
           id?: string
           logo_url?: string | null
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -45,16 +47,26 @@ export type Database = {
           footer_notes?: string | null
           id?: string
           logo_url?: string | null
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_movements: {
         Row: {
           created_at: string
           id: string
           note: string | null
+          organization_id: string | null
           product_id: string
           quantity: number
           type: Database["public"]["Enums"]["movement_type"]
@@ -63,6 +75,7 @@ export type Database = {
           created_at?: string
           id?: string
           note?: string | null
+          organization_id?: string | null
           product_id: string
           quantity: number
           type: Database["public"]["Enums"]["movement_type"]
@@ -71,11 +84,19 @@ export type Database = {
           created_at?: string
           id?: string
           note?: string | null
+          organization_id?: string | null
           product_id?: string
           quantity?: number
           type?: Database["public"]["Enums"]["movement_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_movements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_movements_product_id_fkey"
             columns: ["product_id"]
@@ -84,6 +105,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organizations: {
+        Row: {
+          active_status: boolean
+          business_type: string | null
+          company_name: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          plan_type: Database["public"]["Enums"]["org_plan"]
+          updated_at: string
+        }
+        Insert: {
+          active_status?: boolean
+          business_type?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          plan_type?: Database["public"]["Enums"]["org_plan"]
+          updated_at?: string
+        }
+        Update: {
+          active_status?: boolean
+          business_type?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          plan_type?: Database["public"]["Enums"]["org_plan"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -95,6 +149,7 @@ export type Database = {
           location: string | null
           min_stock: number
           name: string
+          organization_id: string | null
           price: number
           sku: string
           stock: number
@@ -110,6 +165,7 @@ export type Database = {
           location?: string | null
           min_stock?: number
           name: string
+          organization_id?: string | null
           price?: number
           sku: string
           stock?: number
@@ -125,13 +181,63 @@ export type Database = {
           location?: string | null
           min_stock?: number
           name?: string
+          organization_id?: string | null
           price?: number
           sku?: string
           stock?: number
           supplier?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transaction_history: {
         Row: {
@@ -139,6 +245,7 @@ export type Database = {
           created_at: string
           id: string
           new_stock: number | null
+          organization_id: string | null
           previous_stock: number | null
           product_id: string | null
           product_name: string | null
@@ -155,6 +262,7 @@ export type Database = {
           created_at?: string
           id?: string
           new_stock?: number | null
+          organization_id?: string | null
           previous_stock?: number | null
           product_id?: string | null
           product_name?: string | null
@@ -171,6 +279,7 @@ export type Database = {
           created_at?: string
           id?: string
           new_stock?: number | null
+          organization_id?: string | null
           previous_stock?: number | null
           product_id?: string | null
           product_name?: string | null
@@ -182,17 +291,32 @@ export type Database = {
           user_email?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transaction_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_user_org: { Args: never; Returns: string }
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      app_role: "super_admin" | "owner" | "manager" | "employee"
       movement_type: "add" | "remove" | "adjustment"
+      org_plan: "free" | "starter" | "pro" | "enterprise"
       transaction_source: "manual" | "barcode_scan" | "adjustment" | "system"
       transaction_type:
         | "product_created"
@@ -329,7 +453,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["super_admin", "owner", "manager", "employee"],
       movement_type: ["add", "remove", "adjustment"],
+      org_plan: ["free", "starter", "pro", "enterprise"],
       transaction_source: ["manual", "barcode_scan", "adjustment", "system"],
       transaction_type: [
         "product_created",
