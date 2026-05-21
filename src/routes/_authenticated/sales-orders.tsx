@@ -281,14 +281,19 @@ function SalesOrdersPage() {
                                 {t("so.export_pdf", "Export PDF")}
                               </DropdownMenuItem>
                               {canManage &&
-                                so.status !== "cancelled" &&
-                                so.status !== "fulfilled" && (
+                                so.status !== "cancelled" && (
                                   <DropdownMenuItem
                                     onClick={async () => {
-                                      await updateSOStatus(so.id, "cancelled");
-                                      qc.invalidateQueries({
-                                        queryKey: ["sales_orders"],
-                                      });
+                                      try {
+                                        await updateSOStatus(so.id, "cancelled");
+                                        toast.success(t("so.cancelled_toast", "Order cancelled"));
+                                        qc.invalidateQueries({ queryKey: ["sales_orders"] });
+                                        qc.invalidateQueries({ queryKey: ["sales_order_detail", so.id] });
+                                        qc.invalidateQueries({ queryKey: ["products"] });
+                                        qc.invalidateQueries({ queryKey: ["movements"] });
+                                      } catch (e: any) {
+                                        toast.error(e.message);
+                                      }
                                     }}
                                   >
                                     {t("common.cancel")}
