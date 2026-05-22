@@ -34,7 +34,14 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  // Structured log so we can correlate production crashes with route/session.
+  // eslint-disable-next-line no-console
+  console.error("[__root ErrorComponent]", {
+    route: typeof window !== "undefined" ? window.location.pathname : "ssr",
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    message: error?.message,
+    stack: error?.stack,
+  });
   const router = useRouter();
 
   return (
