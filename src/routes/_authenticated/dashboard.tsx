@@ -413,6 +413,7 @@ function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
     </div>
   );
 }
