@@ -32,6 +32,7 @@ import { formatDistanceToNow } from "date-fns";
 import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { OperationsWidgets } from "@/components/OperationsWidgets";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
