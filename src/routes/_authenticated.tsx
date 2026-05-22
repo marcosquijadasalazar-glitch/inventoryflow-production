@@ -80,9 +80,21 @@ function AuthenticatedLayout() {
     );
   }
 
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   return (
     <AppLayout>
-      <Outlet />
+      <ErrorBoundary
+        name="AuthenticatedOutlet"
+        resetKeys={[pathname]}
+        context={{
+          userId: session.user.id,
+          email: session.user.email,
+          pathname,
+        }}
+      >
+        <Outlet />
+      </ErrorBoundary>
     </AppLayout>
   );
 }
