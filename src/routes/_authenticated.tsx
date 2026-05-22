@@ -32,7 +32,20 @@ function AuthenticatedLayout() {
     }
   }, [loading, session, navigate]);
 
-  if (loading || !session || access.isLoading) {
+  useEffect(() => {
+    if (access.error) {
+      // eslint-disable-next-line no-console
+      console.error("[_authenticated] access-status query failed", {
+        userId: session?.user?.id,
+        error: (access.error as Error)?.message,
+      });
+    }
+  }, [access.error, session?.user?.id]);
+
+  // Show spinner only while we genuinely don't know yet. If the access query
+  // errored, fail-open into the app so the user isn't stuck on a blank screen
+  // (server-side RLS still protects every query downstream).
+  if (loading || !session || (access.isLoading && !access.error)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -41,12 +54,13 @@ function AuthenticatedLayout() {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="h-3.5 w-3.5 rounded-full border-2 border-muted border-t-primary animate-spin" />
-            Loading workspace…
+            {t("access.loadingWorkspace", { defaultValue: "Loading workspace…" })}
           </div>
         </div>
       </div>
     );
   }
+
 
   if (access.data && !access.data.ok) {
     return (
