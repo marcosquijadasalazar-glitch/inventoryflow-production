@@ -141,6 +141,8 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: listProducts,
   });
+  const usageQ = useOrgUsage();
+  const productsAtLimit = isAtLimit(usageQ.data ?? undefined, "products");
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
