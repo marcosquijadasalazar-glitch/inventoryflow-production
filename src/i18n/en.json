@@ -337,23 +337,7 @@
       "in_transit": "In transit",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    },
-    "view_details": "View details",
-    "date": "Transfer date",
-    "completed_date": "Completed date",
-    "created_at": "Created",
-    "created_by": "Created by",
-    "related_movements": "Related inventory movements",
-    "no_movements": "No related movements yet."
-  },
-  "locstock": {
-    "button": "Location Stock",
-    "title": "Stock by Location",
-    "subtitle": "Available stock grouped by product location.",
-    "empty": "No products yet.",
-    "back": "Back to Transfers",
-    "products": "products",
-    "units": "units"
+    }
   },
   "loc": {
     "new": "New Location",
@@ -368,9 +352,6 @@
     "empty_short": "No locations yet",
     "created": "Location created",
     "name_required": "Name is required",
-    "unassigned": "Unassigned",
-    "available": "Available",
-    "last_movement": "Last movement",
     "types": {
       "warehouse": "Warehouse",
       "store": "Store",
