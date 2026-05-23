@@ -34,6 +34,9 @@ import {
   exportMovementsXlsx,
   exportMovementsPdf,
 } from "@/lib/movements-export";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+import type { MovementWithProduct } from "@/lib/inventory";
 import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
 import { ScanFieldButton } from "@/components/ScanFieldButton";
 import { toast } from "sonner";
@@ -57,6 +60,18 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/movements")({
   component: MovementsPage,
 });
+
+const MOVEMENT_EXPORT_COLUMNS: ExportColumn<MovementWithProduct>[] = [
+  { key: "date", header: "Date", get: (m) => new Date(m.created_at).toLocaleString() },
+  { key: "type", header: "Type" },
+  { key: "product", header: "Product", get: (m) => m.products?.name ?? "" },
+  { key: "sku", header: "SKU", get: (m) => m.products?.sku ?? "" },
+  { key: "barcode", header: "Barcode", get: (m) => m.products?.barcode ?? "" },
+  { key: "category", header: "Category", get: (m) => m.products?.category ?? "" },
+  { key: "location", header: "Location", get: (m) => m.products?.location ?? "" },
+  { key: "qty", header: "Qty", align: "right", get: (m) => m.quantity },
+  { key: "note", header: "Reason", get: (m) => m.note ?? "" },
+];
 
 type MovementType = "add" | "remove" | "adjustment";
 type SourceFilter = "__all" | "manual" | "barcode_scan";
@@ -412,26 +427,13 @@ function MovementsPage() {
                     })
                   : ""}
               </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={filtered.length === 0}>
-                    <Download className="h-3.5 w-3.5" />
-                    {t("common.export")}
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleExport("csv")}>
-                    {t("common.exportCsv")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport("xlsx")}>
-                    {t("common.exportXlsx")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                    {t("common.exportPdf")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportMenu
+                title={t("movements.title", "Inventory Movements")}
+                filename="movements"
+                rows={filtered}
+                columns={MOVEMENT_EXPORT_COLUMNS}
+                orientation="landscape"
+              />
             </div>
           </div>
 
