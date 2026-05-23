@@ -311,6 +311,7 @@ type OrgRow = {
   status: Status;
   user_count: number;
   product_count: number;
+  enabled_modules?: Partial<Record<ModuleKey, boolean>> | null;
   created_at: string;
 };
 
@@ -325,6 +326,7 @@ function OrgsTable({
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
+  const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
