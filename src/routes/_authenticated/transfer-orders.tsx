@@ -248,6 +248,11 @@ function TransferOrdersPage() {
         onClose={() => setNewLocOpen(false)}
         onCreated={() => qc.invalidateQueries({ queryKey: ["locations"] })}
       />
+      <TransferDetailsDialog
+        transferId={detailsId}
+        open={!!detailsId}
+        onClose={() => setDetailsId(null)}
+      />
     </div>
   );
 }
