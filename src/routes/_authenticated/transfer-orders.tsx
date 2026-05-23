@@ -122,6 +122,12 @@ function TransferOrdersPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/location-stock">
+              <Layers className="h-4 w-4" />{" "}
+              {t("locstock.button", "Location Stock")}
+            </Link>
+          </Button>
           <Button variant="outline" onClick={() => setNewLocOpen(true)}>
             <MapPin className="h-4 w-4" /> {t("loc.new", "New Location")}
           </Button>
