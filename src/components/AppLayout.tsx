@@ -17,6 +17,7 @@ import {
   ArrowRightLeft,
   Wrench,
   Warehouse,
+  FileBarChart,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ function useNavItems() {
     { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse },
     { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench },
     { to: "/history", label: t("nav.history"), icon: History },
+    { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart },
     { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
     { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },
     { to: "/settings", label: t("nav.settings"), icon: SettingsIcon },
