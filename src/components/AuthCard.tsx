@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield } from "lucide-react";
+import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield, User, Building2, Phone, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
@@ -17,6 +17,10 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
