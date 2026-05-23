@@ -59,6 +59,7 @@ function LandingPage() {
       <Features />
       <HowItWorks />
       <WhoItsFor />
+      <BuiltForGrowth />
       <Pricing />
       <CompareTable />
       <FinalCTA />
@@ -395,18 +396,67 @@ function WhoItsFor() {
   );
 }
 
+/* ---------- Built for growth ---------- */
+
+function BuiltForGrowth() {
+  const { t } = useTranslation();
+  const points = t("landing.recurring.points", { returnObjects: true }) as string[];
+  return (
+    <section className="border-t border-black/[0.06] bg-[#FAFAFA]">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
+            {t("landing.recurring.eyebrow")}
+          </p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
+            {t("landing.recurring.title")}
+          </h2>
+          <p className="mt-3 text-black/60">{t("landing.recurring.subtitle")}</p>
+        </div>
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {points.map((p) => (
+            <div
+              key={p}
+              className="flex items-start gap-3 rounded-2xl border border-black/[0.08] bg-white p-6"
+            >
+              <div className="h-8 w-8 rounded-lg bg-[#0066FF]/8 flex items-center justify-center shrink-0">
+                <Check className="h-4 w-4 text-[#0066FF]" />
+              </div>
+              <p className="text-sm font-medium text-black leading-relaxed">{p}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- Pricing ---------- */
 
 type PlanKey = "trial" | "starter" | "pro" | "enterprise";
 
 function Pricing() {
   const { t } = useTranslation();
-  const plans: { key: PlanKey; popular?: boolean; cta: "trial" | "choose" | "contact"; to: string }[] = [
-    { key: "trial", cta: "trial", to: "/signup" },
-    { key: "starter", cta: "trial", to: "/signup" },
-    { key: "pro", popular: true, cta: "trial", to: "/signup" },
-    { key: "enterprise", cta: "contact", to: "/signup" },
+
+  const plans: {
+    key: PlanKey;
+    popular?: boolean;
+    ctaLabel: string;
+    ctaVariant: "primary" | "secondary" | "outline";
+    to: string;
+  }[] = [
+    { key: "trial", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup" },
+    { key: "starter", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup" },
+    { key: "pro", popular: true, ctaLabel: t("landing.pricing.upgradeToPro"), ctaVariant: "primary", to: "/signup" },
+    { key: "enterprise", ctaLabel: t("landing.pricing.contactSales"), ctaVariant: "secondary", to: "/signup" },
   ];
+
+  const limits: Record<PlanKey, { users: string; products: string; locations: string }> = {
+    trial: { users: "2", products: "100", locations: "1" },
+    starter: { users: "3", products: "500", locations: "2" },
+    pro: { users: "25", products: "∞", locations: "10" },
+    enterprise: { users: "∞", products: "∞", locations: "∞" },
+  };
 
   return (
     <section id="pricing" className="border-t border-black/[0.06] bg-white">
@@ -422,16 +472,21 @@ function Pricing() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {plans.map(({ key, popular, cta, to }) => {
+          {plans.map(({ key, popular, ctaLabel, ctaVariant, to }) => {
             const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
             const price = t(`landing.pricing.plans.${key}.price`);
+            const setupFee = t(`landing.pricing.plans.${key}.setupFee`, { defaultValue: "" });
             const isCustom = key === "enterprise";
             const isTrial = key === "trial";
+            const planLimits = limits[key];
+
             return (
               <div
                 key={key}
                 className={`relative flex flex-col rounded-2xl border bg-white p-6 ${
-                  popular ? "border-[#0066FF] shadow-[0_24px_60px_-30px_rgba(0,102,255,0.45)]" : "border-black/[0.08]"
+                  popular
+                    ? "border-[#0066FF] shadow-[0_24px_60px_-30px_rgba(0,102,255,0.45)]"
+                    : "border-black/[0.08]"
                 }`}
               >
                 {popular && (
@@ -439,7 +494,14 @@ function Pricing() {
                     <Star className="h-3 w-3" /> {t("landing.pricing.mostPopular")}
                   </div>
                 )}
+                {isTrial && (
+                  <div className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-black px-2.5 py-1 text-[11px] font-medium text-white">
+                    {t("landing.pricing.freeTrialBanner")}
+                  </div>
+                )}
+
                 <div className="text-sm font-medium text-black">{t(`landing.pricing.plans.${key}.name`)}</div>
+
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold tracking-tight text-black">{price}</span>
                   {!isCustom && !isTrial && (
@@ -449,10 +511,39 @@ function Pricing() {
                     <span className="text-sm text-black/50">· {t("landing.pricing.plans.trial.period")}</span>
                   )}
                 </div>
+
+                {!isTrial && !isCustom && setupFee && (
+                  <p className="mt-1 text-xs text-black/50">
+                    {t("landing.pricing.setupFee")}: {setupFee}
+                  </p>
+                )}
+
                 <p className="mt-2 text-sm text-black/60 min-h-[40px]">
                   {t(`landing.pricing.plans.${key}.tagline`)}
                 </p>
-                <ul className="mt-5 space-y-2.5 text-sm">
+
+                {/* Plan limits */}
+                <div className="mt-4 rounded-lg bg-black/[0.03] p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-black/50 mb-2">
+                    {t("landing.pricing.limitsLabel")}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-xs font-semibold text-black">{planLimits.users}</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.usersLabel")}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-black">{planLimits.products}</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.productsLabel")}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-black">{planLimits.locations}</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.locationsLabel")}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <ul className="mt-4 space-y-2 text-sm">
                   {features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-black/80">
                       <Check className="h-4 w-4 text-[#0066FF] shrink-0 mt-0.5" />
@@ -460,22 +551,19 @@ function Pricing() {
                     </li>
                   ))}
                 </ul>
+
                 <div className="mt-6 pt-4">
                   <Button
                     asChild
-                    className={`w-full h-10 ${
-                      popular
+                    className={`w-full h-10 shadow-none ${
+                      ctaVariant === "primary"
                         ? "bg-[#0066FF] hover:bg-[#0052CC] text-white"
-                        : "bg-black hover:bg-black/85 text-white"
-                    } shadow-none`}
+                        : ctaVariant === "outline"
+                          ? "bg-white border border-black/15 text-black hover:bg-black/5"
+                          : "bg-black hover:bg-black/85 text-white"
+                    }`}
                   >
-                    <Link to={to}>
-                      {cta === "trial"
-                        ? t("landing.pricing.startTrial")
-                        : cta === "contact"
-                          ? t("landing.pricing.contactSales")
-                          : t("landing.pricing.choosePlan")}
-                    </Link>
+                    <Link to={to}>{ctaLabel}</Link>
                   </Button>
                 </div>
               </div>

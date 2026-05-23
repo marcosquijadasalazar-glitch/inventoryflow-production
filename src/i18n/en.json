@@ -135,47 +135,60 @@
       "badge": "Built for B2B operations",
       "title1": "Smart inventory for",
       "title2": "modern small businesses.",
-      "subtitle": "InventoryFlow helps warehouses and small businesses manage inventory, stock movements, orders, barcode workflows, and operations in one platform.",
+      "subtitle": "InventoryFlow helps growing B2B teams centralize inventory, orders, and operations across locations — with the control and visibility to scale.",
       "ctaPrimary": "Start Free 7-Day Trial",
       "ctaSecondary": "See how it works",
       "fineprint": "No credit card required · Setup approval may be required · Cancel anytime"
     },
     "pricing": {
       "eyebrow": "Pricing",
-      "title": "Simple, transparent pricing for growing teams.",
-      "subtitle": "Start with a 7-day free trial. Upgrade when you're ready.",
+      "title": "Simple, transparent pricing for growing operations.",
+      "subtitle": "Start with a 7-day free trial. Upgrade when you're ready to scale.",
       "perMonth": "/month",
+      "setupFee": "Setup fee",
+      "usersLabel": "Users",
+      "productsLabel": "Products",
+      "locationsLabel": "Locations",
       "mostPopular": "Most Popular",
       "contactSales": "Contact Sales",
-      "startTrial": "Start Free 7-Day Trial",
-      "choosePlan": "Choose plan",
-      "trialNote": "All paid plans start with a 7-day free trial. No credit card required.",
+      "startTrial": "Start Free Trial",
+      "upgradeToPro": "Upgrade to Pro",
+      "choosePlan": "Choose Plan",
+      "trialNote": "No credit card required · Approval may be required · Cancel anytime · Full onboarding available",
+      "freeTrialBanner": "Free 7-Day Trial",
+      "modulesLabel": "Included modules",
+      "limitsLabel": "Plan limits",
+      "recurringModel": "Recurring SaaS — cancel anytime",
       "plans": {
         "trial": {
           "name": "Free Trial",
           "price": "Free",
           "period": "7 days",
-          "tagline": "Try most Pro features for 7 days.",
+          "tagline": "Try Pro features for 7 days. No permanent free plan.",
           "features": [
-            "Access to most Pro features",
+            "Full Pro feature access",
             "Up to 2 users",
             "Up to 100 products",
             "1 location",
-            "InventoryFlow branding visible",
-            "No advanced exports",
-            "No priority support"
+            "InventoryFlow branding",
+            "Guided onboarding",
+            "Cancel anytime"
           ]
         },
         "starter": {
           "name": "Starter",
-          "price": "$39",
+          "price": "$29",
+          "setupFee": "$49 one-time",
           "tagline": "For small businesses getting organized.",
           "features": [
+            "Dashboard",
             "Products & catalog",
             "Stock movements",
+            "Barcode scanner",
+            "Low-stock alerts",
             "Sales & purchase orders",
             "Transaction history",
-            "Basic exports (CSV)",
+            "Basic CSV exports",
             "Up to 3 users",
             "Up to 500 products",
             "Up to 2 locations"
@@ -183,18 +196,19 @@
         },
         "pro": {
           "name": "Pro",
-          "price": "$149",
+          "price": "$99",
+          "setupFee": "$199 one-time",
           "tagline": "For growing operations that need control.",
           "features": [
             "Everything in Starter",
-            "Transfers between locations",
+            "Transfer orders",
             "Internal use tracking",
             "Reports & analytics",
             "Full exports (CSV, PDF, XLSX)",
             "Multi-location inventory",
-            "Advanced inventory visibility",
             "Approval workflows",
             "Up to 25 users",
+            "Unlimited products",
             "Up to 10 locations"
           ]
         },
@@ -205,9 +219,10 @@
           "features": [
             "Unlimited users",
             "Unlimited locations",
+            "Unlimited products",
             "All modules + custom modules",
             "Advanced permissions",
-            "Onboarding assistance",
+            "Dedicated onboarding",
             "Priority support",
             "API & integrations roadmap"
           ]
@@ -296,6 +311,17 @@
           }
         ]
       }
+    },
+    "recurring": {
+      "eyebrow": "Built for growth",
+      "title": "Scale your operations without the overhead.",
+      "subtitle": "A recurring SaaS platform designed for businesses that need operational control and visibility.",
+      "points": [
+        "Built for growing operations",
+        "Scale your inventory workflows",
+        "Centralize operations across locations",
+        "Reduce inventory mistakes and improve visibility"
+      ]
     },
     "cta": {
       "eyebrow": "Ready when you are",

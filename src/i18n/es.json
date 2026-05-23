@@ -135,47 +135,60 @@
       "badge": "Hecho para operaciones B2B",
       "title1": "Inventario inteligente para",
       "title2": "pequeñas empresas modernas.",
-      "subtitle": "InventoryFlow ayuda a almacenes y pequeñas empresas a gestionar inventario, movimientos, órdenes y flujos con código de barras en una sola plataforma.",
+      "subtitle": "InventoryFlow ayuda a equipos B2B en crecimiento a centralizar inventario, órdenes y operaciones entre ubicaciones — con el control y visibilidad para escalar.",
       "ctaPrimary": "Iniciar prueba gratuita de 7 días",
       "ctaSecondary": "Ver cómo funciona",
       "fineprint": "No se requiere tarjeta · Puede requerir aprobación de configuración · Cancela cuando quieras"
     },
     "pricing": {
       "eyebrow": "Precios",
-      "title": "Precios simples y transparentes para equipos en crecimiento.",
-      "subtitle": "Empieza con una prueba gratuita de 7 días. Actualiza cuando estés listo.",
+      "title": "Precios simples y transparentes para operaciones en crecimiento.",
+      "subtitle": "Empieza con una prueba gratuita de 7 días. Actualiza cuando estés listo para escalar.",
       "perMonth": "/mes",
+      "setupFee": "Tarifa de configuración",
+      "usersLabel": "Usuarios",
+      "productsLabel": "Productos",
+      "locationsLabel": "Ubicaciones",
       "mostPopular": "Más popular",
       "contactSales": "Contactar a ventas",
-      "startTrial": "Iniciar prueba de 7 días",
+      "startTrial": "Iniciar prueba gratis",
+      "upgradeToPro": "Actualizar a Pro",
       "choosePlan": "Elegir plan",
-      "trialNote": "Todos los planes pagos incluyen una prueba gratis de 7 días. No se requiere tarjeta.",
+      "trialNote": "No se requiere tarjeta · Puede requerir aprobación · Cancela cuando quieras · Onboarding completo disponible",
+      "freeTrialBanner": "Prueba gratis de 7 días",
+      "modulesLabel": "Módulos incluidos",
+      "limitsLabel": "Límites del plan",
+      "recurringModel": "SaaS recurrente — cancela cuando quieras",
       "plans": {
         "trial": {
           "name": "Prueba gratis",
           "price": "Gratis",
           "period": "7 días",
-          "tagline": "Prueba la mayoría de funciones Pro por 7 días.",
+          "tagline": "Prueba funciones Pro por 7 días. No hay plan gratuito permanente.",
           "features": [
-            "Acceso a la mayoría de funciones Pro",
+            "Acceso completo a funciones Pro",
             "Hasta 2 usuarios",
             "Hasta 100 productos",
             "1 ubicación",
             "Marca InventoryFlow visible",
-            "Sin exportaciones avanzadas",
-            "Sin soporte prioritario"
+            "Onboarding guiado",
+            "Cancela cuando quieras"
           ]
         },
         "starter": {
           "name": "Starter",
-          "price": "$39",
+          "price": "$29",
+          "setupFee": "$49 único",
           "tagline": "Para pequeñas empresas que se organizan.",
           "features": [
+            "Panel de control",
             "Productos y catálogo",
             "Movimientos de stock",
+            "Escáner de códigos",
+            "Alertas de stock bajo",
             "Órdenes de venta y compra",
             "Historial de transacciones",
-            "Exportaciones básicas (CSV)",
+            "Exportaciones CSV básicas",
             "Hasta 3 usuarios",
             "Hasta 500 productos",
             "Hasta 2 ubicaciones"
@@ -183,18 +196,19 @@
         },
         "pro": {
           "name": "Pro",
-          "price": "$149",
+          "price": "$99",
+          "setupFee": "$199 único",
           "tagline": "Para operaciones en crecimiento que necesitan control.",
           "features": [
             "Todo lo de Starter",
-            "Transferencias entre ubicaciones",
+            "Órdenes de transferencia",
             "Seguimiento de uso interno",
             "Reportes y analíticas",
             "Exportaciones completas (CSV, PDF, XLSX)",
             "Inventario multi-ubicación",
-            "Visibilidad avanzada de inventario",
             "Flujos de aprobación",
             "Hasta 25 usuarios",
+            "Productos ilimitados",
             "Hasta 10 ubicaciones"
           ]
         },
@@ -205,9 +219,10 @@
           "features": [
             "Usuarios ilimitados",
             "Ubicaciones ilimitadas",
+            "Productos ilimitados",
             "Todos los módulos + módulos personalizados",
             "Permisos avanzados",
-            "Asistencia de onboarding",
+            "Onboarding dedicado",
             "Soporte prioritario",
             "Roadmap de API e integraciones"
           ]
@@ -296,6 +311,17 @@
           }
         ]
       }
+    },
+    "recurring": {
+      "eyebrow": "Hecho para crecer",
+      "title": "Escala tus operaciones sin fricción.",
+      "subtitle": "Una plataforma SaaS recurrente diseñada para empresas que necesitan control operativo y visibilidad.",
+      "points": [
+        "Hecho para operaciones en crecimiento",
+        "Escala tus flujos de inventario",
+        "Centraliza operaciones entre ubicaciones",
+        "Reduce errores de inventario y mejora la visibilidad"
+      ]
     },
     "cta": {
       "eyebrow": "Cuando estés listo",
