@@ -137,7 +137,17 @@ export type TransferOrder = {
   completed_date: string | null;
   notes: string | null;
   created_at: string;
+  created_by: string | null;
   items?: TransferItem[];
+};
+
+export type TransferMovement = {
+  id: string;
+  created_at: string;
+  product_id: string;
+  type: "add" | "remove" | "adjustment";
+  quantity: number;
+  note: string | null;
 };
 
 // ---------------- Helpers ----------------
