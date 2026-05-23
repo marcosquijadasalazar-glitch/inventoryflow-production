@@ -187,6 +187,26 @@ function AdminPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
+            <Inbox className="h-4 w-4 text-primary" /> New Access Requests
+            {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length > 0 && (
+              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">
+                {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <AccessRequestsTable
+            users={(users.data ?? []).filter((u: any) => u.account_status === "pending_approval")}
+            loading={users.isLoading}
+            onChanged={refetchAll}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
             <Building2 className="h-4 w-4 text-primary" /> Companies
           </CardTitle>
         </CardHeader>
