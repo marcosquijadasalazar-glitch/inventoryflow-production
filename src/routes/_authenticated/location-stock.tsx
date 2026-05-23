@@ -26,6 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft, MapPin, Search } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
 
 const sb = supabase as any;
 
@@ -149,6 +151,24 @@ function LocationStockPage() {
             <ArrowLeft className="h-4 w-4" /> {t("ls.back_to_transfers", "Back to Transfers")}
           </Link>
         </Button>
+      </div>
+
+      <div className="flex justify-end">
+        <ExportMenu
+          title={`${t("ls.title", "Location Stock")}${selectedLoc ? " — " + selectedLoc.name : ""}`}
+          filename={`location-stock${selectedLoc ? "-" + selectedLoc.name.toLowerCase().replace(/\s+/g, "-") : ""}`}
+          rows={rows}
+          columns={[
+            { key: "name", header: "Product", get: (r: any) => r.p.name },
+            { key: "sku", header: "SKU", get: (r: any) => r.p.sku },
+            { key: "barcode", header: "Barcode", get: (r: any) => r.p.barcode ?? "" },
+            { key: "category", header: "Category", get: (r: any) => r.p.category ?? "" },
+            { key: "atLocation", header: "At location", align: "right", get: (r: any) => r.atLocation ?? "" },
+            { key: "total", header: "Total stock", align: "right", get: (r: any) => r.p.stock ?? 0 },
+            { key: "lastMove", header: "Last movement", get: (r: any) => r.lastMove ? new Date(r.lastMove).toLocaleString() : "" },
+          ]}
+          meta={selectedLoc ? [{ label: "Location", value: selectedLoc.name }] : undefined}
+        />
       </div>
 
       <Card className="border-border shadow-soft">

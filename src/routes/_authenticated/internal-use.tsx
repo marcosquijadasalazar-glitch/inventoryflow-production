@@ -33,6 +33,18 @@ import { Wrench, AlertTriangle } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
 import { useProfile, canManageOrg } from "@/lib/profile";
 import { format } from "date-fns";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+
+const IU_EXPORT_COLUMNS: ExportColumn<any>[] = [
+  { key: "date", header: "Date", get: (r) => new Date(r.created_at).toLocaleString() },
+  { key: "product_name", header: "Product" },
+  { key: "sku", header: "SKU" },
+  { key: "barcode", header: "Barcode" },
+  { key: "quantity_change", header: "Qty", align: "right" },
+  { key: "reason", header: "Reason / Department" },
+  { key: "user_email", header: "User" },
+];
 
 export const Route = createFileRoute("/_authenticated/internal-use")({
   component: InternalUsePage,
@@ -226,8 +238,14 @@ function InternalUsePage() {
       </Card>
 
       <Card className="border-border shadow-soft">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">{t("iu.history", "Internal use history")}</CardTitle>
+          <ExportMenu
+            title={t("iu.title", "Internal Use")}
+            filename="internal-use"
+            rows={history.data ?? []}
+            columns={IU_EXPORT_COLUMNS}
+          />
         </CardHeader>
         <CardContent>
           {history.isLoading ? (

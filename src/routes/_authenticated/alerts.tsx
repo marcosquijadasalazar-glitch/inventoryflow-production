@@ -18,6 +18,21 @@ import { StockBadge, StockHealthBar } from "@/components/StockBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+import type { Product } from "@/lib/inventory";
+
+const ALERT_EXPORT_COLUMNS: ExportColumn<Product>[] = [
+  { key: "name", header: "Product" },
+  { key: "sku", header: "SKU" },
+  { key: "barcode", header: "Barcode" },
+  { key: "category", header: "Category" },
+  { key: "supplier", header: "Supplier" },
+  { key: "location", header: "Location" },
+  { key: "status", header: "Status", get: (p) => getStockStatus(p) },
+  { key: "stock", header: "Stock", align: "right" },
+  { key: "min_stock", header: "Min", align: "right" },
+];
 
 export const Route = createFileRoute("/_authenticated/alerts")({
   component: AlertsPage,
@@ -72,14 +87,23 @@ function AlertsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wider text-[oklch(0.55_0.16_70)] mb-1.5">
-          Attention required
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Stock Alerts</h1>
-        <p className="text-muted-foreground mt-1">
-          Products needing review based on stock thresholds and activity.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-[oklch(0.55_0.16_70)] mb-1.5">
+            Attention required
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">Stock Alerts</h1>
+          <p className="text-muted-foreground mt-1">
+            Products needing review based on stock thresholds and activity.
+          </p>
+        </div>
+        <ExportMenu
+          title={`Stock Alerts — ${filter}`}
+          filename={`alerts-${filter}`}
+          rows={list}
+          columns={ALERT_EXPORT_COLUMNS}
+          meta={[{ label: "View", value: filter }]}
+        />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
