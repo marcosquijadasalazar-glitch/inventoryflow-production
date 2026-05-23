@@ -368,6 +368,9 @@
     "empty_short": "No locations yet",
     "created": "Location created",
     "name_required": "Name is required",
+    "unassigned": "Unassigned",
+    "available": "Available",
+    "last_movement": "Last movement",
     "types": {
       "warehouse": "Warehouse",
       "store": "Store",
