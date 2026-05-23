@@ -185,6 +185,8 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
+      <UsageSummaryCard usage={usageQ.data ?? undefined} />
+
       <CategoryManagerCard />
 
       <Card>
