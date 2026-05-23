@@ -42,10 +42,23 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!fullName.trim() || !companyName.trim()) {
+          setError("Full name and company name are required.");
+          setBusy(false);
+          return;
+        }
         const { error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-confirmed`,
+            data: {
+              full_name: fullName.trim(),
+              company_name: companyName.trim(),
+              business_type: businessType.trim() || null,
+              phone: phone.trim() || null,
+            },
+          },
         });
         if (err) throw err;
         setSignupSuccess(true);
