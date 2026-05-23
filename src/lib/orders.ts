@@ -658,6 +658,8 @@ export async function createTransferOrder(input: {
       );
     }
   }
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id ?? null;
   const { data: t, error } = await sb
     .from("transfer_orders")
     .insert({
@@ -669,6 +671,7 @@ export async function createTransferOrder(input: {
       transfer_date: input.transfer_date,
       notes: input.notes,
       status: input.status,
+      created_by: uid,
     })
     .select()
     .single();
