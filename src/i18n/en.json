@@ -45,6 +45,7 @@
     "purchaseOrders": "Purchase Orders",
     "salesOrders": "Sales Orders",
     "transferOrders": "Transfers",
+    "locationStock": "Location Stock",
     "internalUse": "Internal Use",
     "history": "Transaction History",
     "scanner": "Barcode Scanner",
@@ -337,7 +338,24 @@
       "in_transit": "In transit",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    }
+    },
+    "view_details": "View details",
+    "completed_date": "Completed",
+    "related_movements": "Related inventory movements",
+    "no_movements": "No linked movements yet."
+  },
+  "ls": {
+    "section": "Inventory",
+    "title": "Location Stock",
+    "subtitle": "View stock by location, derived from completed transfers.",
+    "pick": "Pick a location",
+    "pick_first": "Pick a location",
+    "search_ph": "Search by name, SKU, barcode, category",
+    "at_location": "At location",
+    "total_stock": "Total stock",
+    "last_move": "Last movement",
+    "back_to_transfers": "Back to Transfers",
+    "note": "Per-location stock is derived from completed transfer orders (incoming − outgoing)."
   },
   "loc": {
     "new": "New Location",
