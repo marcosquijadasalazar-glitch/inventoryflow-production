@@ -39,6 +39,7 @@ function useNavItems() {
     { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart },
     { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt },
     { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft },
+    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse },
     { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench },
     { to: "/history", label: t("nav.history"), icon: History },
     { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
