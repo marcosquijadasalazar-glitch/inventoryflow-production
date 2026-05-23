@@ -410,6 +410,10 @@ type UserRow = {
   suspended_at: string | null;
   archived_at: string | null;
   status: Status;
+  account_status?:
+    | "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected"
+    | null;
+  trial_ends_at?: string | null;
   created_at: string;
 };
 
