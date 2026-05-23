@@ -52,6 +52,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, Trash2, MoreHorizontal, Truck, ShoppingCart } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+
+const PO_EXPORT_COLUMNS: ExportColumn<PurchaseOrder>[] = [
+  { key: "po_number", header: "PO #" },
+  { key: "supplier", header: "Supplier", get: (p) => p.suppliers?.name ?? "" },
+  { key: "status", header: "Status" },
+  { key: "order_date", header: "Order date", get: (p) => p.order_date ?? "" },
+  { key: "expected_date", header: "Expected", get: (p) => p.expected_date ?? "" },
+  { key: "received_date", header: "Received", get: (p) => p.received_date ?? "" },
+  { key: "subtotal", header: "Subtotal", align: "right", get: (p) => Number(p.subtotal).toFixed(2) },
+  { key: "tax", header: "Tax", align: "right", get: (p) => Number(p.tax).toFixed(2) },
+  { key: "total", header: "Total", align: "right", get: (p) => Number(p.total).toFixed(2) },
+];
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({
   component: PurchaseOrdersPage,
@@ -86,9 +100,18 @@ function PurchaseOrdersPage() {
             {t("po.subtitle", "Buy inventory from suppliers and receive stock.")}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
-          <Plus className="h-4 w-4" /> {t("po.create", "Create Purchase Order")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ExportMenu
+            title={t("po.title", "Purchase Orders")}
+            filename="purchase-orders"
+            rows={pos.data ?? []}
+            columns={PO_EXPORT_COLUMNS}
+            orientation="landscape"
+          />
+          <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
+            <Plus className="h-4 w-4" /> {t("po.create", "Create Purchase Order")}
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border shadow-soft">

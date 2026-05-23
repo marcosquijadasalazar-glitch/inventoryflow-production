@@ -58,6 +58,18 @@ import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput
 import { LocationSelect } from "@/components/LocationSelect";
 import { LocationFormDialog } from "@/components/LocationFormDialog";
 import { TransferDetailsDrawer } from "@/components/TransferDetailsDrawer";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+
+const TRANSFER_EXPORT_COLUMNS: ExportColumn<TransferOrder>[] = [
+  { key: "transfer_number", header: "Transfer #" },
+  { key: "from_location", header: "From", get: (t) => t.from_location ?? "" },
+  { key: "to_location", header: "To", get: (t) => t.to_location ?? "" },
+  { key: "status", header: "Status" },
+  { key: "transfer_date", header: "Date", get: (t) => t.transfer_date ?? "" },
+  { key: "completed_date", header: "Completed", get: (t) => t.completed_date ?? "" },
+  { key: "notes", header: "Notes", get: (t) => t.notes ?? "" },
+];
 
 export const Route = createFileRoute("/_authenticated/transfer-orders")({
   component: TransferOrdersPage,
@@ -122,6 +134,13 @@ function TransferOrdersPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ExportMenu
+            title={t("tr.title", "Transfer Orders")}
+            filename="transfer-orders"
+            rows={transfers.data ?? []}
+            columns={TRANSFER_EXPORT_COLUMNS}
+            orientation="landscape"
+          />
           <Button variant="outline" asChild>
             <Link to="/location-stock">
               <Warehouse className="h-4 w-4" /> {t("ls.title", "Location Stock")}

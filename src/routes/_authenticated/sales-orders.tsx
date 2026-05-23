@@ -21,6 +21,23 @@ import {
 } from "@/lib/orders";
 import { getCompanySettings } from "@/lib/settings";
 import { exportSalesOrderInvoicePdf } from "@/lib/pdf";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+
+const SO_EXPORT_COLUMNS: ExportColumn<SalesOrder>[] = [
+  { key: "so_number", header: "SO #" },
+  { key: "customer", header: "Customer", get: (s) => s.customers?.name ?? "" },
+  { key: "status", header: "Status" },
+  { key: "payment_status", header: "Payment" },
+  { key: "order_date", header: "Order date", get: (s) => s.order_date ?? "" },
+  { key: "fulfilled_date", header: "Fulfilled", get: (s) => s.fulfilled_date ?? "" },
+  { key: "subtotal", header: "Subtotal", align: "right", get: (s) => Number(s.subtotal).toFixed(2) },
+  { key: "tax", header: "Tax", align: "right", get: (s) => Number(s.tax).toFixed(2) },
+  { key: "discount", header: "Discount", align: "right", get: (s) => Number(s.discount).toFixed(2) },
+  { key: "total", header: "Total", align: "right", get: (s) => Number(s.total).toFixed(2) },
+  { key: "amount_paid", header: "Paid", align: "right", get: (s) => Number(s.amount_paid).toFixed(2) },
+  { key: "balance_due", header: "Balance", align: "right", get: (s) => Number(s.balance_due).toFixed(2) },
+];
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,9 +170,18 @@ function SalesOrdersPage() {
             {t("so.subtitle", "Sell and dispatch inventory to customers.")}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
-          <Plus className="h-4 w-4" /> {t("so.create", "Create Sales Order")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ExportMenu
+            title={t("so.title", "Sales Orders")}
+            filename="sales-orders"
+            rows={sos.data ?? []}
+            columns={SO_EXPORT_COLUMNS}
+            orientation="landscape"
+          />
+          <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
+            <Plus className="h-4 w-4" /> {t("so.create", "Create Sales Order")}
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border shadow-soft">

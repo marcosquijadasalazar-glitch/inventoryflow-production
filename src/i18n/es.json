@@ -38,6 +38,10 @@
     "exportXlsx": "Exportar Excel",
     "scanBarcode": "Escanear código"
   },
+  "export": {
+    "all_rows": "Todo filtrado ({{n}})",
+    "selected": "Seleccionados ({{n}})"
+  },
   "nav": {
     "dashboard": "Panel",
     "products": "Productos",
