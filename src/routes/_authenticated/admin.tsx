@@ -441,6 +441,12 @@ function OrgsTable({
                       >
                         Archive
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteOrgRow(o)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete company…
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -453,6 +459,28 @@ function OrgsTable({
         org={modulesOrg}
         onOpenChange={(open) => !open && setModulesOrg(null)}
         onSaved={onChanged}
+      />
+      <DeleteConfirmDialog
+        open={!!deleteOrgRow}
+        onOpenChange={(o) => !o && setDeleteOrgRow(null)}
+        texts={{
+          title: "Delete company",
+          description:
+            "This archives the company and revokes access for all its members. Inventory history, orders, payments, movements and audit logs are preserved.",
+          targetLabel: deleteOrgRow?.company_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await deleteOrg({
+            data: {
+              organization_id: deleteOrgRow!.id,
+              password,
+              confirmation: "DELETE",
+              reason,
+            },
+          });
+          toast.success("Company deleted");
+          onChanged();
+        }}
       />
     </div>
   );
