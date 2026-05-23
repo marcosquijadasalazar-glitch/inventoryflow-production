@@ -530,15 +530,15 @@ function Pricing() {
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <div className="text-xs font-semibold text-black">{planLimits.users}</div>
-                      <div className="text-[10px] text-black/50">Users</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.usersLabel")}</div>
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-black">{planLimits.products}</div>
-                      <div className="text-[10px] text-black/50">Products</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.productsLabel")}</div>
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-black">{planLimits.locations}</div>
-                      <div className="text-[10px] text-black/50">Locations</div>
+                      <div className="text-[10px] text-black/50">{t("landing.pricing.locationsLabel")}</div>
                     </div>
                   </div>
                 </div>
