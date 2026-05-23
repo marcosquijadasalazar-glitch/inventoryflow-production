@@ -184,6 +184,42 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          organization_id: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           active_status: boolean
@@ -793,11 +829,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           from_location: string | null
+          from_location_id: string | null
           id: string
           notes: string | null
           organization_id: string | null
           status: Database["public"]["Enums"]["transfer_status"]
           to_location: string | null
+          to_location_id: string | null
           transfer_date: string | null
           transfer_number: string
         }
@@ -806,11 +844,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           from_location?: string | null
+          from_location_id?: string | null
           id?: string
           notes?: string | null
           organization_id?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
           to_location?: string | null
+          to_location_id?: string | null
           transfer_date?: string | null
           transfer_number: string
         }
@@ -819,15 +859,32 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           from_location?: string | null
+          from_location_id?: string | null
           id?: string
           notes?: string | null
           organization_id?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
           to_location?: string | null
+          to_location_id?: string | null
           transfer_date?: string | null
           transfer_number?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transfer_orders_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -843,6 +900,7 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "owner" | "manager" | "employee"
+      location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
       org_plan: "free" | "starter" | "pro" | "enterprise"
       payment_status: "unpaid" | "paid" | "partial" | "refunded"
@@ -996,6 +1054,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "owner", "manager", "employee"],
+      location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
       movement_type: ["add", "remove", "adjustment"],
       org_plan: ["free", "starter", "pro", "enterprise"],
       payment_status: ["unpaid", "paid", "partial", "refunded"],
