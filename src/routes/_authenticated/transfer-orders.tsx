@@ -79,6 +79,7 @@ function TransferOrdersPage() {
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [newLocOpen, setNewLocOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
 
   const downloadPdf = async (tr: TransferOrder) => {
     try {
