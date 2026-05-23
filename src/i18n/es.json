@@ -309,6 +309,17 @@
         ]
       }
     },
+    "recurring": {
+      "eyebrow": "Hecho para crecer",
+      "title": "Escala tus operaciones sin fricción.",
+      "subtitle": "Una plataforma SaaS recurrente diseñada para empresas que necesitan control operativo y visibilidad.",
+      "points": [
+        "Hecho para operaciones en crecimiento",
+        "Escala tus flujos de inventario",
+        "Centraliza operaciones entre ubicaciones",
+        "Reduce errores de inventario y mejora la visibilidad"
+      ]
+    },
     "cta": {
       "eyebrow": "Cuando estés listo",
       "title": "Gestiona tu inventario como un equipo B2B moderno.",

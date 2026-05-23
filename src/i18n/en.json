@@ -309,6 +309,17 @@
         ]
       }
     },
+    "recurring": {
+      "eyebrow": "Built for growth",
+      "title": "Scale your operations without the overhead.",
+      "subtitle": "A recurring SaaS platform designed for businesses that need operational control and visibility.",
+      "points": [
+        "Built for growing operations",
+        "Scale your inventory workflows",
+        "Centralize operations across locations",
+        "Reduce inventory mistakes and improve visibility"
+      ]
+    },
     "cta": {
       "eyebrow": "Ready when you are",
       "title": "Start running your inventory like a modern B2B team.",

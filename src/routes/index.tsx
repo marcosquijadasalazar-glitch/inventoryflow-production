@@ -59,6 +59,7 @@ function LandingPage() {
       <Features />
       <HowItWorks />
       <WhoItsFor />
+      <BuiltForGrowth />
       <Pricing />
       <CompareTable />
       <FinalCTA />
