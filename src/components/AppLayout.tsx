@@ -29,29 +29,34 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScanBarcodeButton } from "./ScanBarcodeButton";
 import { useProfile } from "@/lib/profile";
+import { useEnabledModules } from "@/lib/use-modules";
+import type { ModuleKey } from "@/lib/modules";
 
 function useNavItems() {
   const { t } = useTranslation();
   const profile = useProfile();
-  const items = [
-    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-    { to: "/products", label: t("nav.products"), icon: Package },
-    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight },
-    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart },
-    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt },
-    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft },
-    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse },
-    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench },
-    { to: "/history", label: t("nav.history"), icon: History },
-    { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart },
-    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine },
-    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle },
-    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon },
+  const { modules } = useEnabledModules();
+  const isSuper = profile.data?.role === "super_admin";
+  const items: Array<{ to: string; label: string; icon: typeof Boxes; module: ModuleKey | null }> = [
+    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, module: "dashboard" },
+    { to: "/products", label: t("nav.products"), icon: Package, module: "products" },
+    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight, module: "movements" },
+    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart, module: "purchase_orders" },
+    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt, module: "sales_orders" },
+    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft, module: "transfer_orders" },
+    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse, module: "location_stock" },
+    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use" },
+    { to: "/history", label: t("nav.history"), icon: History, module: "history" },
+    { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart, module: "reports" },
+    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine, module: "scanner" },
+    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle, module: "alerts" },
+    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon, module: "settings" },
   ];
-  if (profile.data?.role === "super_admin") {
-    items.push({ to: "/admin", label: "Admin", icon: Shield });
+  const visible = items.filter((i) => isSuper || !i.module || modules[i.module]);
+  if (isSuper) {
+    visible.push({ to: "/admin", label: "Admin", icon: Shield, module: null });
   }
-  return items;
+  return visible;
 }
 
 function NavItem({
