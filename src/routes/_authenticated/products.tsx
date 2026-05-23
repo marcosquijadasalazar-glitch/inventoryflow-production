@@ -76,6 +76,8 @@ import { toast } from "sonner";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { productsToCsv, downloadCsv } from "@/lib/csv";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -418,9 +420,13 @@ function ProductsPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={exportAll}>
-            <Download className="h-4 w-4" /> {t("common.export")}
-          </Button>
+          <ExportMenu
+            title={t("products.title", "Products")}
+            filename="products"
+            rows={filtered}
+            selectedRows={(data ?? []).filter((p) => selected.has(p.id))}
+            columns={PRODUCT_EXPORT_COLUMNS}
+          />
           <Button variant="outline" onClick={() => setScanOpen(true)}>
             <ScanLine className="h-4 w-4" /> {t("common.scanBarcode")}
           </Button>
