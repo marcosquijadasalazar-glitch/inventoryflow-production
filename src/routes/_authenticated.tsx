@@ -98,7 +98,8 @@ function AuthenticatedLayout() {
     );
   }
 
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+
 
   return (
     <AppLayout>
