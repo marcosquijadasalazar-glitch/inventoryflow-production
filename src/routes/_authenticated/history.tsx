@@ -34,6 +34,22 @@ import {
 import { downloadCsv } from "@/lib/csv";
 import { exportHistoryPdf } from "@/lib/pdf";
 import { exportHistoryXlsx } from "@/lib/xlsx-export";
+import { ExportMenu } from "@/components/ExportMenu";
+import type { ExportColumn } from "@/lib/exporters";
+
+const HISTORY_EXPORT_COLUMNS: ExportColumn<TransactionRow>[] = [
+  { key: "date", header: "Date", get: (r) => new Date(r.created_at).toLocaleString() },
+  { key: "type", header: "Type" },
+  { key: "source", header: "Source" },
+  { key: "product_name", header: "Product" },
+  { key: "sku", header: "SKU" },
+  { key: "barcode", header: "Barcode" },
+  { key: "quantity_change", header: "Qty", align: "right" },
+  { key: "previous_stock", header: "Prev", align: "right" },
+  { key: "new_stock", header: "New", align: "right" },
+  { key: "reason", header: "Reason" },
+  { key: "user_email", header: "User" },
+];
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
@@ -168,22 +184,13 @@ function HistoryPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={exportCsv}>
-            <Download className="h-4 w-4 mr-1.5" /> {t("common.exportCsv")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportHistoryXlsx(filtered)}
-          >
-            <Download className="h-4 w-4 mr-1.5" /> {t("common.exportXlsx")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => exportHistoryPdf(filtered, settings ?? null)}
-          >
-            <FileText className="h-4 w-4 mr-1.5" /> {t("common.exportPdf")}
-          </Button>
+          <ExportMenu
+            title={t("history.title", "Transaction History")}
+            filename="history"
+            rows={filtered}
+            columns={HISTORY_EXPORT_COLUMNS}
+            orientation="landscape"
+          />
         </div>
       </header>
 
