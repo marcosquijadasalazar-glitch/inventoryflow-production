@@ -227,6 +227,9 @@ export type Database = {
           business_type: string | null
           company_name: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
           enabled_modules: Json
           id: string
           is_active: boolean
@@ -242,6 +245,9 @@ export type Database = {
           business_type?: string | null
           company_name: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           enabled_modules?: Json
           id?: string
           is_active?: boolean
@@ -257,6 +263,9 @@ export type Database = {
           business_type?: string | null
           company_name?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           enabled_modules?: Json
           id?: string
           is_active?: boolean
@@ -364,6 +373,9 @@ export type Database = {
           business_type: string | null
           company_name: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -382,6 +394,9 @@ export type Database = {
           business_type?: string | null
           company_name?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -400,6 +415,9 @@ export type Database = {
           business_type?: string | null
           company_name?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           email?: string | null
           full_name?: string | null
           id?: string

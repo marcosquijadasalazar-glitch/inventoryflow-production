@@ -84,7 +84,9 @@ import {
   type PresetName,
 } from "@/lib/modules";
 import { Switch } from "@/components/ui/switch";
-import { Settings2 } from "lucide-react";
+import { Settings2, Trash2 } from "lucide-react";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { deleteUserSecure, deleteOrganizationSecure } from "@/lib/delete.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -326,7 +328,9 @@ function OrgsTable({
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
+  const deleteOrg = useServerFn(deleteOrganizationSecure);
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
+  const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
@@ -437,6 +441,12 @@ function OrgsTable({
                       >
                         Archive
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteOrgRow(o)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete company…
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -449,6 +459,28 @@ function OrgsTable({
         org={modulesOrg}
         onOpenChange={(open) => !open && setModulesOrg(null)}
         onSaved={onChanged}
+      />
+      <DeleteConfirmDialog
+        open={!!deleteOrgRow}
+        onOpenChange={(o) => !o && setDeleteOrgRow(null)}
+        texts={{
+          title: "Delete company",
+          description:
+            "This archives the company and revokes access for all its members. Inventory history, orders, payments, movements and audit logs are preserved.",
+          targetLabel: deleteOrgRow?.company_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await deleteOrg({
+            data: {
+              organization_id: deleteOrgRow!.id,
+              password,
+              confirmation: "DELETE",
+              reason,
+            },
+          });
+          toast.success("Company deleted");
+          onChanged();
+        }}
       />
     </div>
   );
@@ -697,6 +729,8 @@ function UsersTable({
   const assign = useServerFn(adminAssignUser);
   const setStatus = useServerFn(adminSetUserStatus);
   const setAccountStatus = useServerFn(adminSetAccountStatus);
+  const deleteUser = useServerFn(deleteUserSecure);
+  const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -888,6 +922,12 @@ function UsersTable({
                     >
                       Archive
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteUserRow(u)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete user…
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -895,6 +935,28 @@ function UsersTable({
           ))}
         </TableBody>
       </Table>
+      <DeleteConfirmDialog
+        open={!!deleteUserRow}
+        onOpenChange={(o) => !o && setDeleteUserRow(null)}
+        texts={{
+          title: "Delete user",
+          description:
+            "This deactivates the user's login and archives their profile. Audit logs and history are preserved. Consider suspending instead if this is temporary.",
+          targetLabel: deleteUserRow?.email ?? deleteUserRow?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await deleteUser({
+            data: {
+              user_id: deleteUserRow!.user_id,
+              password,
+              confirmation: "DELETE",
+              reason,
+            },
+          });
+          toast.success("User deleted");
+          onChanged();
+        }}
+      />
     </div>
   );
 }
