@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Boxes,
   ArrowRight,
@@ -32,8 +33,16 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: LandingPage,
+  component: LandingRoute,
 });
+
+function LandingRoute() {
+  return (
+    <ErrorBoundary name="LandingPage" context={{ route: "/" }}>
+      <LandingPage />
+    </ErrorBoundary>
+  );
+}
 
 function LandingPage() {
   return (

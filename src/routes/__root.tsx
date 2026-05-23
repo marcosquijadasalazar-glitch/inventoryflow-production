@@ -34,19 +34,20 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  // Structured log so we can correlate production crashes with route/session.
+  const route = typeof window !== "undefined" ? window.location.pathname : "ssr";
+  const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
   // eslint-disable-next-line no-console
   console.error("[__root ErrorComponent]", {
-    route: typeof window !== "undefined" ? window.location.pathname : "ssr",
-    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    route,
+    userAgent,
     message: error?.message,
     stack: error?.stack,
   });
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="max-w-xl w-full text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
@@ -70,6 +71,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             Go home
           </a>
         </div>
+        <details className="mt-6 text-left rounded-md border border-border bg-muted/40 p-3 text-xs">
+          <summary className="cursor-pointer font-medium text-foreground">
+            Show error details
+          </summary>
+          <div className="mt-2 space-y-2 font-mono text-[11px] text-muted-foreground break-all">
+            <div><span className="text-foreground">route:</span> {route}</div>
+            <div><span className="text-foreground">message:</span> {error?.message || "(no message)"}</div>
+            <div><span className="text-foreground">user-agent:</span> {userAgent}</div>
+            {error?.stack ? (
+              <pre className="whitespace-pre-wrap text-[10px] leading-snug">{error.stack}</pre>
+            ) : null}
+          </div>
+        </details>
       </div>
     </div>
   );
