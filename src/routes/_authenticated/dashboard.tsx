@@ -245,6 +245,9 @@ function Dashboard() {
         <OperationsWidgets />
       </ErrorBoundary>
 
+      {usageQ.data && <UsageSummaryCard usage={usageQ.data} />}
+
+
 
       <ErrorBoundary name="DashboardLowerGrid">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
