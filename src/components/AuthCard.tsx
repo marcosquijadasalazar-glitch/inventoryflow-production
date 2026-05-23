@@ -146,6 +146,18 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
             </p>
           </div>
 
+          {signupSuccess && (
+            <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+              <p className="font-medium text-foreground">Account created.</p>
+              <p className="mt-1 text-muted-foreground">
+                Check your email to verify your account. After verification, your account will be reviewed by an administrator.
+              </p>
+              <Link to="/login" className="mt-3 inline-block text-primary font-medium hover:underline">
+                Back to Login
+              </Link>
+            </div>
+          )}
+
           <Button type="button" variant="outline" className="w-full h-11 shadow-soft" onClick={google} disabled={googleBusy || busy}>
             <GoogleIcon />
             {googleBusy ? "Redirecting…" : "Continue with Google"}
