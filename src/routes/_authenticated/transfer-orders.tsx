@@ -14,7 +14,7 @@ import {
 } from "@/lib/orders";
 import { listLocations, type Location } from "@/lib/locations";
 import { listProducts } from "@/lib/inventory";
-import { loadSettings } from "@/lib/settings";
+import { getCompanySettings } from "@/lib/settings";
 import { exportTransferOrderPdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ function TransferOrdersPage() {
   const downloadPdf = async (tr: TransferOrder) => {
     try {
       const [settings, fullRes] = await Promise.all([
-        loadSettings().catch(() => null),
+        getCompanySettings().catch(() => null),
         import("@/lib/orders").then((m) => m.getTransferOrder(tr.id)),
       ]);
       const full = fullRes ?? tr;
