@@ -107,7 +107,7 @@ function AuthenticatedLayout() {
   );
 }
 
-function ModuleGate({ pathname, children }: { pathname: string; children: React.ReactNode }) {
+function ModuleGate({ pathname, children }: { pathname: string; children: ReactNode }) {
   const profile = useProfile();
   const { modules, isLoading } = useEnabledModules();
   const isSuper = profile.data?.role === "super_admin";
