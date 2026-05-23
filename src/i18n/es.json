@@ -337,7 +337,24 @@
       "in_transit": "En tránsito",
       "completed": "Completada",
       "cancelled": "Cancelada"
-    }
+    },
+    "view_details": "Ver detalles",
+    "completed_date": "Completada",
+    "related_movements": "Movimientos de inventario relacionados",
+    "no_movements": "Aún no hay movimientos vinculados."
+  },
+  "ls": {
+    "section": "Inventario",
+    "title": "Stock por ubicación",
+    "subtitle": "Consulta el stock por ubicación, calculado a partir de transferencias completadas.",
+    "pick": "Selecciona una ubicación",
+    "pick_first": "Selecciona una ubicación",
+    "search_ph": "Buscar por nombre, SKU, código de barras o categoría",
+    "at_location": "En ubicación",
+    "total_stock": "Stock total",
+    "last_move": "Último movimiento",
+    "back_to_transfers": "Volver a transferencias",
+    "note": "El stock por ubicación se calcula a partir de transferencias completadas (entradas − salidas)."
   },
   "loc": {
     "new": "Nueva ubicación",
