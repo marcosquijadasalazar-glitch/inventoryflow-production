@@ -31,6 +31,7 @@ function SettingsPage() {
     queryKey: ["company-settings"],
     queryFn: getCompanySettings,
   });
+  const usageQ = useOrgUsage();
   const [form, setForm] = useState<Partial<CompanySettings>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
