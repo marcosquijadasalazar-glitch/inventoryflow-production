@@ -15,6 +15,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  // IMPORTANT: All hooks must be declared at the top before any conditional
+  // returns. Adding/reordering hooks below an early return causes React #310
+  // (hook order mismatch) on subsequent renders.
   const { session, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -25,6 +28,7 @@ function AuthenticatedLayout() {
     enabled: !!session,
     staleTime: 30_000,
   });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     if (!loading && !session) {
