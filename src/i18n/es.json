@@ -368,6 +368,9 @@
     "empty_short": "Aún no hay ubicaciones",
     "created": "Ubicación creada",
     "name_required": "El nombre es obligatorio",
+    "unassigned": "Sin asignar",
+    "available": "Disponible",
+    "last_movement": "Último movimiento",
     "types": {
       "warehouse": "Almacén",
       "store": "Tienda",
