@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   ArrowRight,
   Check,
+  X,
   Boxes,
   Package,
   ArrowLeftRight,
@@ -16,22 +19,23 @@ import {
   Truck,
   Store,
   Wrench,
+  Star,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "InventoryFlow — Smart inventory for modern small businesses" },
+      { title: "InventoryFlow — Smart inventory for modern B2B teams" },
       {
         name: "description",
         content:
-          "Manage inventory, stock movements, orders and barcode workflows in one simple platform built for warehouses and small businesses.",
+          "Inventory, stock movements, orders and barcode workflows for warehouses and small businesses. Start a free 7-day trial — no credit card required.",
       },
-      { property: "og:title", content: "InventoryFlow — Smart inventory for modern small businesses" },
+      { property: "og:title", content: "InventoryFlow — Smart inventory for modern B2B teams" },
       {
         property: "og:description",
         content:
-          "Manage inventory, stock movements, orders and barcode workflows in one simple platform.",
+          "Start a free 7-day trial. Manage inventory, orders and barcode workflows in one platform.",
       },
     ],
   }),
@@ -55,7 +59,9 @@ function LandingPage() {
       <Features />
       <HowItWorks />
       <WhoItsFor />
-      <RequestAccess />
+      <Pricing />
+      <CompareTable />
+      <FinalCTA />
       <SiteFooter />
     </div>
   );
@@ -63,26 +69,26 @@ function LandingPage() {
 
 /* ---------- Header ---------- */
 
-const NAV = [
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how" },
-  { label: "Who it's for", href: "#who" },
-  { label: "Request Access", href: "#request" },
-];
-
 function SiteHeader() {
+  const { t } = useTranslation();
+  const nav = [
+    { label: t("landing.nav.features"), href: "#features" },
+    { label: t("landing.nav.pricing"), href: "#pricing" },
+    { label: t("landing.nav.how"), href: "#how" },
+    { label: t("landing.nav.who"), href: "#who" },
+  ];
   return (
     <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/85 backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center">
-            <Boxes className="h-4.5 w-4.5 text-white" strokeWidth={2.25} />
+            <Boxes className="h-4 w-4 text-white" strokeWidth={2.25} />
           </div>
           <span className="font-semibold tracking-tight text-[15px]">InventoryFlow</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-black/70">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <a key={n.href} href={n.href} className="hover:text-black transition-colors">
               {n.label}
             </a>
@@ -90,18 +96,19 @@ function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
           <Button asChild variant="ghost" size="sm" className="h-9 text-black hover:bg-black/5">
-            <Link to="/login">Login</Link>
+            <Link to="/login">{t("landing.nav.login")}</Link>
           </Button>
           <Button
             asChild
             size="sm"
             className="h-9 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
           >
-            <a href="#request">
-              Request Access
+            <Link to="/signup">
+              {t("landing.nav.startTrial")}
               <ArrowRight className="h-3.5 w-3.5" />
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -112,22 +119,22 @@ function SiteHeader() {
 /* ---------- Hero ---------- */
 
 function Hero() {
+  const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-black/70">
           <span className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" />
-          Now in private beta
+          {t("landing.hero.badge")}
         </div>
 
         <h1 className="mt-6 text-4xl sm:text-5xl lg:text-[64px] font-semibold tracking-[-0.025em] max-w-4xl mx-auto leading-[1.02] text-black">
-          Smart inventory for{" "}
-          <span className="text-[#0066FF]">modern small businesses.</span>
+          {t("landing.hero.title1")}{" "}
+          <span className="text-[#0066FF]">{t("landing.hero.title2")}</span>
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-black/60 max-w-2xl mx-auto leading-relaxed">
-          InventoryFlow helps warehouses and small businesses manage inventory, stock movements,
-          orders, barcode workflows, and operations in one simple platform.
+          {t("landing.hero.subtitle")}
         </p>
 
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -136,10 +143,10 @@ function Hero() {
             size="lg"
             className="h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
           >
-            <a href="#request">
-              Request Early Access
+            <Link to="/signup">
+              {t("landing.hero.ctaPrimary")}
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </Button>
           <Button
             asChild
@@ -147,13 +154,11 @@ function Hero() {
             size="lg"
             className="h-11 px-5 border-black/15 text-black hover:bg-black/5 bg-white"
           >
-            <a href="#how">See how it works</a>
+            <a href="#how">{t("landing.hero.ctaSecondary")}</a>
           </Button>
         </div>
 
-        <p className="mt-5 text-xs text-black/50">
-          No credit card required · Cancel anytime
-        </p>
+        <p className="mt-5 text-xs text-black/50">{t("landing.hero.fineprint")}</p>
       </div>
     </section>
   );
@@ -166,7 +171,6 @@ function DashboardPreview() {
     <section className="pb-20 sm:pb-28">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.18)] overflow-hidden">
-          {/* Window chrome */}
           <div className="flex items-center gap-2 px-4 h-9 border-b border-black/[0.06] bg-[#FAFAFA]">
             <div className="flex gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
@@ -179,7 +183,6 @@ function DashboardPreview() {
           </div>
 
           <div className="grid grid-cols-12 min-h-[440px]">
-            {/* Sidebar */}
             <div className="hidden md:flex col-span-2 flex-col gap-0.5 p-3 border-r border-black/[0.06] bg-white">
               {[
                 { icon: LayoutDashboard, label: "Dashboard", active: true },
@@ -203,7 +206,6 @@ function DashboardPreview() {
               ))}
             </div>
 
-            {/* Main */}
             <div className="col-span-12 md:col-span-10 p-5 space-y-4 bg-[#FAFAFA]/60">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
@@ -249,11 +251,7 @@ function DashboardPreview() {
                           <span className="text-black/80">{r.name}</span>
                         </div>
                         <span
-                          className={
-                            r.in
-                              ? "text-[#0066FF] font-medium"
-                              : "text-black/70 font-medium"
-                          }
+                          className={r.in ? "text-[#0066FF] font-medium" : "text-black/70 font-medium"}
                         >
                           {r.qty}
                         </span>
@@ -297,51 +295,24 @@ function DashboardPreview() {
 
 function Features() {
   const features = [
-    {
-      icon: Package,
-      title: "Products & catalog",
-      desc: "One clean catalog with SKUs, barcodes, categories, suppliers, locations and live stock.",
-    },
-    {
-      icon: ArrowLeftRight,
-      title: "Stock movements",
-      desc: "Add, remove and adjust stock with a full audit trail — every change attributed and timestamped.",
-    },
-    {
-      icon: Receipt,
-      title: "Sales & purchase orders",
-      desc: "Issue orders, track fulfillment, and automatically reduce inventory when sales are confirmed.",
-    },
-    {
-      icon: ScanLine,
-      title: "Barcode workflows",
-      desc: "Scan in, scan out, and manage stock from any phone — no scanner hardware required.",
-    },
-    {
-      icon: AlertTriangle,
-      title: "Low-stock alerts",
-      desc: "Smart thresholds notify your team before something runs out, not after.",
-    },
-    {
-      icon: TrendingUp,
-      title: "Reports & insights",
-      desc: "Sales, inventory, movements and operations reports — exportable to CSV and PDF.",
-    },
+    { icon: Package, title: "Products & catalog", desc: "One clean catalog with SKUs, barcodes, categories, suppliers, locations and live stock." },
+    { icon: ArrowLeftRight, title: "Stock movements", desc: "Add, remove and adjust stock with a full audit trail — every change attributed and timestamped." },
+    { icon: Receipt, title: "Sales & purchase orders", desc: "Issue orders, track fulfillment, and automatically reduce inventory when sales are confirmed." },
+    { icon: ScanLine, title: "Barcode workflows", desc: "Scan in, scan out, and manage stock from any phone — no scanner hardware required." },
+    { icon: AlertTriangle, title: "Low-stock alerts", desc: "Smart thresholds notify your team before something runs out, not after." },
+    { icon: TrendingUp, title: "Reports & insights", desc: "Sales, inventory, movements and operations reports — exportable to CSV and PDF." },
   ];
 
   return (
     <section id="features" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Features
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Features</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
             Everything you need to run your operations.
           </h2>
           <p className="mt-3 text-black/60">
-            A focused set of tools designed for the day-to-day reality of small businesses and
-            warehouses.
+            A focused set of tools designed for the day-to-day reality of small businesses and warehouses.
           </p>
         </div>
 
@@ -349,7 +320,7 @@ function Features() {
           {features.map((f) => (
             <div key={f.title} className="bg-white p-7">
               <div className="h-9 w-9 rounded-lg bg-[#0066FF]/8 flex items-center justify-center mb-5">
-                <f.icon className="h-4.5 w-4.5 text-[#0066FF]" />
+                <f.icon className="h-4 w-4 text-[#0066FF]" />
               </div>
               <h3 className="font-semibold tracking-tight text-black">{f.title}</h3>
               <p className="mt-1.5 text-sm text-black/60 leading-relaxed">{f.desc}</p>
@@ -365,43 +336,24 @@ function Features() {
 
 function HowItWorks() {
   const steps = [
-    {
-      n: "01",
-      title: "Import your catalog",
-      desc: "Bring in your products with a CSV import or add them as you go. Categories, suppliers, locations — all included.",
-    },
-    {
-      n: "02",
-      title: "Track every movement",
-      desc: "Add stock, remove stock, scan barcodes, fulfill orders. Inventory updates in real time across your team.",
-    },
-    {
-      n: "03",
-      title: "Stay ahead with insights",
-      desc: "Get alerts before you run out, see what's moving, and export reports your accountant will actually like.",
-    },
+    { n: "01", title: "Import your catalog", desc: "Bring in your products with a CSV import or add them as you go. Categories, suppliers, locations — all included." },
+    { n: "02", title: "Track every movement", desc: "Add stock, remove stock, scan barcodes, fulfill orders. Inventory updates in real time across your team." },
+    { n: "03", title: "Stay ahead with insights", desc: "Get alerts before you run out, see what's moving, and export reports your accountant will actually like." },
   ];
   return (
     <section id="how" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            How it works
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">How it works</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
             From spreadsheets to running smoothly — in an afternoon.
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
           {steps.map((s) => (
-            <div
-              key={s.n}
-              className="rounded-2xl border border-black/[0.08] bg-white p-7"
-            >
+            <div key={s.n} className="rounded-2xl border border-black/[0.08] bg-white p-7">
               <div className="text-sm font-mono text-[#0066FF]">{s.n}</div>
-              <h3 className="mt-3 text-lg font-semibold tracking-tight text-black">
-                {s.title}
-              </h3>
+              <h3 className="mt-3 text-lg font-semibold tracking-tight text-black">{s.title}</h3>
               <p className="mt-2 text-sm text-black/60 leading-relaxed">{s.desc}</p>
             </div>
           ))}
@@ -415,44 +367,23 @@ function HowItWorks() {
 
 function WhoItsFor() {
   const audiences = [
-    {
-      icon: Building2,
-      title: "Warehouses",
-      desc: "Real-time stock across locations, with barcode-driven receiving and picking.",
-    },
-    {
-      icon: Store,
-      title: "Retail & e-commerce",
-      desc: "Keep online and in-store inventory in sync. Reduce overselling and stockouts.",
-    },
-    {
-      icon: Truck,
-      title: "Distributors",
-      desc: "Manage purchase and sales orders end-to-end with full visibility.",
-    },
-    {
-      icon: Wrench,
-      title: "Workshops & service",
-      desc: "Track parts, internal usage and reorder points without the spreadsheet pain.",
-    },
+    { icon: Building2, title: "Warehouses", desc: "Real-time stock across locations, with barcode-driven receiving and picking." },
+    { icon: Store, title: "Retail & e-commerce", desc: "Keep online and in-store inventory in sync. Reduce overselling and stockouts." },
+    { icon: Truck, title: "Distributors", desc: "Manage purchase and sales orders end-to-end with full visibility." },
+    { icon: Wrench, title: "Workshops & service", desc: "Track parts, internal usage and reorder points without the spreadsheet pain." },
   ];
   return (
     <section id="who" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Who it's for
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Who it's for</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Built for small teams that move fast.
+            Built for B2B teams that move fast.
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {audiences.map((a) => (
-            <div
-              key={a.title}
-              className="rounded-2xl border border-black/[0.08] bg-white p-6"
-            >
+            <div key={a.title} className="rounded-2xl border border-black/[0.08] bg-white p-6">
               <a.icon className="h-5 w-5 text-[#0066FF]" />
               <h3 className="mt-4 font-semibold tracking-tight text-black">{a.title}</h3>
               <p className="mt-1.5 text-sm text-black/60 leading-relaxed">{a.desc}</p>
@@ -464,28 +395,165 @@ function WhoItsFor() {
   );
 }
 
-/* ---------- Request access ---------- */
+/* ---------- Pricing ---------- */
 
-function RequestAccess() {
-  const bullets = [
-    "Priority onboarding",
-    "Direct line to the team",
-    "Lock in launch pricing",
+type PlanKey = "trial" | "starter" | "pro" | "enterprise";
+
+function Pricing() {
+  const { t } = useTranslation();
+  const plans: { key: PlanKey; popular?: boolean; cta: "trial" | "choose" | "contact"; to: string }[] = [
+    { key: "trial", cta: "trial", to: "/signup" },
+    { key: "starter", cta: "trial", to: "/signup" },
+    { key: "pro", popular: true, cta: "trial", to: "/signup" },
+    { key: "enterprise", cta: "contact", to: "/signup" },
   ];
+
+  return (
+    <section id="pricing" className="border-t border-black/[0.06] bg-white">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
+            {t("landing.pricing.eyebrow")}
+          </p>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
+            {t("landing.pricing.title")}
+          </h2>
+          <p className="mt-3 text-black/60">{t("landing.pricing.subtitle")}</p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {plans.map(({ key, popular, cta, to }) => {
+            const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
+            const price = t(`landing.pricing.plans.${key}.price`);
+            const isCustom = key === "enterprise";
+            const isTrial = key === "trial";
+            return (
+              <div
+                key={key}
+                className={`relative flex flex-col rounded-2xl border bg-white p-6 ${
+                  popular ? "border-[#0066FF] shadow-[0_24px_60px_-30px_rgba(0,102,255,0.45)]" : "border-black/[0.08]"
+                }`}
+              >
+                {popular && (
+                  <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-[#0066FF] px-2.5 py-1 text-[11px] font-medium text-white">
+                    <Star className="h-3 w-3" /> {t("landing.pricing.mostPopular")}
+                  </div>
+                )}
+                <div className="text-sm font-medium text-black">{t(`landing.pricing.plans.${key}.name`)}</div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-3xl font-semibold tracking-tight text-black">{price}</span>
+                  {!isCustom && !isTrial && (
+                    <span className="text-sm text-black/50">{t("landing.pricing.perMonth")}</span>
+                  )}
+                  {isTrial && (
+                    <span className="text-sm text-black/50">· {t("landing.pricing.plans.trial.period")}</span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm text-black/60 min-h-[40px]">
+                  {t(`landing.pricing.plans.${key}.tagline`)}
+                </p>
+                <ul className="mt-5 space-y-2.5 text-sm">
+                  {features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-black/80">
+                      <Check className="h-4 w-4 text-[#0066FF] shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 pt-4">
+                  <Button
+                    asChild
+                    className={`w-full h-10 ${
+                      popular
+                        ? "bg-[#0066FF] hover:bg-[#0052CC] text-white"
+                        : "bg-black hover:bg-black/85 text-white"
+                    } shadow-none`}
+                  >
+                    <Link to={to}>
+                      {cta === "trial"
+                        ? t("landing.pricing.startTrial")
+                        : cta === "contact"
+                          ? t("landing.pricing.contactSales")
+                          : t("landing.pricing.choosePlan")}
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-6 text-center text-xs text-black/50">{t("landing.pricing.trialNote")}</p>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Compare table ---------- */
+
+type CompareRow = { label: string; trial: string; starter: string; pro: string; enterprise: string };
+
+function CompareCell({ value }: { value: string }) {
+  if (value === "yes") return <Check className="h-4 w-4 text-[#0066FF] mx-auto" />;
+  if (value === "no") return <X className="h-4 w-4 text-black/25 mx-auto" />;
+  return <span className="text-sm text-black/80">{value}</span>;
+}
+
+function CompareTable() {
+  const { t } = useTranslation();
+  const rows = t("landing.pricing.compare.rows", { returnObjects: true }) as CompareRow[];
+  return (
+    <section className="border-t border-black/[0.06] bg-[#FAFAFA]">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <h3 className="text-xl sm:text-2xl font-semibold tracking-[-0.01em] text-black">
+          {t("landing.pricing.compare.title")}
+        </h3>
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-black/[0.08] bg-white">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="border-b border-black/[0.06] text-left">
+                <th className="px-5 py-3.5 font-medium text-black/60">{t("landing.pricing.compare.feature")}</th>
+                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.trial.name")}</th>
+                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.starter.name")}</th>
+                <th className="px-5 py-3.5 font-medium text-[#0066FF] text-center">{t("landing.pricing.plans.pro.name")}</th>
+                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.enterprise.name")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.label} className="border-b border-black/[0.04] last:border-0">
+                  <td className="px-5 py-3 text-black/80">{r.label}</td>
+                  <td className="px-5 py-3 text-center"><CompareCell value={r.trial} /></td>
+                  <td className="px-5 py-3 text-center"><CompareCell value={r.starter} /></td>
+                  <td className="px-5 py-3 text-center bg-[#0066FF]/[0.03]"><CompareCell value={r.pro} /></td>
+                  <td className="px-5 py-3 text-center"><CompareCell value={r.enterprise} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Final CTA ---------- */
+
+function FinalCTA() {
+  const { t } = useTranslation();
+  const bullets = t("landing.cta.bullets", { returnObjects: true }) as string[];
   return (
     <section id="request" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="rounded-3xl bg-black text-white p-10 sm:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-[#5C9BFF]">
-              Early access
+              {t("landing.cta.eyebrow")}
             </p>
             <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em]">
-              Ready to run your inventory like a modern team?
+              {t("landing.cta.title")}
             </h2>
-            <p className="mt-3 text-white/70 max-w-md">
-              Join the InventoryFlow early access program and get set up in minutes.
-            </p>
+            <p className="mt-3 text-white/70 max-w-md">{t("landing.cta.subtitle")}</p>
             <ul className="mt-6 space-y-2.5">
               {bullets.map((b) => (
                 <li key={b} className="flex items-center gap-2.5 text-sm text-white/85">
@@ -502,7 +570,7 @@ function RequestAccess() {
               className="h-12 px-6 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none text-base"
             >
               <Link to="/signup">
-                Request Early Access
+                {t("landing.cta.primary")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -512,7 +580,7 @@ function RequestAccess() {
               size="lg"
               className="h-12 px-6 bg-transparent border-white/25 text-white hover:bg-white/10 text-base"
             >
-              <a href="#how">See how it works</a>
+              <a href="#pricing">{t("landing.cta.secondary")}</a>
             </Button>
           </div>
         </div>
@@ -532,23 +600,14 @@ function SiteFooter() {
             <Boxes className="h-4 w-4 text-white" strokeWidth={2.25} />
           </div>
           <span className="text-sm font-medium text-black">InventoryFlow</span>
-          <span className="text-xs text-black/40 ml-2">
-            © {new Date().getFullYear()}
-          </span>
+          <span className="text-xs text-black/40 ml-2">© {new Date().getFullYear()}</span>
         </div>
         <div className="flex items-center gap-6 text-xs text-black/60">
-          <Link to="/privacy" className="hover:text-black transition-colors">
-            Privacy
-          </Link>
-          <Link to="/terms" className="hover:text-black transition-colors">
-            Terms
-          </Link>
-          <Link to="/service-agreement" className="hover:text-black transition-colors">
-            Service Agreement
-          </Link>
-          <Link to="/login" className="hover:text-black transition-colors">
-            Login
-          </Link>
+          <a href="#pricing" className="hover:text-black transition-colors">Pricing</a>
+          <Link to="/privacy" className="hover:text-black transition-colors">Privacy</Link>
+          <Link to="/terms" className="hover:text-black transition-colors">Terms</Link>
+          <Link to="/service-agreement" className="hover:text-black transition-colors">Service Agreement</Link>
+          <Link to="/login" className="hover:text-black transition-colors">Login</Link>
         </div>
       </div>
     </footer>
