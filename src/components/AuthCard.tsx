@@ -62,6 +62,16 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           },
         });
         if (err) throw err;
+        // Fire-and-forget admin notification — must never block signup.
+        void notifyAdminOfSignup({
+          data: {
+            fullName: fullName.trim(),
+            companyName: companyName.trim(),
+            businessType: businessType.trim(),
+            phone: phone.trim(),
+            email: email.trim(),
+          },
+        }).catch((e) => console.warn("[signup-notify] failed:", e?.message ?? e));
         setSignupSuccess(true);
         toast.success("Account created. Check your email to verify your account.");
       } else {
