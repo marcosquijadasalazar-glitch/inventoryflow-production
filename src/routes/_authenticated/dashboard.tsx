@@ -44,6 +44,7 @@ function Dashboard() {
   const { t } = useTranslation();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
+  const usageQ = useOrgUsage();
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("__all");
