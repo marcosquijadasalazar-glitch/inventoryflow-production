@@ -190,6 +190,42 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           </div>
 
           <form onSubmit={submit} className="space-y-4">
+            {mode === "signup" && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName">Full name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="fullName" autoComplete="name" placeholder="Jane Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-11" required />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="companyName">Company name</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="companyName" autoComplete="organization" placeholder="Acme Inc." value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="pl-9 h-11" required />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="businessType">Business type</Label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="businessType" placeholder="Warehouse, retail…" value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="pl-9 h-11" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="phone" type="tel" autoComplete="tel" placeholder="+1 555 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-9 h-11" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
