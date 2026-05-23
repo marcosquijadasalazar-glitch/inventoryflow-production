@@ -485,6 +485,7 @@ function UsersTable({
             <TableHead>Role</TableHead>
             <TableHead>Company</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Account</TableHead>
             <TableHead className="w-16"></TableHead>
           </TableRow>
         </TableHeader>
