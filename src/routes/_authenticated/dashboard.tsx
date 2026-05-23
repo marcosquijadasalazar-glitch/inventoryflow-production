@@ -33,6 +33,8 @@ import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { OperationsWidgets } from "@/components/OperationsWidgets";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { UsageSummaryCard } from "@/components/PlanLimitBanner";
+import { useOrgUsage } from "@/lib/use-org-usage";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -42,6 +44,7 @@ function Dashboard() {
   const { t } = useTranslation();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
+  const usageQ = useOrgUsage();
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("__all");
@@ -241,6 +244,9 @@ function Dashboard() {
       <ErrorBoundary name="OperationsWidgets">
         <OperationsWidgets />
       </ErrorBoundary>
+
+      {usageQ.data && <UsageSummaryCard usage={usageQ.data} />}
+
 
 
       <ErrorBoundary name="DashboardLowerGrid">

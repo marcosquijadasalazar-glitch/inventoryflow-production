@@ -123,12 +123,19 @@ export function ProductForm({
       onSaved();
       onOpenChange(false);
     } catch (e: any) {
-      const msg =
-        [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
-          .filter(Boolean)
-          .join(" — ") || "Failed to save";
-      setErrorMsg(msg);
-      toast.error(msg);
+      const planKind = (await import("@/lib/plan-limits")).parsePlanLimitError(e);
+      if (planKind) {
+        const msg = `${t("plan.limitReached")} ${t("plan.upgradePrompt")}`;
+        setErrorMsg(msg);
+        toast.error(msg);
+      } else {
+        const msg =
+          [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
+            .filter(Boolean)
+            .join(" — ") || "Failed to save";
+        setErrorMsg(msg);
+        toast.error(msg);
+      }
     } finally {
       setSaving(false);
     }

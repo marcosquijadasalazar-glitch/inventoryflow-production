@@ -71,7 +71,12 @@ export function LocationFormDialog({
       onCreated?.(loc);
       onClose();
     } catch (e: any) {
-      toast.error(e.message ?? String(e));
+      const { parsePlanLimitError } = await import("@/lib/plan-limits");
+      if (parsePlanLimitError(e)) {
+        toast.error(`${t("plan.limitReached")} ${t("plan.upgradePrompt")}`);
+      } else {
+        toast.error(e.message ?? String(e));
+      }
     } finally {
       setSaving(false);
     }

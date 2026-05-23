@@ -285,6 +285,33 @@ export const adminCreateUser = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CreateUserSchema.parse(input))
   .handler(async ({ context, data }) => {
     const me = await assertSuperAdmin(context.userId);
+
+    // Hard plan-limit pre-check (the BEFORE INSERT trigger on profiles is the
+    // real gate; this avoids leaving an orphan auth user when over the cap).
+    if (data.organization_id) {
+      const { data: orgRow } = await supabaseAdmin
+        .from("organizations")
+        .select("plan_type")
+        .eq("id", data.organization_id)
+        .maybeSingle();
+      const plan = (orgRow as any)?.plan_type as
+        | "free" | "starter" | "pro" | "enterprise" | undefined;
+      const { PLAN_LIMITS } = await import("./plan-limits");
+      const cap = plan ? PLAN_LIMITS[plan].max_users : null;
+      if (cap != null) {
+        const { count } = await supabaseAdmin
+          .from("profiles")
+          .select("user_id", { count: "exact", head: true })
+          .eq("organization_id", data.organization_id)
+          .is("deleted_at", null)
+          .is("archived_at", null)
+          .eq("is_active", true);
+        if ((count ?? 0) >= cap) {
+          throw new Error(`PLAN_LIMIT_USERS:${count}:${cap}`);
+        }
+      }
+    }
+
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,

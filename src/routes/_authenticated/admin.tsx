@@ -1163,7 +1163,12 @@ function CreateUserDialog({
       onOpenChange(false);
       onCreated();
     } catch (e: any) {
-      toast.error(e.message);
+      const { parsePlanLimitError } = await import("@/lib/plan-limits");
+      if (parsePlanLimitError(e)) {
+        toast.error("Plan user limit reached for this organization. Upgrade the plan to continue.");
+      } else {
+        toast.error(e.message);
+      }
     } finally {
       setSaving(false);
     }

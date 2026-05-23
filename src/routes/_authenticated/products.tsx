@@ -78,6 +78,9 @@ import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { productsToCsv, downloadCsv } from "@/lib/csv";
 import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
+import { useOrgUsage } from "@/lib/use-org-usage";
+import { PlanLimitBanner } from "@/components/PlanLimitBanner";
+import { isAtLimit } from "@/lib/plan-limits";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,6 +141,8 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: listProducts,
   });
+  const usageQ = useOrgUsage();
+  const productsAtLimit = isAtLimit(usageQ.data ?? undefined, "products");
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -451,11 +456,15 @@ function ProductsPage() {
               setOpen(true);
             }}
             className="shadow-soft"
+            disabled={productsAtLimit}
+            title={productsAtLimit ? t("plan.limitReached") : undefined}
           >
             <Plus className="h-4 w-4" /> {t("products.addProduct")}
           </Button>
         </div>
       </div>
+
+      <PlanLimitBanner usage={usageQ.data ?? undefined} kind="products" />
 
       {/* Saved views */}
       <div className="flex items-center gap-2 flex-wrap">

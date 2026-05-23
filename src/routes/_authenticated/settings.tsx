@@ -15,6 +15,8 @@ import {
 } from "@/lib/settings";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { CategoryManagerCard } from "@/components/CategoryManagerCard";
+import { UsageSummaryCard } from "@/components/PlanLimitBanner";
+import { useOrgUsage } from "@/lib/use-org-usage";
 import { Building2, Upload, Trash2, Settings as Cog } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +31,7 @@ function SettingsPage() {
     queryKey: ["company-settings"],
     queryFn: getCompanySettings,
   });
+  const usageQ = useOrgUsage();
   const [form, setForm] = useState<Partial<CompanySettings>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -181,6 +184,8 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <UsageSummaryCard usage={usageQ.data ?? undefined} />
 
       <CategoryManagerCard />
 
