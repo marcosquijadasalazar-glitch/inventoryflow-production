@@ -816,5 +816,16 @@
     "restoredToast": "Category restored",
     "empty": "No categories yet. Add your first one above.",
     "inUse": "In use by products"
+  },
+  "plan": {
+    "limitReached": "You reached your current plan limit.",
+    "upgradePrompt": "Upgrade your plan to continue.",
+    "upgradeCta": "Upgrade",
+    "usageTitle": "Plan usage",
+    "kinds": {
+      "users": "Users",
+      "products": "Products",
+      "locations": "Locations"
+    }
   }
 }
