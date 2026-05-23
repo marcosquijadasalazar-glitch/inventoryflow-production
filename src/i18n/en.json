@@ -59,6 +59,20 @@
     "blockedBody": "Your account or company access is currently inactive. Please contact your administrator.",
     "statusLabel": "Status"
   },
+  "onboarding": {
+    "verifiedTitle": "Email verified successfully.",
+    "verifiedPending": "Your account is pending approval.",
+    "verifiedReview": "An administrator will review your access shortly.",
+    "backToLogin": "Back to Login"
+  },
+  "pending": {
+    "title": "Your account is pending approval.",
+    "trialExpiredTitle": "Your free trial has ended.",
+    "suspendedTitle": "Your account is suspended.",
+    "rejectedTitle": "Your account access was rejected.",
+    "cancelledTitle": "Your account has been cancelled.",
+    "body": "An administrator will review your access shortly. You'll receive an email once your account is activated."
+  },
   "landing": {
     "login": "Log in",
     "startTrial": "Start Free Trial",
