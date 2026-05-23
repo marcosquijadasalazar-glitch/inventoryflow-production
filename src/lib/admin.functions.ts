@@ -464,11 +464,24 @@ export const getMyAccessStatus = createServerFn({ method: "GET" })
     }
     const p = profile as any;
     if (p.role === "super_admin") {
-      return { ok: true as const, reason: null, scope: "super_admin" as const };
+      return { ok: true as const, reason: null, scope: "super_admin" as const, account_status: "active" as const, trial_ends_at: null };
+    }
+    const accountStatus = (p.account_status ?? "active") as
+      | "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected";
+    const trialEndsAt = p.trial_ends_at ? new Date(p.trial_ends_at).getTime() : null;
+    const trialExpired = accountStatus === "trial_active" && trialEndsAt !== null && trialEndsAt <= Date.now();
+    if (!(accountStatus === "active" || (accountStatus === "trial_active" && !trialExpired))) {
+      return {
+        ok: false as const,
+        reason: trialExpired ? "trial_expired" : accountStatus,
+        scope: "account" as const,
+        account_status: accountStatus,
+        trial_ends_at: p.trial_ends_at ?? null,
+      };
     }
     const userStatus = deriveUserStatus(p);
     if (userStatus !== "active") {
-      return { ok: false as const, reason: userStatus, scope: "user" as const };
+      return { ok: false as const, reason: userStatus, scope: "user" as const, account_status: accountStatus, trial_ends_at: p.trial_ends_at ?? null };
     }
     if (p.organization_id) {
       const { data: org } = await supabaseAdmin
@@ -479,9 +492,62 @@ export const getMyAccessStatus = createServerFn({ method: "GET" })
       if (org) {
         const orgStatus = deriveOrgStatus(org as any);
         if (orgStatus !== "active") {
-          return { ok: false as const, reason: orgStatus, scope: "organization" as const };
+          return { ok: false as const, reason: orgStatus, scope: "organization" as const, account_status: accountStatus, trial_ends_at: p.trial_ends_at ?? null };
         }
       }
     }
-    return { ok: true as const, reason: null, scope: "ok" as const };
+    return { ok: true as const, reason: null, scope: "ok" as const, account_status: accountStatus, trial_ends_at: p.trial_ends_at ?? null };
+  });
+
+// ---------- Account status management (approval workflow) ----------
+
+const AccountStatusSchema = z.object({
+  user_id: z.string().uuid(),
+  status: z.enum(["pending_approval", "trial_active", "active", "suspended", "cancelled", "rejected"]),
+  trial_days: z.number().int().min(1).max(365).optional().nullable(),
+  reason: z.string().max(500).optional().nullable(),
+});
+
+export const adminSetAccountStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => AccountStatusSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const me = await assertSuperAdmin(context.userId);
+    if (data.user_id === context.userId) {
+      throw new Error("You cannot change your own account status");
+    }
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, email, account_status, trial_ends_at")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+    if (!existing) throw new Error("User not found");
+
+    const patch: Record<string, unknown> = { account_status: data.status };
+    if (data.status === "trial_active") {
+      const days = data.trial_days ?? 14;
+      patch.trial_ends_at = new Date(Date.now() + days * 86400000).toISOString();
+    } else if (data.status === "active") {
+      patch.trial_ends_at = null;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update(patch as never)
+      .eq("user_id", data.user_id);
+    if (error) throw new Error(error.message);
+
+    await writeAudit({
+      action_type: `account_${data.status}`,
+      target_type: "user",
+      target_id: data.user_id,
+      target_label: (existing as any).email ?? null,
+      performed_by: context.userId,
+      performed_by_email: me?.email ?? null,
+      previous_status: (existing as any).account_status ?? null,
+      new_status: data.status,
+      reason: data.reason ?? null,
+      metadata: patch.trial_ends_at ? { trial_ends_at: patch.trial_ends_at as string } : null,
+    });
+    return { ok: true };
   });

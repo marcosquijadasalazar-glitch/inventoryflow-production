@@ -66,6 +66,7 @@ import {
   adminAssignUser,
   adminSetOrganizationStatus,
   adminSetUserStatus,
+  adminSetAccountStatus,
   adminListAuditLog,
 } from "@/lib/admin.functions";
 
@@ -409,6 +410,10 @@ type UserRow = {
   suspended_at: string | null;
   archived_at: string | null;
   status: Status;
+  account_status?:
+    | "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected"
+    | null;
+  trial_ends_at?: string | null;
   created_at: string;
 };
 
@@ -425,6 +430,7 @@ function UsersTable({
 }) {
   const assign = useServerFn(adminAssignUser);
   const setStatus = useServerFn(adminSetUserStatus);
+  const setAccountStatus = useServerFn(adminSetAccountStatus);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -443,6 +449,18 @@ function UsersTable({
       setStatus({ data: { user_id: vars.user_id, status: vars.status } }),
     onSuccess: () => {
       toast.success("User status updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const accountMut = useMutation({
+    mutationFn: (vars: {
+      user_id: string;
+      status: "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected";
+      trial_days?: number;
+    }) => setAccountStatus({ data: vars }),
+    onSuccess: () => {
+      toast.success("Account status updated");
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
@@ -467,6 +485,7 @@ function UsersTable({
             <TableHead>Role</TableHead>
             <TableHead>Company</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Account</TableHead>
             <TableHead className="w-16"></TableHead>
           </TableRow>
         </TableHeader>
@@ -532,6 +551,18 @@ function UsersTable({
               <TableCell>
                 <StatusBadge status={u.status} />
               </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-0.5">
+                  <Badge variant="outline" className="w-fit capitalize text-[10px]">
+                    {(u.account_status ?? "active").replace("_", " ")}
+                  </Badge>
+                  {u.account_status === "trial_active" && u.trial_ends_at && (
+                    <span className="text-[10px] text-muted-foreground">
+                      ends {new Date(u.trial_ends_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -540,7 +571,35 @@ function UsersTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Status</DropdownMenuLabel>
+                    <DropdownMenuLabel>Approval</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "active" })}
+                    >
+                      Approve / Activate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "trial_active", trial_days: 14 })}
+                    >
+                      Start 14-day Trial
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "suspended" })}
+                    >
+                      Suspend
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "cancelled" })}
+                    >
+                      Cancel
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "rejected" })}
+                    >
+                      Reject
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}
                     >
@@ -554,7 +613,7 @@ function UsersTable({
                     <DropdownMenuItem
                       onClick={() => statusMut.mutate({ user_id: u.user_id, status: "suspended" })}
                     >
-                      Suspend
+                      Suspend (legacy)
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

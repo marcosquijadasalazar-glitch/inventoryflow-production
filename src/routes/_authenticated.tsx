@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
-import { Boxes, ShieldAlert, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Boxes } from "lucide-react";
 import { getMyAccessStatus } from "@/lib/admin.functions";
 import { useTranslation } from "react-i18next";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -18,7 +17,7 @@ function AuthenticatedLayout() {
   // IMPORTANT: All hooks must be declared at the top before any conditional
   // returns. Adding/reordering hooks below an early return causes React #310
   // (hook order mismatch) on subsequent renders.
-  const { session, loading, signOut } = useAuth();
+  const { session, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const fetchAccess = useServerFn(getMyAccessStatus);
@@ -67,33 +66,17 @@ function AuthenticatedLayout() {
 
 
   if (access.data && !access.data.ok) {
+    // Redirect to pending-approval page (handles all not-ok scopes)
+    if (pathname !== "/pending-approval") {
+      navigate({
+        to: "/pending-approval",
+        replace: true,
+        search: { reason: access.data.reason ?? "pending", scope: access.data.scope ?? "account" } as any,
+      });
+    }
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full text-center bg-card border rounded-2xl p-8 shadow-soft">
-          <div className="mx-auto h-14 w-14 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center mb-4">
-            <ShieldAlert className="h-7 w-7" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("access.blockedTitle")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("access.blockedBody")}
-          </p>
-          <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">
-            {t("access.statusLabel")}:{" "}
-            <span className="font-mono">{access.data.reason}</span> ({access.data.scope})
-          </p>
-          <Button
-            variant="outline"
-            className="mt-6"
-            onClick={async () => {
-              await signOut();
-              navigate({ to: "/login", replace: true });
-            }}
-          >
-            <LogOut className="h-4 w-4" /> {t("nav.signOut")}
-          </Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="h-3.5 w-3.5 rounded-full border-2 border-muted border-t-primary animate-spin" />
       </div>
     );
   }

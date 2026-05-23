@@ -59,6 +59,20 @@
     "blockedBody": "Tu cuenta o el acceso de tu empresa está inactivo. Contacta a tu administrador.",
     "statusLabel": "Estado"
   },
+  "onboarding": {
+    "verifiedTitle": "Correo verificado correctamente.",
+    "verifiedPending": "Tu cuenta está pendiente de aprobación.",
+    "verifiedReview": "Un administrador revisará tu acceso en breve.",
+    "backToLogin": "Volver al inicio de sesión"
+  },
+  "pending": {
+    "title": "Tu cuenta está pendiente de aprobación.",
+    "trialExpiredTitle": "Tu prueba gratuita ha finalizado.",
+    "suspendedTitle": "Tu cuenta está suspendida.",
+    "rejectedTitle": "Tu acceso fue rechazado.",
+    "cancelledTitle": "Tu cuenta ha sido cancelada.",
+    "body": "Un administrador revisará tu acceso en breve. Recibirás un correo cuando se active tu cuenta."
+  },
   "landing": {
     "login": "Iniciar sesión",
     "startTrial": "Prueba gratis",

@@ -20,12 +20,13 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session) {
+    if (!authLoading && session && !signupSuccess) {
       navigate({ to: "/dashboard", replace: true });
     }
-  }, [authLoading, session, navigate]);
+  }, [authLoading, session, navigate, signupSuccess]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -40,10 +41,11 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
         const { error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+          options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
         });
         if (err) throw err;
-        toast.success("Check your inbox to confirm your account.");
+        setSignupSuccess(true);
+        toast.success("Account created. Check your email to verify your account.");
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
@@ -143,6 +145,18 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
                 : "Start tracking your warehouse in minutes."}
             </p>
           </div>
+
+          {signupSuccess && (
+            <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+              <p className="font-medium text-foreground">Account created.</p>
+              <p className="mt-1 text-muted-foreground">
+                Check your email to verify your account. After verification, your account will be reviewed by an administrator.
+              </p>
+              <Link to="/login" className="mt-3 inline-block text-primary font-medium hover:underline">
+                Back to Login
+              </Link>
+            </div>
+          )}
 
           <Button type="button" variant="outline" className="w-full h-11 shadow-soft" onClick={google} disabled={googleBusy || busy}>
             <GoogleIcon />
