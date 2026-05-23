@@ -15,6 +15,8 @@ import {
 } from "@/lib/settings";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { CategoryManagerCard } from "@/components/CategoryManagerCard";
+import { UsageSummaryCard } from "@/components/PlanLimitBanner";
+import { useOrgUsage } from "@/lib/use-org-usage";
 import { Building2, Upload, Trash2, Settings as Cog } from "lucide-react";
 import { toast } from "sonner";
 
