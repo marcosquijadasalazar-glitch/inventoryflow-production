@@ -922,6 +922,12 @@ function UsersTable({
                     >
                       Archive
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteUserRow(u)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete user…
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -929,6 +935,28 @@ function UsersTable({
           ))}
         </TableBody>
       </Table>
+      <DeleteConfirmDialog
+        open={!!deleteUserRow}
+        onOpenChange={(o) => !o && setDeleteUserRow(null)}
+        texts={{
+          title: "Delete user",
+          description:
+            "This deactivates the user's login and archives their profile. Audit logs and history are preserved. Consider suspending instead if this is temporary.",
+          targetLabel: deleteUserRow?.email ?? deleteUserRow?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await deleteUser({
+            data: {
+              user_id: deleteUserRow!.user_id,
+              password,
+              confirmation: "DELETE",
+              reason,
+            },
+          });
+          toast.success("User deleted");
+          onChanged();
+        }}
+      />
     </div>
   );
 }
