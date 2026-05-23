@@ -20,6 +20,11 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // Hard guard against React #310 regressions: hooks must always run in
+      // the same order on every render. Never call a hook after an early
+      // return, inside an if/else, loop, or nested function.
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "no-restricted-imports": [
         "error",
         {
