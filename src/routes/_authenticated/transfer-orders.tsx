@@ -183,6 +183,10 @@ function TransferOrdersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setDetailsId(tr.id)}>
+                              <Eye className="h-3.5 w-3.5" />
+                              {t("tr.view_details", "View details")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadPdf(tr)}>
                               <FileDown className="h-3.5 w-3.5" />
                               {t("common.exportPdf", "Export PDF")}
