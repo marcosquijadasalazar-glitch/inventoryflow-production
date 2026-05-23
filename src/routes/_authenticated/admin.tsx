@@ -71,6 +71,20 @@ import {
   adminSetAccountStatus,
   adminListAuditLog,
 } from "@/lib/admin.functions";
+import { adminUpdateOrgModules } from "@/lib/modules.functions";
+import {
+  MODULE_KEYS,
+  MODULE_LABELS,
+  MODULE_PRESETS,
+  PRESET_NAMES,
+  detectPreset,
+  normalizeModules,
+  type ModuleKey,
+  type ModuleMap,
+  type PresetName,
+} from "@/lib/modules";
+import { Switch } from "@/components/ui/switch";
+import { Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
