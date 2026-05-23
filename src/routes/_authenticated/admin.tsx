@@ -430,6 +430,7 @@ function UsersTable({
 }) {
   const assign = useServerFn(adminAssignUser);
   const setStatus = useServerFn(adminSetUserStatus);
+  const setAccountStatus = useServerFn(adminSetAccountStatus);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -448,6 +449,18 @@ function UsersTable({
       setStatus({ data: { user_id: vars.user_id, status: vars.status } }),
     onSuccess: () => {
       toast.success("User status updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const accountMut = useMutation({
+    mutationFn: (vars: {
+      user_id: string;
+      status: "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected";
+      trial_days?: number;
+    }) => setAccountStatus({ data: vars }),
+    onSuccess: () => {
+      toast.success("Account status updated");
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
