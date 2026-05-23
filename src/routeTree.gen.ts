@@ -27,7 +27,6 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedMovementsRouteImport } from './routes/_authenticated/movements'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedLocationStockRouteImport } from './routes/_authenticated/location-stock'
 import { Route as AuthenticatedInternalUseRouteImport } from './routes/_authenticated/internal-use'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
@@ -128,11 +127,6 @@ const AuthenticatedMovementsRoute = AuthenticatedMovementsRouteImport.update({
   path: '/movements',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedLocationStockRoute =
   AuthenticatedLocationStockRouteImport.update({
     id: '/location-stock',
@@ -197,7 +191,6 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
-  '/reports': typeof AuthenticatedReportsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -224,7 +217,6 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
-  '/reports': typeof AuthenticatedReportsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -253,7 +245,6 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
-  '/_authenticated/reports': typeof AuthenticatedReportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -282,7 +273,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/transfer-orders'
-    | '/reports'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -309,7 +299,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/transfer-orders'
-    | '/reports'
   id:
     | '__root__'
     | '/'
@@ -337,7 +326,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/transfer-orders'
-    | '/_authenticated/reports'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -480,13 +468,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/location-stock': {
       id: '/_authenticated/location-stock'
       path: '/location-stock'
@@ -556,7 +537,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTransferOrdersRoute: typeof AuthenticatedTransferOrdersRoute
-  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -576,7 +556,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTransferOrdersRoute: AuthenticatedTransferOrdersRoute,
-  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
