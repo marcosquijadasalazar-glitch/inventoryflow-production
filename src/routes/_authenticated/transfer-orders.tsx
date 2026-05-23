@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -51,10 +51,13 @@ import {
   CheckCircle2,
   MapPin,
   FileDown,
+  Eye,
+  Layers,
 } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
 import { LocationSelect } from "@/components/LocationSelect";
 import { LocationFormDialog } from "@/components/LocationFormDialog";
+import { TransferDetailsDialog } from "@/components/TransferDetailsDialog";
 
 export const Route = createFileRoute("/_authenticated/transfer-orders")({
   component: TransferOrdersPage,
@@ -76,6 +79,7 @@ function TransferOrdersPage() {
   });
   const [createOpen, setCreateOpen] = useState(false);
   const [newLocOpen, setNewLocOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
 
   const downloadPdf = async (tr: TransferOrder) => {
     try {
@@ -118,6 +122,12 @@ function TransferOrdersPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/location-stock">
+              <Layers className="h-4 w-4" />{" "}
+              {t("locstock.button", "Location Stock")}
+            </Link>
+          </Button>
           <Button variant="outline" onClick={() => setNewLocOpen(true)}>
             <MapPin className="h-4 w-4" /> {t("loc.new", "New Location")}
           </Button>
@@ -174,6 +184,10 @@ function TransferOrdersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setDetailsId(tr.id)}>
+                              <Eye className="h-3.5 w-3.5" />
+                              {t("tr.view_details", "View details")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadPdf(tr)}>
                               <FileDown className="h-3.5 w-3.5" />
                               {t("common.exportPdf", "Export PDF")}
@@ -233,6 +247,11 @@ function TransferOrdersPage() {
         open={newLocOpen}
         onClose={() => setNewLocOpen(false)}
         onCreated={() => qc.invalidateQueries({ queryKey: ["locations"] })}
+      />
+      <TransferDetailsDialog
+        transferId={detailsId}
+        open={!!detailsId}
+        onClose={() => setDetailsId(null)}
       />
     </div>
   );

@@ -137,7 +137,17 @@ export type TransferOrder = {
   completed_date: string | null;
   notes: string | null;
   created_at: string;
+  created_by: string | null;
   items?: TransferItem[];
+};
+
+export type TransferMovement = {
+  id: string;
+  created_at: string;
+  product_id: string;
+  type: "add" | "remove" | "adjustment";
+  quantity: number;
+  note: string | null;
 };
 
 // ---------------- Helpers ----------------
@@ -648,6 +658,8 @@ export async function createTransferOrder(input: {
       );
     }
   }
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id ?? null;
   const { data: t, error } = await sb
     .from("transfer_orders")
     .insert({
@@ -659,6 +671,7 @@ export async function createTransferOrder(input: {
       transfer_date: input.transfer_date,
       notes: input.notes,
       status: input.status,
+      created_by: uid,
     })
     .select()
     .single();
@@ -715,6 +728,31 @@ export async function updateTransferStatus(id: string, status: TransferStatus) {
   const { error } = await sb.from("transfer_orders").update({ status }).eq("id", id);
   if (error) throw error;
 }
+
+export async function listTransferMovements(transferNumber: string): Promise<TransferMovement[]> {
+  const { data, error } = await sb
+    .from("inventory_movements")
+    .select("id, created_at, product_id, type, quantity, note")
+    .or(
+      `note.ilike.%[transfer-out] ${transferNumber}%,note.ilike.%[transfer-in] ${transferNumber}%`,
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as TransferMovement[];
+}
+
+export async function getProfileEmail(userId: string): Promise<string | null> {
+  if (!userId) return null;
+  const { data } = await sb
+    .from("profiles")
+    .select("email, full_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!data) return null;
+  return data.full_name || data.email || null;
+}
+
+
 
 // ---------------- Internal Use ----------------
 export const INTERNAL_DEPARTMENTS = [

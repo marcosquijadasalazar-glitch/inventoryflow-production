@@ -337,7 +337,23 @@
       "in_transit": "En tránsito",
       "completed": "Completada",
       "cancelled": "Cancelada"
-    }
+    },
+    "view_details": "Ver detalles",
+    "date": "Fecha de transferencia",
+    "completed_date": "Fecha de finalización",
+    "created_at": "Creada",
+    "created_by": "Creada por",
+    "related_movements": "Movimientos de inventario relacionados",
+    "no_movements": "Aún no hay movimientos relacionados."
+  },
+  "locstock": {
+    "button": "Stock por ubicación",
+    "title": "Stock por ubicación",
+    "subtitle": "Stock disponible agrupado por ubicación del producto.",
+    "empty": "Aún no hay productos.",
+    "back": "Volver a transferencias",
+    "products": "productos",
+    "units": "unidades"
   },
   "loc": {
     "new": "Nueva ubicación",
@@ -352,6 +368,9 @@
     "empty_short": "Aún no hay ubicaciones",
     "created": "Ubicación creada",
     "name_required": "El nombre es obligatorio",
+    "unassigned": "Sin asignar",
+    "available": "Disponible",
+    "last_movement": "Último movimiento",
     "types": {
       "warehouse": "Almacén",
       "store": "Tienda",
