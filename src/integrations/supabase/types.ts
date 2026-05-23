@@ -356,6 +356,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: Database["public"]["Enums"]["account_status"]
           archived_at: string | null
           created_at: string
           email: string | null
@@ -365,10 +366,12 @@ export type Database = {
           organization_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           suspended_at: string | null
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_status?: Database["public"]["Enums"]["account_status"]
           archived_at?: string | null
           created_at?: string
           email?: string | null
@@ -378,10 +381,12 @@ export type Database = {
           organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           suspended_at?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_status?: Database["public"]["Enums"]["account_status"]
           archived_at?: string | null
           created_at?: string
           email?: string | null
@@ -391,6 +396,7 @@ export type Database = {
           organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           suspended_at?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -899,6 +905,13 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      account_status:
+        | "pending_approval"
+        | "trial_active"
+        | "active"
+        | "suspended"
+        | "cancelled"
+        | "rejected"
       app_role: "super_admin" | "owner" | "manager" | "employee"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
@@ -1053,6 +1066,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: [
+        "pending_approval",
+        "trial_active",
+        "active",
+        "suspended",
+        "cancelled",
+        "rejected",
+      ],
       app_role: ["super_admin", "owner", "manager", "employee"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
       movement_type: ["add", "remove", "adjustment"],
