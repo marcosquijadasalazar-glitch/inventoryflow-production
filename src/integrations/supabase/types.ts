@@ -934,6 +934,26 @@ export type Database = {
       }
       is_module_enabled: { Args: { _module: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      org_plan_usage: {
+        Args: { _org_id: string }
+        Returns: {
+          max_locations: number
+          max_products: number
+          max_users: number
+          plan: Database["public"]["Enums"]["org_plan"]
+          used_locations: number
+          used_products: number
+          used_users: number
+        }[]
+      }
+      plan_limits: {
+        Args: { _plan: Database["public"]["Enums"]["org_plan"] }
+        Returns: {
+          max_locations: number
+          max_products: number
+          max_users: number
+        }[]
+      }
     }
     Enums: {
       account_status:
