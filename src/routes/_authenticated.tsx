@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
@@ -8,6 +8,10 @@ import { Boxes } from "lucide-react";
 import { getMyAccessStatus } from "@/lib/admin.functions";
 import { useTranslation } from "react-i18next";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useEnabledModules } from "@/lib/use-modules";
+import { moduleForPath, MODULE_LABELS } from "@/lib/modules";
+import { useProfile } from "@/lib/profile";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -95,8 +99,22 @@ function AuthenticatedLayout() {
           pathname,
         }}
       >
-        <Outlet />
+        <ModuleGate pathname={pathname}>
+          <Outlet />
+        </ModuleGate>
       </ErrorBoundary>
     </AppLayout>
   );
+}
+
+function ModuleGate({ pathname, children }: { pathname: string; children: ReactNode }) {
+  const profile = useProfile();
+  const { modules, isLoading } = useEnabledModules();
+  const isSuper = profile.data?.role === "super_admin";
+  const moduleKey = moduleForPath(pathname);
+  if (isSuper || !moduleKey || isLoading) return <>{children}</>;
+  if (!modules[moduleKey]) {
+    return <ModuleDisabled label={MODULE_LABELS[moduleKey]} />;
+  }
+  return <>{children}</>;
 }

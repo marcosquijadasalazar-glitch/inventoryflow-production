@@ -71,6 +71,20 @@ import {
   adminSetAccountStatus,
   adminListAuditLog,
 } from "@/lib/admin.functions";
+import { adminUpdateOrgModules } from "@/lib/modules.functions";
+import {
+  MODULE_KEYS,
+  MODULE_LABELS,
+  MODULE_PRESETS,
+  PRESET_NAMES,
+  detectPreset,
+  normalizeModules,
+  type ModuleKey,
+  type ModuleMap,
+  type PresetName,
+} from "@/lib/modules";
+import { Switch } from "@/components/ui/switch";
+import { Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -297,6 +311,7 @@ type OrgRow = {
   status: Status;
   user_count: number;
   product_count: number;
+  enabled_modules?: Partial<Record<ModuleKey, boolean>> | null;
   created_at: string;
 };
 
@@ -311,6 +326,7 @@ function OrgsTable({
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
+  const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
@@ -380,44 +396,160 @@ function OrgsTable({
               <TableCell className="text-right font-mono">{o.user_count}</TableCell>
               <TableCell className="text-right font-mono">{o.product_count}</TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Status</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ id: o.id, status: "active" })}
-                    >
-                      Reactivate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ id: o.id, status: "inactive" })}
-                    >
-                      Deactivate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ id: o.id, status: "suspended" })}
-                    >
-                      Suspend
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => statusMut.mutate({ id: o.id, status: "archived" })}
-                    >
-                      Archive
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setModulesOrg(o)}
+                    title="Modules"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline ml-1">Modules</span>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Status</DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() => statusMut.mutate({ id: o.id, status: "active" })}
+                      >
+                        Reactivate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => statusMut.mutate({ id: o.id, status: "inactive" })}
+                      >
+                        Deactivate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => statusMut.mutate({ id: o.id, status: "suspended" })}
+                      >
+                        Suspend
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => statusMut.mutate({ id: o.id, status: "archived" })}
+                      >
+                        Archive
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <ModulesDialog
+        org={modulesOrg}
+        onOpenChange={(open) => !open && setModulesOrg(null)}
+        onSaved={onChanged}
+      />
     </div>
+  );
+}
+
+function ModulesDialog({
+  org,
+  onOpenChange,
+  onSaved,
+}: {
+  org: OrgRow | null;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+}) {
+  const updateModules = useServerFn(adminUpdateOrgModules);
+  const [modules, setModules] = useState<ModuleMap>(() => normalizeModules(org?.enabled_modules));
+  const [preset, setPreset] = useState<PresetName>("custom");
+
+  useEffect(() => {
+    if (org) {
+      const m = normalizeModules(org.enabled_modules);
+      setModules(m);
+      setPreset(detectPreset(m));
+    }
+  }, [org]);
+
+  const mut = useMutation({
+    mutationFn: (m: ModuleMap) =>
+      updateModules({ data: { organization_id: org!.id, modules: m } }),
+    onSuccess: () => {
+      toast.success("Modules updated");
+      onSaved();
+      onOpenChange(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const applyPreset = (name: PresetName) => {
+    setPreset(name);
+    if (name !== "custom") setModules(MODULE_PRESETS[name]);
+  };
+
+  const toggle = (key: ModuleKey, value: boolean) => {
+    const next = { ...modules, [key]: value };
+    setModules(next);
+    setPreset(detectPreset(next));
+  };
+
+  return (
+    <Dialog open={!!org} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Modules — {org?.company_name}</DialogTitle>
+          <DialogDescription>
+            Toggle which features this company can access. Disabled modules are hidden from the sidebar and blocked at the route.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Preset plan</Label>
+            <Select value={preset} onValueChange={(v) => applyPreset(v as PresetName)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRESET_NAMES.map((p) => (
+                  <SelectItem key={p} value={p} className="capitalize">
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1 border-t pt-3">
+            {MODULE_KEYS.map((k) => (
+              <label
+                key={k}
+                className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 cursor-pointer"
+              >
+                <span className="text-sm">{MODULE_LABELS[k]}</span>
+                <Switch checked={modules[k]} onCheckedChange={(v) => toggle(k, v)} />
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => mut.mutate(modules)}
+            disabled={mut.isPending || !org}
+          >
+            {mut.isPending ? "Saving…" : "Save modules"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

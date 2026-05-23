@@ -227,6 +227,7 @@ export type Database = {
           business_type: string | null
           company_name: string
           created_at: string
+          enabled_modules: Json
           id: string
           is_active: boolean
           logo_url: string | null
@@ -241,6 +242,7 @@ export type Database = {
           business_type?: string | null
           company_name: string
           created_at?: string
+          enabled_modules?: Json
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -255,6 +257,7 @@ export type Database = {
           business_type?: string | null
           company_name?: string
           created_at?: string
+          enabled_modules?: Json
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -911,6 +914,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      is_module_enabled: { Args: { _module: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
