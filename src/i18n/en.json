@@ -45,6 +45,7 @@
     "purchaseOrders": "Purchase Orders",
     "salesOrders": "Sales Orders",
     "transferOrders": "Transfers",
+    "locationStock": "Location Stock",
     "internalUse": "Internal Use",
     "history": "Transaction History",
     "scanner": "Barcode Scanner",
