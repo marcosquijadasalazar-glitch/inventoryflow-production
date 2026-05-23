@@ -729,6 +729,31 @@ export async function updateTransferStatus(id: string, status: TransferStatus) {
   if (error) throw error;
 }
 
+export async function listTransferMovements(transferNumber: string): Promise<TransferMovement[]> {
+  const { data, error } = await sb
+    .from("inventory_movements")
+    .select("id, created_at, product_id, type, quantity, note")
+    .or(
+      `note.ilike.%[transfer-out] ${transferNumber}%,note.ilike.%[transfer-in] ${transferNumber}%`,
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as TransferMovement[];
+}
+
+export async function getProfileEmail(userId: string): Promise<string | null> {
+  if (!userId) return null;
+  const { data } = await sb
+    .from("profiles")
+    .select("email, full_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!data) return null;
+  return data.full_name || data.email || null;
+}
+
+
+
 // ---------------- Internal Use ----------------
 export const INTERNAL_DEPARTMENTS = [
   "Warehouse",
