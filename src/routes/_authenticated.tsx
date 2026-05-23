@@ -99,8 +99,22 @@ function AuthenticatedLayout() {
           pathname,
         }}
       >
-        <Outlet />
+        <ModuleGate pathname={pathname}>
+          <Outlet />
+        </ModuleGate>
       </ErrorBoundary>
     </AppLayout>
   );
+}
+
+function ModuleGate({ pathname, children }: { pathname: string; children: React.ReactNode }) {
+  const profile = useProfile();
+  const { modules, isLoading } = useEnabledModules();
+  const isSuper = profile.data?.role === "super_admin";
+  const moduleKey = moduleForPath(pathname);
+  if (isSuper || !moduleKey || isLoading) return <>{children}</>;
+  if (!modules[moduleKey]) {
+    return <ModuleDisabled label={MODULE_LABELS[moduleKey]} />;
+  }
+  return <>{children}</>;
 }
