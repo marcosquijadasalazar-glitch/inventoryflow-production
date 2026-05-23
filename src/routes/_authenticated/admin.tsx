@@ -53,6 +53,8 @@ import {
   UserPlus,
   MoreHorizontal,
   History,
+  Inbox,
+  Mail as MailIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
@@ -181,6 +183,26 @@ function AdminPage() {
         <StatCard icon={Package} label="Products" value={stats.data?.products} />
         <StatCard icon={Package} label="Movements" value={stats.data?.movements} />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Inbox className="h-4 w-4 text-primary" /> New Access Requests
+            {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length > 0 && (
+              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">
+                {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <AccessRequestsTable
+            users={(users.data ?? []).filter((u: any) => u.account_status === "pending_approval")}
+            loading={users.isLoading}
+            onChanged={refetchAll}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -414,8 +436,120 @@ type UserRow = {
     | "pending_approval" | "trial_active" | "active" | "suspended" | "cancelled" | "rejected"
     | null;
   trial_ends_at?: string | null;
+  company_name?: string | null;
+  business_type?: string | null;
+  phone?: string | null;
   created_at: string;
 };
+
+function AccessRequestsTable({
+  users,
+  loading,
+  onChanged,
+}: {
+  users: UserRow[];
+  loading: boolean;
+  onChanged: () => void;
+}) {
+  const setAccountStatus = useServerFn(adminSetAccountStatus);
+  const mut = useMutation({
+    mutationFn: (vars: {
+      user_id: string;
+      status: "trial_active" | "active" | "rejected";
+      trial_days?: number;
+    }) => setAccountStatus({ data: vars }),
+    onSuccess: () => {
+      toast.success("Access request updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  if (loading) return <Skeleton className="h-32 w-full" />;
+  if (users.length === 0)
+    return <p className="p-6 text-sm text-muted-foreground">No pending access requests.</p>;
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Business type</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Signup date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell>
+                <div className="font-medium">{u.full_name ?? "—"}</div>
+                <div className="text-xs text-muted-foreground">{u.email}</div>
+              </TableCell>
+              <TableCell className="text-sm">{u.company_name ?? "—"}</TableCell>
+              <TableCell className="text-sm">{u.business_type ?? "—"}</TableCell>
+              <TableCell className="text-sm font-mono">{u.phone ?? "—"}</TableCell>
+              <TableCell className="text-xs whitespace-nowrap">
+                {new Date(u.created_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">
+                  Pending
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-1.5 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      mut.mutate({ user_id: u.user_id, status: "trial_active", trial_days: 14 })
+                    }
+                    disabled={mut.isPending}
+                  >
+                    Approve trial
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => mut.mutate({ user_id: u.user_id, status: "active" })}
+                    disabled={mut.isPending}
+                  >
+                    Approve active
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    asChild
+                    disabled={!u.email}
+                  >
+                    <a
+                      href={u.email ? `mailto:${u.email}?subject=${encodeURIComponent("Your InventoryFlow access request")}` : "#"}
+                    >
+                      <MailIcon className="h-3.5 w-3.5" /> Contact
+                    </a>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={() => mut.mutate({ user_id: u.user_id, status: "rejected" })}
+                    disabled={mut.isPending}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 function UsersTable({
   users,

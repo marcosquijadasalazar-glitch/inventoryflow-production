@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield } from "lucide-react";
+import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield, User, Building2, Phone, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
@@ -17,6 +17,10 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [businessType, setBusinessType] = useState("");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +42,23 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!fullName.trim() || !companyName.trim()) {
+          setError("Full name and company name are required.");
+          setBusy(false);
+          return;
+        }
         const { error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-confirmed`,
+            data: {
+              full_name: fullName.trim(),
+              company_name: companyName.trim(),
+              business_type: businessType.trim() || null,
+              phone: phone.trim() || null,
+            },
+          },
         });
         if (err) throw err;
         setSignupSuccess(true);
@@ -173,6 +190,42 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           </div>
 
           <form onSubmit={submit} className="space-y-4">
+            {mode === "signup" && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName">Full name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="fullName" autoComplete="name" placeholder="Jane Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-11" required />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="companyName">Company name</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="companyName" autoComplete="organization" placeholder="Acme Inc." value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="pl-9 h-11" required />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="businessType">Business type</Label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="businessType" placeholder="Warehouse, retail…" value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="pl-9 h-11" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="phone" type="tel" autoComplete="tel" placeholder="+1 555 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-9 h-11" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
