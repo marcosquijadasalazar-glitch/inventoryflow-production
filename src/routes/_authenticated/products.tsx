@@ -456,11 +456,15 @@ function ProductsPage() {
               setOpen(true);
             }}
             className="shadow-soft"
+            disabled={productsAtLimit}
+            title={productsAtLimit ? t("plan.limitReached") : undefined}
           >
             <Plus className="h-4 w-4" /> {t("products.addProduct")}
           </Button>
         </div>
       </div>
+
+      <PlanLimitBanner usage={usageQ.data ?? undefined} kind="products" />
 
       {/* Saved views */}
       <div className="flex items-center gap-2 flex-wrap">
