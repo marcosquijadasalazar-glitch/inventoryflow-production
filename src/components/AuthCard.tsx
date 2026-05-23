@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { notifyAdminOfSignup } from "@/lib/signup-notify.functions";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,16 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           },
         });
         if (err) throw err;
+        // Fire-and-forget admin notification — must never block signup.
+        void notifyAdminOfSignup({
+          data: {
+            fullName: fullName.trim(),
+            companyName: companyName.trim(),
+            businessType: businessType.trim(),
+            phone: phone.trim(),
+            email: email.trim(),
+          },
+        }).catch((e) => console.warn("[signup-notify] failed:", e?.message ?? e));
         setSignupSuccess(true);
         toast.success("Account created. Check your email to verify your account.");
       } else {
