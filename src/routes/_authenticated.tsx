@@ -8,6 +8,10 @@ import { Boxes } from "lucide-react";
 import { getMyAccessStatus } from "@/lib/admin.functions";
 import { useTranslation } from "react-i18next";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useEnabledModules } from "@/lib/use-modules";
+import { moduleForPath, MODULE_LABELS } from "@/lib/modules";
+import { useProfile } from "@/lib/profile";
+import { ModuleDisabled } from "@/components/ModuleDisabled";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
