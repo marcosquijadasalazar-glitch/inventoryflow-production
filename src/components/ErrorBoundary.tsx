@@ -69,6 +69,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-xs text-muted-foreground mt-0.5 truncate">
               {this.state.error.message || "Unexpected error"}
             </p>
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5 font-mono">
+              component: {this.props.name ?? "anonymous"}
+            </p>
             <button
               type="button"
               onClick={this.reset}
