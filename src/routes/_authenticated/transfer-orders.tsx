@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -10,8 +10,12 @@ import {
   updateTransferStatus,
   type TransferItem,
   type TransferStatus,
+  type TransferOrder,
 } from "@/lib/orders";
+import { type Location } from "@/lib/locations";
 import { listProducts } from "@/lib/inventory";
+import { getCompanySettings } from "@/lib/settings";
+import { exportTransferOrderPdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,8 +43,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, MoreHorizontal, ArrowRightLeft, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  MoreHorizontal,
+  ArrowRightLeft,
+  CheckCircle2,
+  MapPin,
+  FileDown,
+} from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
+import { LocationSelect } from "@/components/LocationSelect";
+import { LocationFormDialog } from "@/components/LocationFormDialog";
 
 export const Route = createFileRoute("/_authenticated/transfer-orders")({
   component: TransferOrdersPage,
@@ -61,6 +75,33 @@ function TransferOrdersPage() {
     queryFn: listTransferOrders,
   });
   const [createOpen, setCreateOpen] = useState(false);
+  const [newLocOpen, setNewLocOpen] = useState(false);
+
+  const downloadPdf = async (tr: TransferOrder) => {
+    try {
+      const [settings, fullRes] = await Promise.all([
+        getCompanySettings().catch(() => null),
+        import("@/lib/orders").then((m) => m.getTransferOrder(tr.id)),
+      ]);
+      const full = fullRes ?? tr;
+      await exportTransferOrderPdf({
+        transferNumber: full.transfer_number,
+        fromLocation: full.from_location ?? "",
+        toLocation: full.to_location ?? "",
+        transferDate: full.transfer_date,
+        status: full.status,
+        items: (full.items ?? []).map((i: any) => ({
+          product_name: i.product_name,
+          sku: i.sku,
+          quantity: i.quantity,
+        })),
+        notes: full.notes,
+        settings,
+      });
+    } catch (e: any) {
+      toast.error(e.message ?? String(e));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -76,9 +117,14 @@ function TransferOrdersPage() {
             {t("tr.subtitle", "Move inventory between locations.")}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
-          <Plus className="h-4 w-4" /> {t("tr.create", "Create Transfer Order")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setNewLocOpen(true)}>
+            <MapPin className="h-4 w-4" /> {t("loc.new", "New Location")}
+          </Button>
+          <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
+            <Plus className="h-4 w-4" /> {t("tr.create", "Create Transfer Order")}
+          </Button>
+        </div>
       </div>
 
       <Card className="border-border shadow-soft">
@@ -128,6 +174,10 @@ function TransferOrdersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => downloadPdf(tr)}>
+                              <FileDown className="h-3.5 w-3.5" />
+                              {t("common.exportPdf", "Export PDF")}
+                            </DropdownMenuItem>
                             {tr.status !== "completed" && tr.status !== "cancelled" && (
                               <DropdownMenuItem
                                 onClick={async () => {
@@ -179,6 +229,11 @@ function TransferOrdersPage() {
       </Card>
 
       <CreateTransferDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <LocationFormDialog
+        open={newLocOpen}
+        onClose={() => setNewLocOpen(false)}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["locations"] })}
+      />
     </div>
   );
 }
@@ -194,14 +249,8 @@ function CreateTransferDialog({
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
 
-  const locations = useMemo(() => {
-    const s = new Set<string>();
-    products.data?.forEach((p) => p.location && s.add(p.location));
-    return Array.from(s).sort();
-  }, [products.data]);
-
-  const [fromLoc, setFromLoc] = useState("");
-  const [toLoc, setToLoc] = useState("");
+  const [fromLoc, setFromLoc] = useState<Location | null>(null);
+  const [toLoc, setToLoc] = useState<Location | null>(null);
   const [transferDate, setTransferDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
@@ -221,14 +270,36 @@ function CreateTransferDialog({
   };
 
   const submit = async (status: "draft" | "completed") => {
-    if (!fromLoc || !toLoc) return toast.error(t("tr.need_locs", "Select from and to locations"));
-    if (fromLoc === toLoc) return toast.error(t("tr.same_loc", "From and to must differ"));
-    if (items.length === 0) return toast.error(t("po.need_items", "Add at least one item"));
+    if (!fromLoc || !toLoc)
+      return toast.error(t("tr.need_locs", "Select from and to locations"));
+    if (fromLoc.id === toLoc.id)
+      return toast.error(t("tr.same_loc", "From and to must differ"));
+    if (items.length === 0)
+      return toast.error(t("po.need_items", "Add at least one item"));
+
+    // Client-side stock check using cached products
+    const productMap = new Map(products.data?.map((p) => [p.id, p]) ?? []);
+    for (const it of items) {
+      if (!it.product_id) continue;
+      const p = productMap.get(it.product_id);
+      if (p && (p.stock ?? 0) < it.quantity) {
+        return toast.error(
+          t("tr.insufficient", "Insufficient stock for {{name}} (have {{have}}, need {{need}})", {
+            name: p.name,
+            have: p.stock ?? 0,
+            need: it.quantity,
+          }),
+        );
+      }
+    }
+
     setSaving(true);
     try {
       await createTransferOrder({
-        from_location: fromLoc,
-        to_location: toLoc,
+        from_location_id: fromLoc.id,
+        to_location_id: toLoc.id,
+        from_location: fromLoc.name,
+        to_location: toLoc.name,
         transfer_date: transferDate || null,
         notes: notes || null,
         items,
@@ -240,6 +311,8 @@ function CreateTransferDialog({
       qc.invalidateQueries({ queryKey: ["movements"] });
       onClose();
       setItems([]);
+      setFromLoc(null);
+      setToLoc(null);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -257,25 +330,18 @@ function CreateTransferDialog({
           <div className="grid sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label>{t("tr.from", "From")}</Label>
-              <Input
-                list="loc-options"
-                value={fromLoc}
-                onChange={(e) => setFromLoc(e.target.value)}
-                placeholder="Warehouse A"
+              <LocationSelect
+                value={fromLoc?.id ?? null}
+                onChange={(_, loc) => setFromLoc(loc ?? null)}
+                excludeId={toLoc?.id ?? null}
               />
-              <datalist id="loc-options">
-                {locations.map((l) => (
-                  <option key={l} value={l} />
-                ))}
-              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label>{t("tr.to", "To")}</Label>
-              <Input
-                list="loc-options"
-                value={toLoc}
-                onChange={(e) => setToLoc(e.target.value)}
-                placeholder="Warehouse B"
+              <LocationSelect
+                value={toLoc?.id ?? null}
+                onChange={(_, loc) => setToLoc(loc ?? null)}
+                excludeId={fromLoc?.id ?? null}
               />
             </div>
             <div className="space-y-1.5">
@@ -302,41 +368,54 @@ function CreateTransferDialog({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.map((it, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>
-                          <p className="text-sm">{it.product_name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{it.sku}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={it.quantity}
-                            onChange={(e) => {
-                              const v = parseInt(e.target.value) || 0;
-                              setItems((prev) =>
-                                prev.map((x, i) =>
-                                  i === idx ? { ...x, quantity: v } : x,
-                                ),
-                              );
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              setItems((prev) => prev.filter((_, i) => i !== idx))
-                            }
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {items.map((it, idx) => {
+                      const p = products.data?.find((x) => x.id === it.product_id);
+                      const over = p ? it.quantity > (p.stock ?? 0) : false;
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <p className="text-sm">{it.product_name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {it.sku}
+                              {p && (
+                                <span className="ml-2">
+                                  · {t("tr.available", "Available")}: {p.stock ?? 0}
+                                </span>
+                              )}
+                            </p>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={p?.stock ?? undefined}
+                              value={it.quantity}
+                              className={over ? "border-destructive" : ""}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value) || 0;
+                                setItems((prev) =>
+                                  prev.map((x, i) =>
+                                    i === idx ? { ...x, quantity: v } : x,
+                                  ),
+                                );
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() =>
+                                setItems((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

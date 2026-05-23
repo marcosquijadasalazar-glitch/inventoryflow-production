@@ -130,6 +130,8 @@ export type TransferOrder = {
   organization_id: string | null;
   from_location: string | null;
   to_location: string | null;
+  from_location_id: string | null;
+  to_location_id: string | null;
   status: TransferStatus;
   transfer_date: string | null;
   completed_date: string | null;
@@ -614,6 +616,8 @@ export async function getTransferOrder(id: string): Promise<TransferOrder | null
 }
 
 export async function createTransferOrder(input: {
+  from_location_id: string | null;
+  to_location_id: string | null;
   from_location: string;
   to_location: string;
   transfer_date: string | null;
@@ -621,12 +625,37 @@ export async function createTransferOrder(input: {
   items: TransferItem[];
   status: TransferStatus;
 }) {
+  if (!input.from_location || !input.to_location) {
+    throw new Error("Source and destination are required");
+  }
+  if (
+    input.from_location_id &&
+    input.to_location_id &&
+    input.from_location_id === input.to_location_id
+  ) {
+    throw new Error("Source and destination cannot be the same");
+  }
+  for (const it of input.items) {
+    if (!it.product_id || it.quantity <= 0) continue;
+    const { data: p } = await sb
+      .from("products")
+      .select("id,name,stock")
+      .eq("id", it.product_id)
+      .maybeSingle();
+    if (p && (p.stock ?? 0) < it.quantity) {
+      throw new Error(
+        `Insufficient stock for ${p.name}: need ${it.quantity}, have ${p.stock ?? 0}`,
+      );
+    }
+  }
   const { data: t, error } = await sb
     .from("transfer_orders")
     .insert({
       transfer_number: genNumber("TR"),
       from_location: input.from_location,
       to_location: input.to_location,
+      from_location_id: input.from_location_id,
+      to_location_id: input.to_location_id,
       transfer_date: input.transfer_date,
       notes: input.notes,
       status: input.status,

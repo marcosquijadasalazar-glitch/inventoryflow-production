@@ -479,3 +479,52 @@ export async function exportSalesOrderInvoicePdf(opts: {
     save(doc, `invoice-${so.so_number}.pdf`);
   }
 }
+
+// ---------- TRANSFER ORDER ----------
+export async function exportTransferOrderPdf(opts: {
+  transferNumber: string;
+  fromLocation: string;
+  toLocation: string;
+  transferDate?: string | null;
+  status?: string | null;
+  items: { product_name: string | null; sku: string | null; quantity: number }[];
+  notes?: string | null;
+  settings: CompanySettings | null;
+}) {
+  const { transferNumber, fromLocation, toLocation, transferDate, status, items, notes, settings } = opts;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  await drawHeader(doc, `Transfer Order — ${transferNumber}`, settings);
+
+  doc.setFontSize(10);
+  let y = 150;
+  doc.setFont("helvetica", "bold");
+  doc.text("From:", 40, y);
+  doc.text("To:", 300, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(fromLocation || "—", 80, y);
+  doc.text(toLocation || "—", 320, y);
+  y += 15;
+  doc.text(`Date: ${transferDate ?? new Date().toLocaleDateString()}`, 40, y);
+  if (status) doc.text(`Status: ${status}`, 300, y);
+
+  autoTable(doc, {
+    startY: y + 20,
+    head: [["SKU", "Product", "Qty"]],
+    body: items.map((i) => [i.sku ?? "—", i.product_name ?? "—", String(i.quantity)]),
+    styles: { fontSize: 10, cellPadding: 5 },
+    headStyles: { fillColor: [40, 40, 60], textColor: 255 },
+    margin: { left: 40, right: 40 },
+  });
+
+  if (notes) {
+    const ny = (doc as any).lastAutoTable.finalY + 30;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Notes", 40, ny);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(doc.splitTextToSize(notes, 500), 40, ny + 14);
+  }
+  drawFooter(doc, settings);
+  save(doc, `transfer-${transferNumber}-${Date.now()}.pdf`);
+}
