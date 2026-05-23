@@ -45,6 +45,7 @@
     "purchaseOrders": "Órdenes de compra",
     "salesOrders": "Órdenes de venta",
     "transferOrders": "Transferencias",
+    "locationStock": "Stock por ubicación",
     "internalUse": "Uso interno",
     "history": "Historial",
     "scanner": "Escáner",
