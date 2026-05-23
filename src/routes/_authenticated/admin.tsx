@@ -53,6 +53,8 @@ import {
   UserPlus,
   MoreHorizontal,
   History,
+  Inbox,
+  Mail as MailIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
