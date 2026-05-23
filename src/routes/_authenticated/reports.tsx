@@ -237,7 +237,7 @@ function ReportsPage() {
     };
     const enriched = rows.map((r: any) => ({ ...r, _dept: parseDept(r.reason) }));
     if (department === "all") return enriched;
-    return enriched.filter((r) => r._dept.toLowerCase() === department.toLowerCase());
+    return enriched.filter((r: any) => r._dept.toLowerCase() === department.toLowerCase());
   }, [internal.data, fromTs, toTs, department]);
 
   const movementHistory = useMemo(() => {
