@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_plan_limit() FROM authenticated;
