@@ -123,9 +123,192 @@
     "body": "An administrator will review your access shortly. You'll receive an email once your account is activated."
   },
   "landing": {
-    "login": "Log in",
-    "startTrial": "Start Free Trial",
-    "tagline": "Modern warehouse inventory management"
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "how": "How it works",
+      "who": "Who it's for",
+      "login": "Login",
+      "startTrial": "Start Free Trial"
+    },
+    "hero": {
+      "badge": "Built for B2B operations",
+      "title1": "Smart inventory for",
+      "title2": "modern small businesses.",
+      "subtitle": "InventoryFlow helps warehouses and small businesses manage inventory, stock movements, orders, barcode workflows, and operations in one platform.",
+      "ctaPrimary": "Start Free 7-Day Trial",
+      "ctaSecondary": "See how it works",
+      "fineprint": "No credit card required · Setup approval may be required · Cancel anytime"
+    },
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Simple, transparent pricing for growing teams.",
+      "subtitle": "Start with a 7-day free trial. Upgrade when you're ready.",
+      "perMonth": "/month",
+      "mostPopular": "Most Popular",
+      "contactSales": "Contact Sales",
+      "startTrial": "Start Free 7-Day Trial",
+      "choosePlan": "Choose plan",
+      "trialNote": "All paid plans start with a 7-day free trial. No credit card required.",
+      "plans": {
+        "trial": {
+          "name": "Free Trial",
+          "price": "Free",
+          "period": "7 days",
+          "tagline": "Try most Pro features for 7 days.",
+          "features": [
+            "Access to most Pro features",
+            "Up to 2 users",
+            "Up to 100 products",
+            "1 location",
+            "InventoryFlow branding visible",
+            "No advanced exports",
+            "No priority support"
+          ]
+        },
+        "starter": {
+          "name": "Starter",
+          "price": "$39",
+          "tagline": "For small businesses getting organized.",
+          "features": [
+            "Products & catalog",
+            "Stock movements",
+            "Sales & purchase orders",
+            "Transaction history",
+            "Basic exports (CSV)",
+            "Up to 3 users",
+            "Up to 500 products",
+            "Up to 2 locations"
+          ]
+        },
+        "pro": {
+          "name": "Pro",
+          "price": "$149",
+          "tagline": "For growing operations that need control.",
+          "features": [
+            "Everything in Starter",
+            "Transfers between locations",
+            "Internal use tracking",
+            "Reports & analytics",
+            "Full exports (CSV, PDF, XLSX)",
+            "Multi-location inventory",
+            "Advanced inventory visibility",
+            "Approval workflows",
+            "Up to 25 users",
+            "Up to 10 locations"
+          ]
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "Custom",
+          "tagline": "For large organizations with complex needs.",
+          "features": [
+            "Unlimited users",
+            "Unlimited locations",
+            "All modules + custom modules",
+            "Advanced permissions",
+            "Onboarding assistance",
+            "Priority support",
+            "API & integrations roadmap"
+          ]
+        }
+      },
+      "compare": {
+        "title": "Compare plans",
+        "feature": "Feature",
+        "rows": [
+          {
+            "label": "Users",
+            "trial": "2",
+            "starter": "3",
+            "pro": "25",
+            "enterprise": "Unlimited"
+          },
+          {
+            "label": "Products",
+            "trial": "100",
+            "starter": "500",
+            "pro": "Unlimited",
+            "enterprise": "Unlimited"
+          },
+          {
+            "label": "Locations",
+            "trial": "1",
+            "starter": "2",
+            "pro": "10",
+            "enterprise": "Unlimited"
+          },
+          {
+            "label": "Sales & purchase orders",
+            "trial": "yes",
+            "starter": "yes",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Transfers & internal use",
+            "trial": "yes",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Reports & analytics",
+            "trial": "yes",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Advanced exports (PDF/XLSX)",
+            "trial": "no",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Approval workflows",
+            "trial": "no",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Custom modules",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Priority support",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Onboarding assistance",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          }
+        ]
+      }
+    },
+    "cta": {
+      "eyebrow": "Ready when you are",
+      "title": "Start running your inventory like a modern B2B team.",
+      "subtitle": "Get set up in minutes. No credit card required.",
+      "bullets": [
+        "7-day free trial of Pro features",
+        "Onboarding guidance from our team",
+        "Cancel anytime — your data stays yours"
+      ],
+      "primary": "Start Free 7-Day Trial",
+      "secondary": "Talk to sales"
+    }
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -250,7 +433,6 @@
     "removeDesc": "Sale or shrinkage",
     "adjustDesc": "Set exact stock"
   },
-
   "settings": {
     "title": "Settings",
     "subtitle": "Configure your company and preferences",
@@ -636,5 +818,3 @@
     "inUse": "In use by products"
   }
 }
-
-

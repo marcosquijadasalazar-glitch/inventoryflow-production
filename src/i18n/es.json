@@ -123,9 +123,192 @@
     "body": "Un administrador revisará tu acceso en breve. Recibirás un correo cuando se active tu cuenta."
   },
   "landing": {
-    "login": "Iniciar sesión",
-    "startTrial": "Prueba gratis",
-    "tagline": "Gestión moderna de inventario para bodegas"
+    "nav": {
+      "features": "Funciones",
+      "pricing": "Precios",
+      "how": "Cómo funciona",
+      "who": "Para quién es",
+      "login": "Iniciar sesión",
+      "startTrial": "Iniciar prueba gratis"
+    },
+    "hero": {
+      "badge": "Hecho para operaciones B2B",
+      "title1": "Inventario inteligente para",
+      "title2": "pequeñas empresas modernas.",
+      "subtitle": "InventoryFlow ayuda a almacenes y pequeñas empresas a gestionar inventario, movimientos, órdenes y flujos con código de barras en una sola plataforma.",
+      "ctaPrimary": "Iniciar prueba gratuita de 7 días",
+      "ctaSecondary": "Ver cómo funciona",
+      "fineprint": "No se requiere tarjeta · Puede requerir aprobación de configuración · Cancela cuando quieras"
+    },
+    "pricing": {
+      "eyebrow": "Precios",
+      "title": "Precios simples y transparentes para equipos en crecimiento.",
+      "subtitle": "Empieza con una prueba gratuita de 7 días. Actualiza cuando estés listo.",
+      "perMonth": "/mes",
+      "mostPopular": "Más popular",
+      "contactSales": "Contactar a ventas",
+      "startTrial": "Iniciar prueba de 7 días",
+      "choosePlan": "Elegir plan",
+      "trialNote": "Todos los planes pagos incluyen una prueba gratis de 7 días. No se requiere tarjeta.",
+      "plans": {
+        "trial": {
+          "name": "Prueba gratis",
+          "price": "Gratis",
+          "period": "7 días",
+          "tagline": "Prueba la mayoría de funciones Pro por 7 días.",
+          "features": [
+            "Acceso a la mayoría de funciones Pro",
+            "Hasta 2 usuarios",
+            "Hasta 100 productos",
+            "1 ubicación",
+            "Marca InventoryFlow visible",
+            "Sin exportaciones avanzadas",
+            "Sin soporte prioritario"
+          ]
+        },
+        "starter": {
+          "name": "Starter",
+          "price": "$39",
+          "tagline": "Para pequeñas empresas que se organizan.",
+          "features": [
+            "Productos y catálogo",
+            "Movimientos de stock",
+            "Órdenes de venta y compra",
+            "Historial de transacciones",
+            "Exportaciones básicas (CSV)",
+            "Hasta 3 usuarios",
+            "Hasta 500 productos",
+            "Hasta 2 ubicaciones"
+          ]
+        },
+        "pro": {
+          "name": "Pro",
+          "price": "$149",
+          "tagline": "Para operaciones en crecimiento que necesitan control.",
+          "features": [
+            "Todo lo de Starter",
+            "Transferencias entre ubicaciones",
+            "Seguimiento de uso interno",
+            "Reportes y analíticas",
+            "Exportaciones completas (CSV, PDF, XLSX)",
+            "Inventario multi-ubicación",
+            "Visibilidad avanzada de inventario",
+            "Flujos de aprobación",
+            "Hasta 25 usuarios",
+            "Hasta 10 ubicaciones"
+          ]
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "Personalizado",
+          "tagline": "Para organizaciones grandes con necesidades complejas.",
+          "features": [
+            "Usuarios ilimitados",
+            "Ubicaciones ilimitadas",
+            "Todos los módulos + módulos personalizados",
+            "Permisos avanzados",
+            "Asistencia de onboarding",
+            "Soporte prioritario",
+            "Roadmap de API e integraciones"
+          ]
+        }
+      },
+      "compare": {
+        "title": "Comparar planes",
+        "feature": "Función",
+        "rows": [
+          {
+            "label": "Usuarios",
+            "trial": "2",
+            "starter": "3",
+            "pro": "25",
+            "enterprise": "Ilimitado"
+          },
+          {
+            "label": "Productos",
+            "trial": "100",
+            "starter": "500",
+            "pro": "Ilimitado",
+            "enterprise": "Ilimitado"
+          },
+          {
+            "label": "Ubicaciones",
+            "trial": "1",
+            "starter": "2",
+            "pro": "10",
+            "enterprise": "Ilimitado"
+          },
+          {
+            "label": "Órdenes de venta y compra",
+            "trial": "yes",
+            "starter": "yes",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Transferencias y uso interno",
+            "trial": "yes",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Reportes y analíticas",
+            "trial": "yes",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Exportaciones avanzadas (PDF/XLSX)",
+            "trial": "no",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Flujos de aprobación",
+            "trial": "no",
+            "starter": "no",
+            "pro": "yes",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Módulos personalizados",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Soporte prioritario",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          },
+          {
+            "label": "Asistencia de onboarding",
+            "trial": "no",
+            "starter": "no",
+            "pro": "no",
+            "enterprise": "yes"
+          }
+        ]
+      }
+    },
+    "cta": {
+      "eyebrow": "Cuando estés listo",
+      "title": "Gestiona tu inventario como un equipo B2B moderno.",
+      "subtitle": "Listo en minutos. Sin tarjeta de crédito.",
+      "bullets": [
+        "Prueba gratis de 7 días con funciones Pro",
+        "Acompañamiento de onboarding de nuestro equipo",
+        "Cancela cuando quieras — tus datos son tuyos"
+      ],
+      "primary": "Iniciar prueba gratis de 7 días",
+      "secondary": "Hablar con ventas"
+    }
   },
   "auth": {
     "loginTitle": "Bienvenido de nuevo",
@@ -250,7 +433,6 @@
     "removeDesc": "Venta o merma",
     "adjustDesc": "Fijar stock exacto"
   },
-
   "settings": {
     "title": "Configuración",
     "subtitle": "Configura tu empresa y preferencias",
@@ -636,5 +818,3 @@
     "inUse": "En uso por productos"
   }
 }
-
-
