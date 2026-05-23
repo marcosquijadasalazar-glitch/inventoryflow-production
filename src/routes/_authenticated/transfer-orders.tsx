@@ -51,10 +51,13 @@ import {
   CheckCircle2,
   MapPin,
   FileDown,
+  Eye,
+  Warehouse,
 } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
 import { LocationSelect } from "@/components/LocationSelect";
 import { LocationFormDialog } from "@/components/LocationFormDialog";
+import { TransferDetailsDrawer } from "@/components/TransferDetailsDrawer";
 
 export const Route = createFileRoute("/_authenticated/transfer-orders")({
   component: TransferOrdersPage,
