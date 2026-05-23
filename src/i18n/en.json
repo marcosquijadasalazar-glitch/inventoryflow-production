@@ -330,11 +330,35 @@
     "created": "Transfer created",
     "need_locs": "Select from and to locations",
     "same_loc": "From and to must differ",
+    "available": "Available",
+    "insufficient": "Insufficient stock for {{name}} (have {{have}}, need {{need}})",
     "statuses": {
       "draft": "Draft",
       "in_transit": "In transit",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    }
+  },
+  "loc": {
+    "new": "New Location",
+    "create": "Create location",
+    "create_new": "Create new location",
+    "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "active": "Active",
+    "active_hint": "Inactive locations are hidden from pickers",
+    "select": "Select location",
+    "empty_short": "No locations yet",
+    "created": "Location created",
+    "name_required": "Name is required",
+    "types": {
+      "warehouse": "Warehouse",
+      "store": "Store",
+      "shelf": "Shelf",
+      "bin": "Bin",
+      "truck": "Truck",
+      "other": "Other"
     }
   },
   "iu": {

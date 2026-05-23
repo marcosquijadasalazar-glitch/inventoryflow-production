@@ -330,11 +330,35 @@
     "created": "Transferencia creada",
     "need_locs": "Selecciona ubicaciones de origen y destino",
     "same_loc": "Origen y destino deben ser distintos",
+    "available": "Disponible",
+    "insufficient": "Stock insuficiente para {{name}} (hay {{have}}, se necesitan {{need}})",
     "statuses": {
       "draft": "Borrador",
       "in_transit": "En tránsito",
       "completed": "Completada",
       "cancelled": "Cancelada"
+    }
+  },
+  "loc": {
+    "new": "Nueva ubicación",
+    "create": "Crear ubicación",
+    "create_new": "Crear nueva ubicación",
+    "name": "Nombre",
+    "type": "Tipo",
+    "address": "Dirección",
+    "active": "Activa",
+    "active_hint": "Las ubicaciones inactivas se ocultan en los selectores",
+    "select": "Selecciona ubicación",
+    "empty_short": "Aún no hay ubicaciones",
+    "created": "Ubicación creada",
+    "name_required": "El nombre es obligatorio",
+    "types": {
+      "warehouse": "Almacén",
+      "store": "Tienda",
+      "shelf": "Estante",
+      "bin": "Contenedor",
+      "truck": "Camión",
+      "other": "Otro"
     }
   },
   "iu": {
