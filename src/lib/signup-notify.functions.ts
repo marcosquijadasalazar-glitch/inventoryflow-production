@@ -27,8 +27,12 @@ export const notifyAdminOfSignup = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const apiKey = process.env.RESEND_API_KEY;
-    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL;
+    // Always use Resend's shared verified sender until a custom domain is verified.
+    // Using a Gmail address (or any unverified domain) causes Resend to return 403 "Domain not verified".
+    const configuredFrom = process.env.RESEND_FROM_EMAIL || "";
+    const isGmail = /@gmail\.com$/i.test(configuredFrom);
+    const fromEmail = !configuredFrom || isGmail ? "InventoryFlow <onboarding@resend.dev>" : configuredFrom;
 
     if (!apiKey || !adminEmail) {
       console.warn("[signup-notify] missing RESEND_API_KEY or ADMIN_NOTIFICATION_EMAIL — skipping");
