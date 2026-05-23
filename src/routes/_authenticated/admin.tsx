@@ -66,6 +66,7 @@ import {
   adminAssignUser,
   adminSetOrganizationStatus,
   adminSetUserStatus,
+  adminSetAccountStatus,
   adminListAuditLog,
 } from "@/lib/admin.functions";
 
