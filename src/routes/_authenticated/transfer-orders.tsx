@@ -12,7 +12,7 @@ import {
   type TransferStatus,
   type TransferOrder,
 } from "@/lib/orders";
-import { listLocations, type Location } from "@/lib/locations";
+import { type Location } from "@/lib/locations";
 import { listProducts } from "@/lib/inventory";
 import { getCompanySettings } from "@/lib/settings";
 import { exportTransferOrderPdf } from "@/lib/pdf";
