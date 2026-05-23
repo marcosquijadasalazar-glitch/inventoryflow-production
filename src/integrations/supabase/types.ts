@@ -358,12 +358,15 @@ export type Database = {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
           archived_at: string | null
+          business_type: string | null
+          company_name: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           is_active: boolean
           organization_id: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           suspended_at: string | null
           trial_ends_at: string | null
@@ -373,12 +376,15 @@ export type Database = {
         Insert: {
           account_status?: Database["public"]["Enums"]["account_status"]
           archived_at?: string | null
+          business_type?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
           organization_id?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           suspended_at?: string | null
           trial_ends_at?: string | null
@@ -388,12 +394,15 @@ export type Database = {
         Update: {
           account_status?: Database["public"]["Enums"]["account_status"]
           archived_at?: string | null
+          business_type?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           is_active?: boolean
           organization_id?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           suspended_at?: string | null
           trial_ends_at?: string | null
