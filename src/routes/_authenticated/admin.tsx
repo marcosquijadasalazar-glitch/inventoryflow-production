@@ -328,7 +328,9 @@ function OrgsTable({
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
+  const deleteOrg = useServerFn(deleteOrganizationSecure);
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
+  const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
