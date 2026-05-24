@@ -912,6 +912,10 @@ function UsersTable({
                       Reject
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setResetUserRow(u)}>
+                      <KeyRound className="h-3.5 w-3.5 mr-2" /> Send password reset
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}
