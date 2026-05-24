@@ -944,5 +944,54 @@
       "manage_users": "Manage users",
       "manage_company_settings": "Manage company settings"
     }
+  },
+  "orgUsers": {
+    "navLabel": "Users & Roles",
+    "title": "Users & Roles",
+    "subtitle": "Invite teammates and manage their access.",
+    "invite": "Invite user",
+    "inviteDesc": "The user will receive an email to set their password.",
+    "sendInvite": "Send invitation",
+    "invited": "Invitation sent",
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "edit": "Edit",
+    "editUser": "Edit user",
+    "updated": "User updated",
+    "delete": "Delete",
+    "deleted": "User deleted",
+    "deleteTitle": "Delete user",
+    "deleteDesc": "This will archive {{name}} and revoke their access.",
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "resetPassword": "Send password reset",
+    "resetSent": "Password reset email sent",
+    "resendInvite": "Resend invitation",
+    "active": "Active users",
+    "pending": "Pending invitations",
+    "pendingHint": "Users who have not signed in yet.",
+    "suspended": "Suspended users",
+    "archived": "Archived users",
+    "empty": "No users in this section.",
+    "invalidForm": "Name and email are required",
+    "planLimit": "Seat limit reached for your plan",
+    "seatUsage": "{{used}} / {{cap}} seats",
+    "permissionsHint": "Fine-grained per-user permissions are managed on the",
+    "permissionsHintTail": "page.",
+    "col": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "lastLogin": "Last login"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "archived": "Archived",
+      "inactive": "Inactive"
+    }
   }
 }
