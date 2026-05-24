@@ -853,5 +853,13 @@
       "products": "Productos",
       "locations": "Ubicaciones"
     }
+  },
+  "admin": {
+    "sendPasswordReset": "Enviar restablecimiento de contraseña",
+    "resetConfirmTitle": "Enviar restablecimiento de contraseña",
+    "resetConfirmDesc": "Esto enviará un correo de restablecimiento de contraseña al usuario. Podrá usar el enlace para establecer una nueva contraseña.",
+    "resetSent": "Correo de restablecimiento enviado",
+    "resetSending": "Enviando…",
+    "resetSendBtn": "Enviar correo de restablecimiento"
   }
 }

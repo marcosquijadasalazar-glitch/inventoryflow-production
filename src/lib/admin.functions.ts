@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 
 async function assertSuperAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -576,5 +579,67 @@ export const adminSetAccountStatus = createServerFn({ method: "POST" })
       reason: data.reason ?? null,
       metadata: patch.trial_ends_at ? { trial_ends_at: patch.trial_ends_at as string } : null,
     });
+    return { ok: true };
+  });
+
+const ResetPasswordSchema = z.object({
+  user_id: z.string().uuid(),
+});
+
+export const adminResetUserPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ResetPasswordSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const { data: actor } = await supabaseAdmin
+      .from("profiles")
+      .select("role, organization_id, email")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!actor) throw new Error("Actor profile not found");
+
+    const { data: target } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, email, role, organization_id")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+    if (!target) throw new Error("User not found");
+    if (!target.email) throw new Error("User has no email address");
+
+    const isSuper = actor.role === "super_admin";
+    const isOwner = actor.role === "owner" || actor.role === "manager";
+
+    if (!isSuper) {
+      if (!isOwner) throw new Error("Forbidden: insufficient privileges");
+      if (!actor.organization_id || actor.organization_id !== target.organization_id) {
+        throw new Error("Cross-organization action is not allowed");
+      }
+      if (target.role === "super_admin") {
+        throw new Error("Only a super admin can reset a super admin password");
+      }
+    }
+
+    const url = process.env.SUPABASE_URL!;
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+    const c = createClient<Database>(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    });
+
+    const request = getRequest();
+    const origin = request ? new URL(request.url).origin : "https://inventoryflowapp.com";
+
+    const { error } = await c.auth.resetPasswordForEmail(target.email, {
+      redirectTo: `${origin}/login`,
+    });
+    if (error) throw new Error(error.message);
+
+    await writeAudit({
+      action_type: "reset_password",
+      target_type: "user",
+      target_id: data.user_id,
+      target_label: target.email,
+      performed_by: context.userId,
+      performed_by_email: (actor as any).email ?? null,
+    });
+
     return { ok: true };
   });

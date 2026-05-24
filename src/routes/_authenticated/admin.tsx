@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -55,6 +56,7 @@ import {
   History,
   Inbox,
   Mail as MailIcon,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
@@ -70,6 +72,7 @@ import {
   adminSetUserStatus,
   adminSetAccountStatus,
   adminListAuditLog,
+  adminResetUserPassword,
 } from "@/lib/admin.functions";
 import { adminUpdateOrgModules } from "@/lib/modules.functions";
 import {
@@ -730,7 +733,10 @@ function UsersTable({
   const setStatus = useServerFn(adminSetUserStatus);
   const setAccountStatus = useServerFn(adminSetAccountStatus);
   const deleteUser = useServerFn(deleteUserSecure);
+  const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
+  const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
+  const { t } = useTranslation();
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -761,6 +767,15 @@ function UsersTable({
     }) => setAccountStatus({ data: vars }),
     onSuccess: () => {
       toast.success("Account status updated");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const resetMut = useMutation({
+    mutationFn: (vars: { user_id: string }) =>
+      resetPassword({ data: { user_id: vars.user_id } }),
+    onSuccess: () => {
+      toast.success(t("admin.resetSent"));
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
@@ -899,6 +914,10 @@ function UsersTable({
                       Reject
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setResetUserRow(u)}>
+                      <KeyRound className="h-3.5 w-3.5 mr-2" /> {t("admin.sendPasswordReset")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}
@@ -957,6 +976,36 @@ function UsersTable({
           onChanged();
         }}
       />
+      <Dialog open={!!resetUserRow} onOpenChange={(o) => !o && setResetUserRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> {t("admin.resetConfirmTitle")}
+            </DialogTitle>
+            <DialogDescription>{t("admin.resetConfirmDesc")}</DialogDescription>
+          </DialogHeader>
+          {resetUserRow?.email && (
+            <div className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm">
+              <span className="font-mono">{resetUserRow.email}</span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResetUserRow(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!resetUserRow) return;
+                resetMut.mutate({ user_id: resetUserRow.user_id });
+                setResetUserRow(null);
+              }}
+              disabled={resetMut.isPending}
+            >
+              {resetMut.isPending ? t("admin.resetSending") : t("admin.resetSendBtn")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
