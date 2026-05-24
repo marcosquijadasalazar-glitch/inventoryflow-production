@@ -31,7 +31,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail } from "lucide-react";
+import { Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail, Upload } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import {
   orgListUsers,
@@ -40,7 +40,22 @@ import {
   orgSetUserStatus,
   orgDeleteUser,
   orgResetUserPassword,
+  orgImportUsers,
 } from "@/lib/org-users.functions";
+import { ImportDialog } from "@/components/ImportDialog";
+import type { ImportSchema } from "@/lib/import-utils";
+
+const USERS_IMPORT_SCHEMA: ImportSchema = {
+  entity: "users",
+  sheetName: "Users",
+  fields: [
+    { key: "full_name", required: true, aliases: ["name"], example: "Jane Doe" },
+    { key: "email", required: true, example: "jane@example.com" },
+    { key: "phone", example: "+1 555 0100" },
+    { key: "role", example: "employee" },
+    { key: "status", example: "active" },
+  ],
+};
 import {
   AlertDialog,
   AlertDialogAction,
@@ -119,6 +134,10 @@ function UsersPage() {
               {t("orgUsers.seatUsage", "{{used}} / {{cap}} seats", { used, cap })}
             </Badge>
           )}
+          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={limitReached}>
+            <Upload className="h-4 w-4 mr-2" />
+            {t("importer.button", "Import")}
+          </Button>
           <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
             <UserPlus className="h-4 w-4 mr-2" />
             {t("orgUsers.invite", "Invite user")}
