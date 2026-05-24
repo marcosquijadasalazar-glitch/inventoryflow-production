@@ -63,6 +63,7 @@ function useNavItems() {
   );
   const role = profile.data?.role;
   if (role === "owner" || role === "manager") {
+    visible.push({ to: "/users", label: t("orgUsers.navLabel", "Users & Roles"), icon: Users, module: null, permission: null });
     visible.push({ to: "/permissions", label: t("permissions.navLabel", "Roles & Permissions"), icon: ShieldCheck, module: null, permission: null });
   }
   if (isSuper) {
