@@ -61,6 +61,10 @@ function useNavItems() {
       isSuper ||
       ((!i.module || modules[i.module]) && (!i.permission || perms.can(i.permission))),
   );
+  const role = profile.data?.role;
+  if (role === "owner" || role === "manager") {
+    visible.push({ to: "/permissions", label: t("permissions.navLabel", "Roles & Permissions"), icon: ShieldCheck, module: null, permission: null });
+  }
   if (isSuper) {
     visible.push({ to: "/admin", label: "Admin", icon: Shield, module: null, permission: null });
   }
