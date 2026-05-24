@@ -944,5 +944,54 @@
       "manage_users": "Gestionar usuarios",
       "manage_company_settings": "Gestionar ajustes de empresa"
     }
+  },
+  "orgUsers": {
+    "navLabel": "Usuarios y Roles",
+    "title": "Usuarios y Roles",
+    "subtitle": "Invita a tu equipo y gestiona sus accesos.",
+    "invite": "Invitar usuario",
+    "inviteDesc": "El usuario recibirá un correo para establecer su contraseña.",
+    "sendInvite": "Enviar invitación",
+    "invited": "Invitación enviada",
+    "fullName": "Nombre completo",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "role": "Rol",
+    "edit": "Editar",
+    "editUser": "Editar usuario",
+    "updated": "Usuario actualizado",
+    "delete": "Eliminar",
+    "deleted": "Usuario eliminado",
+    "deleteTitle": "Eliminar usuario",
+    "deleteDesc": "Esto archivará a {{name}} y revocará su acceso.",
+    "suspend": "Suspender",
+    "reactivate": "Reactivar",
+    "resetPassword": "Enviar restablecimiento de contraseña",
+    "resetSent": "Correo de restablecimiento enviado",
+    "resendInvite": "Reenviar invitación",
+    "active": "Usuarios activos",
+    "pending": "Invitaciones pendientes",
+    "pendingHint": "Usuarios que aún no han iniciado sesión.",
+    "suspended": "Usuarios suspendidos",
+    "archived": "Usuarios archivados",
+    "empty": "Sin usuarios en esta sección.",
+    "invalidForm": "Nombre y correo son obligatorios",
+    "planLimit": "Has alcanzado el límite de usuarios de tu plan",
+    "seatUsage": "{{used}} / {{cap}} usuarios",
+    "permissionsHint": "Los permisos detallados por usuario se gestionan en la página",
+    "permissionsHintTail": ".",
+    "col": {
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "status": "Estado",
+      "lastLogin": "Último inicio"
+    },
+    "status": {
+      "active": "Activo",
+      "suspended": "Suspendido",
+      "archived": "Archivado",
+      "inactive": "Inactivo"
+    }
   }
 }
