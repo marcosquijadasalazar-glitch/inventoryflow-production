@@ -36,7 +36,7 @@ async function assertOrgManager(userId: string) {
 async function assertSameOrgTarget(actor: { role: string; organization_id: string | null }, targetUserId: string) {
   const { data: target, error } = await supabaseAdmin
     .from("profiles")
-    .select("user_id, role, organization_id, email, full_name")
+    .select("user_id, role, organization_id, email, full_name, is_active, suspended_at, archived_at")
     .eq("user_id", targetUserId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -47,7 +47,11 @@ async function assertSameOrgTarget(actor: { role: string; organization_id: strin
       throw new Error("Cross-organization action is not allowed");
     }
   }
-  return target;
+  return target as typeof target & {
+    is_active: boolean | null;
+    suspended_at: string | null;
+    archived_at: string | null;
+  };
 }
 
 async function writeAudit(input: {
