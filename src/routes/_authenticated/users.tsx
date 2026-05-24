@@ -187,24 +187,34 @@ function UsersPage() {
         }}
       />
       <EditDialog user={editing} onOpenChange={(o) => !o && setEditing(null)} onSaved={() => { setEditing(null); invalidate(); }} />
-      <DeleteConfirmDialog
-        open={!!deleting}
-        title={t("orgUsers.deleteTitle", "Delete user")}
-        description={t("orgUsers.deleteDesc", "This will permanently archive {{name}} and revoke their access. This cannot be undone.", { name: deleting?.full_name ?? deleting?.email ?? "" })}
-        onCancel={() => setDeleting(null)}
-        onConfirm={async () => {
-          if (!deleting) return;
-          try {
-            const fn = (await import("@/lib/org-users.functions")).orgDeleteUser;
-            await fn({ data: { user_id: deleting.user_id } });
-            toast.success(t("orgUsers.deleted", "User deleted"));
-            setDeleting(null);
-            invalidate();
-          } catch (e) {
-            toast.error((e as Error).message);
-          }
-        }}
-      />
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("orgUsers.deleteTitle", "Delete user")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("orgUsers.deleteDesc", "This will archive {{name}} and revoke their access.", { name: deleting?.full_name ?? deleting?.email ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!deleting) return;
+                try {
+                  await orgDeleteUser({ data: { user_id: deleting.user_id } });
+                  toast.success(t("orgUsers.deleted", "User deleted"));
+                  setDeleting(null);
+                  invalidate();
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              }}
+            >
+              {t("orgUsers.delete", "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
