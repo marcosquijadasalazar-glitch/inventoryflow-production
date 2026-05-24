@@ -769,6 +769,15 @@ function UsersTable({
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const resetMut = useMutation({
+    mutationFn: (vars: { user_id: string }) =>
+      resetPassword({ data: { user_id: vars.user_id } }),
+    onSuccess: () => {
+      toast.success("Password reset email sent");
+      onChanged();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const orgMap = useMemo(() => {
     const m = new Map<string, string>();
