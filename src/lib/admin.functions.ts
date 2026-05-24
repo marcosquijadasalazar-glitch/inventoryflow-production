@@ -628,7 +628,7 @@ export const adminResetUserPassword = createServerFn({ method: "POST" })
     const origin = request ? new URL(request.url).origin : "https://inventoryflowapp.com";
 
     const { error } = await c.auth.resetPasswordForEmail(target.email, {
-      redirectTo: `${origin}/login`,
+      redirectTo: `${origin}/reset-password`,
     });
     if (error) throw new Error(error.message);
 

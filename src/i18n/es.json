@@ -861,5 +861,20 @@
     "resetSent": "Correo de restablecimiento enviado",
     "resetSending": "Enviando…",
     "resetSendBtn": "Enviar correo de restablecimiento"
+  },
+  "resetPassword": {
+    "title": "Establecer una nueva contraseña",
+    "subtitle": "Elige una contraseña segura para tu cuenta.",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "update": "Actualizar contraseña",
+    "updating": "Actualizando…",
+    "mismatch": "Las contraseñas no coinciden.",
+    "tooShort": "La contraseña debe tener al menos 6 caracteres.",
+    "success": "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
+    "goLogin": "Ir al inicio de sesión",
+    "backToLogin": "Volver al inicio de sesión",
+    "verifying": "Verificando enlace de restablecimiento…",
+    "invalidLink": "Este enlace de restablecimiento no es válido o ha expirado. Por favor, solicita uno nuevo."
   }
 }
