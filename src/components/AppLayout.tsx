@@ -31,30 +31,37 @@ import { ScanBarcodeButton } from "./ScanBarcodeButton";
 import { useProfile } from "@/lib/profile";
 import { useEnabledModules } from "@/lib/use-modules";
 import type { ModuleKey } from "@/lib/modules";
+import { usePermissions } from "@/lib/use-permissions";
+import type { AppPermission } from "@/lib/permissions";
 
 function useNavItems() {
   const { t } = useTranslation();
   const profile = useProfile();
   const { modules } = useEnabledModules();
+  const perms = usePermissions();
   const isSuper = profile.data?.role === "super_admin";
-  const items: Array<{ to: string; label: string; icon: typeof Boxes; module: ModuleKey | null }> = [
-    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, module: "dashboard" },
-    { to: "/products", label: t("nav.products"), icon: Package, module: "products" },
-    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight, module: "movements" },
-    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart, module: "purchase_orders" },
-    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt, module: "sales_orders" },
-    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft, module: "transfer_orders" },
-    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse, module: "location_stock" },
-    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use" },
-    { to: "/history", label: t("nav.history"), icon: History, module: "history" },
-    { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart, module: "reports" },
-    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine, module: "scanner" },
-    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle, module: "alerts" },
-    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon, module: "settings" },
+  const items: Array<{ to: string; label: string; icon: typeof Boxes; module: ModuleKey | null; permission: AppPermission | null }> = [
+    { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, module: "dashboard", permission: "view_dashboard" },
+    { to: "/products", label: t("nav.products"), icon: Package, module: "products", permission: "view_products" },
+    { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight, module: "movements", permission: "view_movements" },
+    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart, module: "purchase_orders", permission: "manage_purchase_orders" },
+    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt, module: "sales_orders", permission: "manage_sales_orders" },
+    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft, module: "transfer_orders", permission: "manage_transfer_orders" },
+    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
+    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use", permission: "manage_internal_use" },
+    { to: "/history", label: t("nav.history"), icon: History, module: "history", permission: "view_transaction_history" },
+    { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart, module: "reports", permission: "view_reports" },
+    { to: "/scanner", label: t("nav.scanner"), icon: ScanLine, module: "scanner", permission: "use_barcode_scanner" },
+    { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle, module: "alerts", permission: "manage_alerts" },
+    { to: "/settings", label: t("nav.settings"), icon: SettingsIcon, module: "settings", permission: "manage_company_settings" },
   ];
-  const visible = items.filter((i) => isSuper || !i.module || modules[i.module]);
+  const visible = items.filter(
+    (i) =>
+      isSuper ||
+      ((!i.module || modules[i.module]) && (!i.permission || perms.can(i.permission))),
+  );
   if (isSuper) {
-    visible.push({ to: "/admin", label: "Admin", icon: Shield, module: null });
+    visible.push({ to: "/admin", label: "Admin", icon: Shield, module: null, permission: null });
   }
   return visible;
 }
