@@ -113,11 +113,29 @@ function AuthenticatedLayout() {
 function ModuleGate({ pathname, children }: { pathname: string; children: ReactNode }) {
   const profile = useProfile();
   const { modules, isLoading } = useEnabledModules();
+  const perms = usePermissions();
+  const { t } = useTranslation();
   const isSuper = profile.data?.role === "super_admin";
   const moduleKey = moduleForPath(pathname);
-  if (isSuper || !moduleKey || isLoading) return <>{children}</>;
-  if (!modules[moduleKey]) {
+  if (isSuper || isLoading || perms.isLoading) return <>{children}</>;
+  if (moduleKey && !modules[moduleKey]) {
     return <ModuleDisabled label={MODULE_LABELS[moduleKey]} />;
+  }
+  const requiredPerm = permissionForPath(pathname);
+  if (requiredPerm && !perms.can(requiredPerm)) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="max-w-md text-center space-y-3 p-6">
+          <ShieldOff className="h-10 w-10 text-muted-foreground mx-auto" />
+          <h2 className="text-lg font-semibold">
+            {t("permissions.deniedTitle", "Permission required")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("permissions.deniedBody", "You don't have access to this section. Ask your organization owner to grant the required permission.")}
+          </p>
+        </div>
+      </div>
+    );
   }
   return <>{children}</>;
 }
