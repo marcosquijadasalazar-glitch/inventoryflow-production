@@ -346,7 +346,13 @@
     "continueWithGoogle": "Continue with Google",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "forgotPassword": "Forgot password?",
+    "resetSending": "Sending…",
+    "resetWait": "Wait {{seconds}}s",
+    "resetCooldown": "Please wait {{seconds}} seconds before requesting another reset email.",
+    "resetSent": "Password reset email sent. Check your inbox.",
+    "resetEnterEmail": "Enter your email above to receive a reset link."
   },
   "history": {
     "title": "Transaction History",

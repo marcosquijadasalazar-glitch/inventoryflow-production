@@ -346,7 +346,13 @@
     "continueWithGoogle": "Continuar con Google",
     "noAccount": "¿No tienes cuenta?",
     "haveAccount": "¿Ya tienes cuenta?",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetSending": "Enviando…",
+    "resetWait": "Espera {{seconds}}s",
+    "resetCooldown": "Espera {{seconds}} segundos antes de solicitar otro correo de restablecimiento.",
+    "resetSent": "Correo de restablecimiento enviado. Revisa tu bandeja.",
+    "resetEnterEmail": "Ingresa tu correo arriba para recibir el enlace."
   },
   "history": {
     "title": "Historial de transacciones",
