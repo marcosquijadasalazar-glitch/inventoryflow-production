@@ -99,8 +99,10 @@ function UsersPage() {
   });
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState<UserRow | null>(null);
+  const runImport = useServerFn(orgImportUsers);
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
 
@@ -204,6 +206,14 @@ function UsersPage() {
           setInviteOpen(false);
           invalidate();
         }}
+      />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        schema={USERS_IMPORT_SCHEMA}
+        title={t("orgUsers.importTitle", "Import users")}
+        onImport={async (rows) => runImport({ data: { rows } })}
+        onDone={() => invalidate()}
       />
       <EditDialog user={editing} onOpenChange={(o) => !o && setEditing(null)} onSaved={() => { setEditing(null); invalidate(); }} />
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
