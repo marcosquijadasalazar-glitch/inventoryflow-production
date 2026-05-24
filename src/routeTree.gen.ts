@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ServiceAgreementRouteImport } from './routes/service-agreement'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
 import { Route as LoginRouteImport } from './routes/login'
@@ -48,6 +49,11 @@ const SignupRoute = SignupRouteImport.update({
 const ServiceAgreementRoute = ServiceAgreementRouteImport.update({
   id: '/service-agreement',
   path: '/service-agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pending-approval'
     | '/privacy'
+    | '/reset-password'
     | '/service-agreement'
     | '/signup'
     | '/terms'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pending-approval'
     | '/privacy'
+    | '/reset-password'
     | '/service-agreement'
     | '/signup'
     | '/terms'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pending-approval'
     | '/privacy'
+    | '/reset-password'
     | '/service-agreement'
     | '/signup'
     | '/terms'
@@ -335,6 +347,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ServiceAgreementRoute: typeof ServiceAgreementRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
@@ -361,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/service-agreement'
       fullPath: '/service-agreement'
       preLoaderRoute: typeof ServiceAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -569,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ServiceAgreementRoute: ServiceAgreementRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
@@ -576,13 +597,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
