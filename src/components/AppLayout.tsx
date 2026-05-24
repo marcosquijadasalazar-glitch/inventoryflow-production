@@ -12,6 +12,7 @@ import {
   ScanLine,
   Settings as SettingsIcon,
   Shield,
+  ShieldCheck,
   ShoppingCart,
   Receipt,
   ArrowRightLeft,
