@@ -41,7 +41,16 @@ import {
   orgDeleteUser,
   orgResetUserPassword,
 } from "@/lib/org-users.functions";
-import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/users")({
