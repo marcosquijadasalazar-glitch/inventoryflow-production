@@ -1,105 +1,57 @@
-# InventoryFlow v2: History, Barcode, i18n & PDF
+# Granular RBAC Permissions
 
-This is a large multi-part change. Below is the plan, scoped to keep auth, RLS, landing page, and existing CRUD intact.
+## Overview
 
-## 1. Database (migration)
+Add a permission system layered on top of existing roles (`owner`, `manager`, `employee`, `super_admin`). Permissions are resolved as: **role defaults → org role overrides → per-user overrides**. Owners manage their org; super admins manage all orgs. Enforcement is both UI (hide) and server-side (block + RLS where applicable).
 
-New tables:
+## Database
 
-- `transaction_history` — every inventory action
-  - `id`, `created_at`
-  - `type` (enum: `product_created`, `product_updated`, `product_deleted`, `stock_added`, `stock_removed`, `stock_adjusted`, `low_stock`)
-  - `product_id` (nullable for deleted), `product_name`, `sku`, `barcode`
-  - `quantity_change` (int, nullable), `previous_stock` (int, nullable), `new_stock` (int, nullable)
-  - `reason` (text), `source` (enum: `manual`, `barcode_scan`, `adjustment`, `system`)
-  - `user_id` (uuid), `user_email` (text)
-- `company_settings` — single-row settings (one per workspace, shared model matches current RLS)
-  - `company_name`, `address`, `phone`, `footer_notes`, `logo_url`
+New migration:
 
-RLS: authenticated CRUD on both (matches existing shared-workspace model).
+1. **`app_permission` enum** with the 23 keys listed in the request.
+2. **`role_permissions`** table — per-org role defaults.
+   - `organization_id uuid`, `role app_role`, `permission app_permission`, `granted boolean`
+   - Unique `(organization_id, role, permission)`. NULL `organization_id` = global defaults seed.
+3. **`user_permissions`** table — per-user overrides.
+   - `user_id uuid`, `organization_id uuid`, `permission app_permission`, `granted boolean`
+   - Unique `(user_id, permission)`.
+4. **`has_permission(_user_id uuid, _perm app_permission) returns boolean`** — security definer function. Resolves: super_admin → true; owner → true for own org; else user override → role override → hardcoded defaults from the spec.
+5. **Seed defaults** for each existing organization based on the spec (Owner=all, Manager=specified subset, Employee=specified subset).
+6. **RLS** on both tables: owners/managers can read/write their org's rows (and never `super_admin` role rows for owners); super_admin all access. Users can read their own `user_permissions`.
+7. **Audit trigger** on both tables → insert into `admin_audit_log` with `action_type='permission_change'`.
 
-Trigger: extend `apply_movement` (or add a sibling trigger) to write a `transaction_history` row on every `inventory_movements` insert, capturing previous/new stock and detecting low-stock crossings.
+## Server functions (`src/lib/permissions.functions.ts`)
 
-For `product_created/updated/deleted` we'll log from the client (`upsertProduct`/`deleteProduct`) since we have the user email there — simplest path that doesn't require auth.uid() plumbing in triggers.
+- `getMyPermissions()` → returns `Record<AppPermission, boolean>` for current user (calls `has_permission` for each).
+- `getOrgRolePermissions(orgId)` → matrix for the org.
+- `getUserOverrides(orgId)` → all per-user overrides for the org.
+- `setRolePermission({ orgId, role, permission, granted })` — owner-only, blocks `super_admin` role edits, blocks cross-org for non-super-admin.
+- `setUserPermission({ userId, permission, granted | null })` — owner-only, same org check, blocks super_admin targets.
+- All mutations validate caller via `requireSupabaseAuth` + role/org checks and write `admin_audit_log` entries.
 
-Storage bucket `branding` (public) for the company logo upload.
+## Client
 
-## 2. Transaction History page
+- **`src/lib/use-permissions.ts`** — `usePermissions()` hook backed by React Query; exposes `can(perm)` helper.
+- **`src/lib/permissions.ts`** — constants: `ALL_PERMISSIONS`, `DEFAULT_PERMISSIONS` per role, permission groups for UI.
+- **Sidebar/nav (`src/components/AppLayout.tsx`)** — gate menu items by permission (in addition to existing module gates).
+- **Route guard** — extend `_authenticated.tsx` with a `permissionForPath` map; block access with a "No permission" view when missing.
+- **Action gating** — hide/disable create/edit/delete buttons and cost/price columns based on `can()` in: products, movements, orders, transfers, internal use, reports, exports, settings, alerts, locations, scanner.
+- **Admin UI (`src/routes/_authenticated/admin.tsx`)** — new "Roles & Permissions" tab:
+  - Role matrix: rows = permissions grouped by category, columns = roles, toggles per cell.
+  - User overrides: pick a user → matrix of overrides (granted / denied / inherit).
+  - Owners only see their org; super admin sees an org selector.
 
-`src/routes/_authenticated/history.tsx`:
-- Table with all fields, sortable by date
-- Filters: date range, type, product, SKU, barcode, user, source
-- Search: name / SKU / barcode / user email
-- CSV export (reuse `csv.ts`)
-- PDF export (see §5)
+## i18n
 
-`src/lib/history.ts` — query helpers + `logTransaction()` used by product CRUD paths.
+Add `permissions.*` namespace to `en.json` and `es.json`: section titles, permission labels/descriptions, role names, "No permission" page copy, toast messages.
 
-## 3. Barcode scanner
+## Security guarantees
 
-`src/routes/_authenticated/scanner.tsx` (also embeddable as dialog):
-- Auto-focused barcode input (USB scanners type + Enter)
-- Mobile camera scan via `@zxing/browser`
-- On scan: look up by barcode → show product card → Add / Remove / Adjust + qty + reason → submit creates a movement with `source='barcode_scan'`
-- If not found: "Create new product" button → opens ProductForm prefilled with barcode
+- Owners cannot grant `super_admin` role or edit users outside their org (enforced server-side + RLS).
+- All writes go through server functions with role checks; UI gating is defense-in-depth, not the primary gate.
+- Cost/price visibility is gated by `view_costs` / `view_prices` on the **read path** in product list/detail components — costs/prices are simply not rendered when the permission is missing. (Full column-level RLS for prices would require breaking the products table; out of scope.)
+- Every permission change is logged in `admin_audit_log` with `target_type='role_permission' | 'user_permission'`, performer, before/after.
 
-"Scan Barcode" button added to Products, Movements, Dashboard headers.
+## Out of scope (kept working as-is)
 
-## 4. i18n (English / Spanish)
-
-- `react-i18next` + `i18next` + `i18next-browser-languagedetector`
-- `src/i18n/index.ts`, `src/i18n/en.json`, `src/i18n/es.json`
-- Language selector in sidebar footer + landing nav, persisted in `localStorage`
-- Translate all primary labels across landing, auth, dashboard, products, movements, alerts, history, scanner, settings
-
-## 5. PDF & printing
-
-`@react-pdf/renderer` for PDFs (works in browser, no native deps).
-
-Documents:
-- Product detail PDF
-- Inventory list PDF (all / selected)
-- Transaction history PDF (filtered)
-- Purchase order PDF
-- Stock count sheet PDF
-- Barcode label sheet (uses `jsbarcode` to render SVG barcodes)
-
-All pull company branding from `company_settings`. Print buttons via `window.print()` or "Download PDF" links. Excel export = same CSV with `.xlsx` content type isn't valid; we'll use `xlsx` lib for real `.xlsx` on inventory list + history.
-
-## 6. Settings page
-
-`src/routes/_authenticated/settings.tsx`:
-- Company name, address, phone, footer notes
-- Logo upload to `branding` bucket
-- Language preference
-
-## 7. Navigation
-
-Update `AppLayout.tsx` sidebar to include: Dashboard, Products, Movements, Transaction History, Barcode Scanner, Alerts, Settings — plus language switcher in the footer.
-
-## 8. Files
-
-New:
-- `supabase/migrations/<ts>_history_settings.sql`
-- `src/lib/history.ts`, `src/lib/settings.ts`, `src/lib/pdf/*.tsx` (product, inventory, history, po, count-sheet, labels), `src/lib/xlsx.ts`
-- `src/i18n/{index.ts,en.json,es.json}`
-- `src/components/LanguageSwitcher.tsx`, `src/components/BarcodeScanInput.tsx`, `src/components/ScanBarcodeButton.tsx`
-- `src/routes/_authenticated/{history,scanner,settings}.tsx`
-
-Edited:
-- `src/components/AppLayout.tsx` — nav items, language switcher
-- `src/lib/inventory.ts` — call `logTransaction` from product CRUD
-- `src/routes/_authenticated/{dashboard,products,movements,alerts}.tsx` — Scan button + i18n labels
-- `src/routes/{index,login,signup}.tsx` — i18n labels
-- `src/routes/__root.tsx` — init i18n
-- `package.json` — add deps
-
-## Notes / constraints
-
-- Excel export uses `xlsx` lib (browser-safe).
-- Camera scanning requires HTTPS (preview is HTTPS, fine).
-- Logo stored in public storage bucket so it can be embedded in PDFs.
-- All existing RLS / auth / landing page logic untouched.
-- Spanish copy will be hand-written Latin American SaaS tone, not machine.
-
-This is a big chunk of code (~25-30 files) but each piece is well-scoped. Approve and I'll build it.
+Auth, signup, onboarding, plan limits, module gating, RLS on existing tables, trial logic, password reset flow.
