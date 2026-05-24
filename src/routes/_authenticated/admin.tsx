@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
