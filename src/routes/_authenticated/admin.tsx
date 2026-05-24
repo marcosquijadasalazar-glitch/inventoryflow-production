@@ -70,6 +70,7 @@ import {
   adminSetUserStatus,
   adminSetAccountStatus,
   adminListAuditLog,
+  adminResetUserPassword,
 } from "@/lib/admin.functions";
 import { adminUpdateOrgModules } from "@/lib/modules.functions";
 import {
