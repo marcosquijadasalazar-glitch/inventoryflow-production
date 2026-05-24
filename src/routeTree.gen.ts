@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedTransferOrdersRouteImport } from './routes/_authenticated/transfer-orders'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -85,6 +86,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTransferOrdersRoute =
   AuthenticatedTransferOrdersRouteImport.update({
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
+  '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
+  '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/transfer-orders'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/transfer-orders'
+    | '/users'
   id:
     | '__root__'
     | '/'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/transfer-orders'
+    | '/_authenticated/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -437,6 +449,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/transfer-orders': {
       id: '/_authenticated/transfer-orders'
@@ -578,6 +597,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTransferOrdersRoute: typeof AuthenticatedTransferOrdersRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -598,6 +618,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTransferOrdersRoute: AuthenticatedTransferOrdersRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -619,3 +640,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
