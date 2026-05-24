@@ -101,7 +101,8 @@
     "settings": "Configuración",
     "reports": "Informes",
     "signOut": "Cerrar sesión",
-    "language": "Idioma"
+    "language": "Idioma",
+    "customers": "Clientes"
   },
   "access": {
     "blockedTitle": "Acceso no disponible",
@@ -993,5 +994,35 @@
       "archived": "Archivado",
       "inactive": "Inactivo"
     }
+  },
+  "customers": {
+    "title": "Clientes",
+    "subtitle": "Gestiona tu directorio de clientes",
+    "name": "Nombre",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "empty": "Aún no hay clientes. Importa un archivo CSV/Excel para comenzar.",
+    "importTitle": "Importar clientes"
+  },
+  "importer": {
+    "button": "Importar",
+    "description": "Sube un archivo CSV o Excel. Descarga la plantilla para asegurar nombres de columnas correctos.",
+    "downloadTemplate": "Descargar plantilla",
+    "chooseFile": "Elegir archivo",
+    "unknownHeaders": "Columnas ignoradas",
+    "total": "Total: {{n}}",
+    "valid": "Válidas: {{n}}",
+    "errors": "Errores: {{n}}",
+    "status": "Estado",
+    "previewLimit": "Mostrando las primeras 100 filas. Todas las filas válidas se importarán.",
+    "summary": "Resumen de importación",
+    "inserted": "Insertadas: {{n}}",
+    "failed": "Fallidas: {{n}}",
+    "importN": "Importar {{n}}",
+    "success": "Se importaron {{n}} registros",
+    "partial": "Se importaron {{ok}}, {{fail}} fallaron",
+    "empty": "No se encontraron filas en el archivo",
+    "noValidRows": "No hay filas válidas para importar"
   }
 }

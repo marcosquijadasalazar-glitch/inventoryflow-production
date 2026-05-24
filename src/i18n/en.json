@@ -101,7 +101,8 @@
     "settings": "Settings",
     "reports": "Reports",
     "signOut": "Sign out",
-    "language": "Language"
+    "language": "Language",
+    "customers": "Customers"
   },
   "access": {
     "blockedTitle": "Access unavailable",
@@ -993,5 +994,35 @@
       "archived": "Archived",
       "inactive": "Inactive"
     }
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "Manage your customer directory",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "empty": "No customers yet. Import a CSV/Excel file to get started.",
+    "importTitle": "Import customers"
+  },
+  "importer": {
+    "button": "Import",
+    "description": "Upload a CSV or Excel file. Download the template to ensure correct column names.",
+    "downloadTemplate": "Download template",
+    "chooseFile": "Choose file",
+    "unknownHeaders": "Ignored columns",
+    "total": "Total: {{n}}",
+    "valid": "Valid: {{n}}",
+    "errors": "Errors: {{n}}",
+    "status": "Status",
+    "previewLimit": "Showing first 100 rows. All valid rows will be imported.",
+    "summary": "Import summary",
+    "inserted": "Inserted: {{n}}",
+    "failed": "Failed: {{n}}",
+    "importN": "Import {{n}}",
+    "success": "Imported {{n}} records",
+    "partial": "Imported {{ok}}, {{fail}} failed",
+    "empty": "No rows found in file",
+    "noValidRows": "No valid rows to import"
   }
 }
