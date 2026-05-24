@@ -317,24 +317,15 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
                 {mode === "signin" && (
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!email) {
-                        setError("Enter your email above to receive a reset link.");
-                        return;
-                      }
-                      try {
-                        const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-                          redirectTo: `${window.location.origin}/reset-password`,
-                        });
-                        if (err) throw err;
-                        toast.success("Password reset email sent. Check your inbox.");
-                      } catch (e: any) {
-                        setError(e?.message ?? "Failed to send reset email");
-                      }
-                    }}
-                    className="text-xs font-medium text-primary hover:underline"
+                    onClick={sendPasswordReset}
+                    disabled={resetCooldown > 0 || resetBusy}
+                    className="text-xs font-medium text-primary hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
                   >
-                    Forgot password?
+                    {resetCooldown > 0
+                      ? t("auth.resetWait", { seconds: resetCooldown })
+                      : resetBusy
+                      ? t("auth.resetSending")
+                      : t("auth.forgotPassword")}
                   </button>
                 )}
               </div>
