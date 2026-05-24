@@ -974,6 +974,38 @@ function UsersTable({
           onChanged();
         }}
       />
+      <Dialog open={!!resetUserRow} onOpenChange={(o) => !o && setResetUserRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" /> Send password reset
+            </DialogTitle>
+            <DialogDescription>
+              This will send a password reset email to the user. They can use the link to set a new password.
+            </DialogDescription>
+          </DialogHeader>
+          {resetUserRow?.email && (
+            <div className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm">
+              <span className="font-mono">{resetUserRow.email}</span>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setResetUserRow(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!resetUserRow) return;
+                resetMut.mutate({ user_id: resetUserRow.user_id });
+                setResetUserRow(null);
+              }}
+              disabled={resetMut.isPending}
+            >
+              {resetMut.isPending ? "Sending…" : "Send reset email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
