@@ -775,7 +775,7 @@ function UsersTable({
     mutationFn: (vars: { user_id: string }) =>
       resetPassword({ data: { user_id: vars.user_id } }),
     onSuccess: () => {
-      toast.success("Password reset email sent");
+      toast.success(t("admin.resetSent"));
       onChanged();
     },
     onError: (e: any) => toast.error(e.message),
