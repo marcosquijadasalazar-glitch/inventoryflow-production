@@ -404,3 +404,110 @@ export const orgResetUserPassword = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// -------- Bulk import (CSV/XLSX) --------
+
+const ImportUserRow = z.object({
+  email: z.string().trim().email().max(255),
+  full_name: z.string().trim().min(1).max(120),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  role: z.string().trim().max(40).optional().or(z.literal("")),
+  status: z.string().trim().max(20).optional().or(z.literal("")),
+});
+
+const ImportUsersInput = z.object({
+  rows: z.array(z.record(z.string(), z.string())).max(500),
+});
+
+export const orgImportUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => ImportUsersInput.parse(i))
+  .handler(async ({ data, context }) => {
+    const me = await assertOrgManager(context.userId);
+    const orgId = me.organization_id!;
+    if (!orgId) throw new Error("No organization");
+
+    // Plan cap
+    const { data: org } = await supabaseAdmin
+      .from("organizations").select("plan_type").eq("id", orgId).maybeSingle();
+    const plan = (org as any)?.plan_type as keyof typeof PLAN_LIMITS | undefined;
+    const cap = plan ? PLAN_LIMITS[plan].max_users : null;
+    let used = 0;
+    if (cap != null) {
+      const { count } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("organization_id", orgId)
+        .is("deleted_at", null).is("archived_at", null).eq("is_active", true);
+      used = count ?? 0;
+    }
+
+    const errors: { row: number; message: string }[] = [];
+    let inserted = 0;
+    const c = publicAuthClient();
+    const origin = getOrigin();
+
+    for (let i = 0; i < data.rows.length; i++) {
+      const rowNum = i + 2;
+      const parsed = ImportUserRow.safeParse(data.rows[i]);
+      if (!parsed.success) {
+        errors.push({ row: rowNum, message: parsed.error.issues.map((x) => `${x.path.join(".")}: ${x.message}`).join("; ") });
+        continue;
+      }
+      const v = parsed.data;
+      const roleRaw = (v.role || "employee").toLowerCase();
+      if (roleRaw === "super_admin" || roleRaw === "owner") {
+        errors.push({ row: rowNum, message: `cannot create role "${roleRaw}"` });
+        continue;
+      }
+      if (!ASSIGNABLE_ROLES.includes(roleRaw as any)) {
+        errors.push({ row: rowNum, message: `unknown role "${v.role}"` });
+        continue;
+      }
+      if (cap != null && used + inserted >= cap) {
+        errors.push({ row: rowNum, message: `PLAN_LIMIT_USERS:${cap}` });
+        continue;
+      }
+      try {
+        const tempPass = `Tmp_${crypto.randomUUID()}A1!`;
+        const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+          email: v.email, password: tempPass, email_confirm: true,
+          user_metadata: { full_name: v.full_name, role: roleRaw, organization_id: orgId, phone: v.phone || null },
+        });
+        if (error) throw new Error(error.message);
+        const uid = created.user?.id;
+        if (!uid) throw new Error("user creation failed");
+        const { error: upErr } = await supabaseAdmin.from("profiles").upsert({
+          user_id: uid, email: v.email, full_name: v.full_name, phone: v.phone || null,
+          role: roleRaw as never, organization_id: orgId,
+          account_status: "active" as never, is_active: true,
+        } as never, { onConflict: "user_id" });
+        if (upErr) throw new Error(upErr.message);
+        await c.auth.resetPasswordForEmail(v.email, { redirectTo: `${origin}/reset-password` });
+        await writeAudit({
+          action_type: "invite",
+          target_id: uid,
+          target_label: v.email,
+          performed_by: context.userId,
+          performed_by_email: me.email ?? null,
+          new_status: "active",
+          metadata: { role: roleRaw, organization_id: orgId, source: "import" },
+        });
+        inserted++;
+      } catch (e: any) {
+        errors.push({ row: rowNum, message: e?.message ?? "create failed" });
+      }
+    }
+
+    await supabaseAdmin.from("admin_audit_log" as never).insert({
+      action_type: "import",
+      target_type: "users",
+      target_id: orgId,
+      target_label: `Imported ${inserted} users`,
+      performed_by: me.user_id,
+      performed_by_email: me.email,
+      metadata: { total: data.rows.length, inserted, failed: errors.length, organization_id: orgId } as never,
+    } as never);
+
+    return { inserted, failed: errors.length, errors };
+  });

@@ -21,6 +21,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedTransferOrdersRouteImport } from './routes/_authenticated/transfer-orders'
+import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScannerRouteImport } from './routes/_authenticated/scanner'
@@ -30,6 +31,7 @@ import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
 import { Route as AuthenticatedMovementsRouteImport } from './routes/_authenticated/movements'
+import { Route as AuthenticatedLocationsRouteImport } from './routes/_authenticated/locations'
 import { Route as AuthenticatedLocationStockRouteImport } from './routes/_authenticated/location-stock'
 import { Route as AuthenticatedInternalUseRouteImport } from './routes/_authenticated/internal-use'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
@@ -38,6 +40,7 @@ import { Route as AuthenticatedCustomersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
 import { Route as AuthenticatedAdminRecoveryRouteImport } from './routes/_authenticated/admin-recovery'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdjustmentsRouteImport } from './routes/_authenticated/adjustments'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -99,6 +102,11 @@ const AuthenticatedTransferOrdersRoute =
     path: '/transfer-orders',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -147,6 +155,11 @@ const AuthenticatedMovementsRoute = AuthenticatedMovementsRouteImport.update({
   path: '/movements',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLocationsRoute = AuthenticatedLocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedLocationStockRoute =
   AuthenticatedLocationStockRouteImport.update({
     id: '/location-stock',
@@ -190,6 +203,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdjustmentsRoute =
+  AuthenticatedAdjustmentsRouteImport.update({
+    id: '/adjustments',
+    path: '/adjustments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
@@ -209,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof AuthenticatedHistoryRoute
   '/internal-use': typeof AuthenticatedInternalUseRoute
   '/location-stock': typeof AuthenticatedLocationStockRoute
+  '/locations': typeof AuthenticatedLocationsRoute
   '/movements': typeof AuthenticatedMovementsRoute
   '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -218,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/scanner': typeof AuthenticatedScannerRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
 }
@@ -231,6 +253,7 @@ export interface FileRoutesByTo {
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
@@ -239,6 +262,7 @@ export interface FileRoutesByTo {
   '/history': typeof AuthenticatedHistoryRoute
   '/internal-use': typeof AuthenticatedInternalUseRoute
   '/location-stock': typeof AuthenticatedLocationStockRoute
+  '/locations': typeof AuthenticatedLocationsRoute
   '/movements': typeof AuthenticatedMovementsRoute
   '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -248,6 +272,7 @@ export interface FileRoutesByTo {
   '/scanner': typeof AuthenticatedScannerRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
 }
@@ -263,6 +288,7 @@ export interface FileRoutesById {
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
@@ -271,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/internal-use': typeof AuthenticatedInternalUseRoute
   '/_authenticated/location-stock': typeof AuthenticatedLocationStockRoute
+  '/_authenticated/locations': typeof AuthenticatedLocationsRoute
   '/_authenticated/movements': typeof AuthenticatedMovementsRoute
   '/_authenticated/permissions': typeof AuthenticatedPermissionsRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
@@ -280,6 +307,7 @@ export interface FileRoutesById {
   '/_authenticated/scanner': typeof AuthenticatedScannerRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
+  '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
 }
@@ -295,6 +323,7 @@ export interface FileRouteTypes {
     | '/service-agreement'
     | '/signup'
     | '/terms'
+    | '/adjustments'
     | '/admin'
     | '/admin-recovery'
     | '/alerts'
@@ -303,6 +332,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/internal-use'
     | '/location-stock'
+    | '/locations'
     | '/movements'
     | '/permissions'
     | '/products'
@@ -312,6 +342,7 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/setup'
+    | '/suppliers'
     | '/transfer-orders'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
@@ -325,6 +356,7 @@ export interface FileRouteTypes {
     | '/service-agreement'
     | '/signup'
     | '/terms'
+    | '/adjustments'
     | '/admin'
     | '/admin-recovery'
     | '/alerts'
@@ -333,6 +365,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/internal-use'
     | '/location-stock'
+    | '/locations'
     | '/movements'
     | '/permissions'
     | '/products'
@@ -342,6 +375,7 @@ export interface FileRouteTypes {
     | '/scanner'
     | '/settings'
     | '/setup'
+    | '/suppliers'
     | '/transfer-orders'
     | '/users'
   id:
@@ -356,6 +390,7 @@ export interface FileRouteTypes {
     | '/service-agreement'
     | '/signup'
     | '/terms'
+    | '/_authenticated/adjustments'
     | '/_authenticated/admin'
     | '/_authenticated/admin-recovery'
     | '/_authenticated/alerts'
@@ -364,6 +399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/history'
     | '/_authenticated/internal-use'
     | '/_authenticated/location-stock'
+    | '/_authenticated/locations'
     | '/_authenticated/movements'
     | '/_authenticated/permissions'
     | '/_authenticated/products'
@@ -373,6 +409,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scanner'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
+    | '/_authenticated/suppliers'
     | '/_authenticated/transfer-orders'
     | '/_authenticated/users'
   fileRoutesById: FileRoutesById
@@ -476,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransferOrdersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/setup': {
       id: '/_authenticated/setup'
       path: '/setup'
@@ -539,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMovementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/locations': {
+      id: '/_authenticated/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof AuthenticatedLocationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/location-stock': {
       id: '/_authenticated/location-stock'
       path: '/location-stock'
@@ -595,10 +646,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/adjustments': {
+      id: '/_authenticated/adjustments'
+      path: '/adjustments'
+      fullPath: '/adjustments'
+      preLoaderRoute: typeof AuthenticatedAdjustmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdjustmentsRoute: typeof AuthenticatedAdjustmentsRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAdminRecoveryRoute: typeof AuthenticatedAdminRecoveryRoute
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
@@ -607,6 +666,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedInternalUseRoute: typeof AuthenticatedInternalUseRoute
   AuthenticatedLocationStockRoute: typeof AuthenticatedLocationStockRoute
+  AuthenticatedLocationsRoute: typeof AuthenticatedLocationsRoute
   AuthenticatedMovementsRoute: typeof AuthenticatedMovementsRoute
   AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
@@ -616,11 +676,13 @@ interface AuthenticatedRouteChildren {
   AuthenticatedScannerRoute: typeof AuthenticatedScannerRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
+  AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
   AuthenticatedTransferOrdersRoute: typeof AuthenticatedTransferOrdersRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdjustmentsRoute: AuthenticatedAdjustmentsRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAdminRecoveryRoute: AuthenticatedAdminRecoveryRoute,
   AuthenticatedAlertsRoute: AuthenticatedAlertsRoute,
@@ -629,6 +691,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedInternalUseRoute: AuthenticatedInternalUseRoute,
   AuthenticatedLocationStockRoute: AuthenticatedLocationStockRoute,
+  AuthenticatedLocationsRoute: AuthenticatedLocationsRoute,
   AuthenticatedMovementsRoute: AuthenticatedMovementsRoute,
   AuthenticatedPermissionsRoute: AuthenticatedPermissionsRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
@@ -638,6 +701,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedScannerRoute: AuthenticatedScannerRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
+  AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
   AuthenticatedTransferOrdersRoute: AuthenticatedTransferOrdersRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }

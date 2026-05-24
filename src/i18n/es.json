@@ -102,7 +102,10 @@
     "reports": "Informes",
     "signOut": "Cerrar sesión",
     "language": "Idioma",
-    "customers": "Clientes"
+    "customers": "Clientes",
+    "suppliers": "Proveedores",
+    "locations": "Ubicaciones",
+    "adjustments": "Ajustes"
   },
   "access": {
     "blockedTitle": "Acceso no disponible",
@@ -1024,5 +1027,37 @@
     "partial": "Se importaron {{ok}}, {{fail}} fallaron",
     "empty": "No se encontraron filas en el archivo",
     "noValidRows": "No hay filas válidas para importar"
+  },
+  "suppliers": {
+    "title": "Proveedores",
+    "subtitle": "Gestiona tu directorio de proveedores",
+    "name": "Nombre",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "notes": "Notas",
+    "empty": "Aún no hay proveedores. Importa un archivo CSV/Excel para comenzar.",
+    "importTitle": "Importar proveedores"
+  },
+  "locationsPage": {
+    "title": "Ubicaciones",
+    "subtitle": "Almacenes, tiendas y otras ubicaciones de stock",
+    "name": "Nombre",
+    "type": "Tipo",
+    "address": "Dirección",
+    "status": "Estado",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "empty": "Aún no hay ubicaciones. Importa un archivo CSV/Excel para comenzar.",
+    "importTitle": "Importar ubicaciones"
+  },
+  "adjustments": {
+    "title": "Ajustes de inventario",
+    "subtitle": "Importa ajustes de stock en bloque. Cada fila crea un movimiento y actualiza el stock.",
+    "importTitle": "Importar ajustes de inventario",
+    "howTitle": "Cómo funciona",
+    "howBody": "Indica sku o barcode para identificar cada producto. adjustment_type acepta: add, remove, adjustment (establecer absoluto).",
+    "help1": "add — incrementa el stock según quantity",
+    "help2": "remove — reduce el stock según quantity",
+    "help3": "adjustment — establece el stock absoluto a quantity"
   }
 }

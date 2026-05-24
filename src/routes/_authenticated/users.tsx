@@ -31,7 +31,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail } from "lucide-react";
+import { Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail, Upload } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import {
   orgListUsers,
@@ -40,7 +40,22 @@ import {
   orgSetUserStatus,
   orgDeleteUser,
   orgResetUserPassword,
+  orgImportUsers,
 } from "@/lib/org-users.functions";
+import { ImportDialog } from "@/components/ImportDialog";
+import type { ImportSchema } from "@/lib/import-utils";
+
+const USERS_IMPORT_SCHEMA: ImportSchema = {
+  entity: "users",
+  sheetName: "Users",
+  fields: [
+    { key: "full_name", required: true, aliases: ["name"], example: "Jane Doe" },
+    { key: "email", required: true, example: "jane@example.com" },
+    { key: "phone", example: "+1 555 0100" },
+    { key: "role", example: "employee" },
+    { key: "status", example: "active" },
+  ],
+};
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,8 +99,10 @@ function UsersPage() {
   });
 
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState<UserRow | null>(null);
+  const runImport = useServerFn(orgImportUsers);
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
 
@@ -119,6 +136,10 @@ function UsersPage() {
               {t("orgUsers.seatUsage", "{{used}} / {{cap}} seats", { used, cap })}
             </Badge>
           )}
+          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={limitReached}>
+            <Upload className="h-4 w-4 mr-2" />
+            {t("importer.button", "Import")}
+          </Button>
           <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
             <UserPlus className="h-4 w-4 mr-2" />
             {t("orgUsers.invite", "Invite user")}
@@ -185,6 +206,14 @@ function UsersPage() {
           setInviteOpen(false);
           invalidate();
         }}
+      />
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        schema={USERS_IMPORT_SCHEMA}
+        title={t("orgUsers.importTitle", "Import users")}
+        onImport={async (rows) => runImport({ data: { rows } })}
+        onDone={() => invalidate()}
       />
       <EditDialog user={editing} onOpenChange={(o) => !o && setEditing(null)} onSaved={() => { setEditing(null); invalidate(); }} />
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
