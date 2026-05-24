@@ -732,7 +732,9 @@ function UsersTable({
   const setStatus = useServerFn(adminSetUserStatus);
   const setAccountStatus = useServerFn(adminSetAccountStatus);
   const deleteUser = useServerFn(deleteUserSecure);
+  const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
+  const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
