@@ -736,6 +736,7 @@ function UsersTable({
   const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
   const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
+  const { t } = useTranslation();
 
   const assignMut = useMutation({
     mutationFn: (vars: {
