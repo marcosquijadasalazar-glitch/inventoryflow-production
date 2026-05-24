@@ -55,6 +55,7 @@ import {
   History,
   Inbox,
   Mail as MailIcon,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
