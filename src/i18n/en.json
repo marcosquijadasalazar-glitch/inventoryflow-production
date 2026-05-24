@@ -102,7 +102,10 @@
     "reports": "Reports",
     "signOut": "Sign out",
     "language": "Language",
-    "customers": "Customers"
+    "customers": "Customers",
+    "suppliers": "Suppliers",
+    "locations": "Locations",
+    "adjustments": "Adjustments"
   },
   "access": {
     "blockedTitle": "Access unavailable",
@@ -1024,5 +1027,37 @@
     "partial": "Imported {{ok}}, {{fail}} failed",
     "empty": "No rows found in file",
     "noValidRows": "No valid rows to import"
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "subtitle": "Manage your supplier directory",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "notes": "Notes",
+    "empty": "No suppliers yet. Import a CSV/Excel file to get started.",
+    "importTitle": "Import suppliers"
+  },
+  "locationsPage": {
+    "title": "Locations",
+    "subtitle": "Warehouses, stores and other stock locations",
+    "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No locations yet. Import a CSV/Excel file to get started.",
+    "importTitle": "Import locations"
+  },
+  "adjustments": {
+    "title": "Inventory Adjustments",
+    "subtitle": "Bulk import stock adjustments. Each row creates a movement and updates stock.",
+    "importTitle": "Import inventory adjustments",
+    "howTitle": "How it works",
+    "howBody": "Provide sku or barcode to identify each product. adjustment_type accepts: add, remove, adjustment (set absolute).",
+    "help1": "add — increases stock by quantity",
+    "help2": "remove — decreases stock by quantity",
+    "help3": "adjustment — sets absolute stock to quantity"
   }
 }
