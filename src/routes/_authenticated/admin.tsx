@@ -915,7 +915,7 @@ function UsersTable({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setResetUserRow(u)}>
-                      <KeyRound className="h-3.5 w-3.5 mr-2" /> Send password reset
+                      <KeyRound className="h-3.5 w-3.5 mr-2" /> {t("admin.sendPasswordReset")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
