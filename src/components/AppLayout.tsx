@@ -20,6 +20,8 @@ import {
   Warehouse,
   FileBarChart,
   Users,
+  Truck,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -49,6 +51,9 @@ function useNavItems() {
     { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart, module: "purchase_orders", permission: "manage_purchase_orders" },
     { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt, module: "sales_orders", permission: "manage_sales_orders" },
     { to: "/customers", label: t("nav.customers", "Customers"), icon: Users, module: "sales_orders", permission: "manage_sales_orders" },
+    { to: "/suppliers", label: t("nav.suppliers", "Suppliers"), icon: Truck, module: "purchase_orders", permission: "manage_purchase_orders" },
+    { to: "/locations", label: t("nav.locations", "Locations"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
+    { to: "/adjustments", label: t("nav.adjustments", "Adjustments"), icon: SlidersHorizontal, module: "movements", permission: "adjust_stock" },
     { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft, module: "transfer_orders", permission: "manage_transfer_orders" },
     { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
     { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use", permission: "manage_internal_use" },
