@@ -12,6 +12,9 @@ import { useEnabledModules } from "@/lib/use-modules";
 import { moduleForPath, MODULE_LABELS } from "@/lib/modules";
 import { useProfile } from "@/lib/profile";
 import { ModuleDisabled } from "@/components/ModuleDisabled";
+import { usePermissions } from "@/lib/use-permissions";
+import { permissionForPath } from "@/lib/permissions";
+import { ShieldOff } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
