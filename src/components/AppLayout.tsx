@@ -19,6 +19,7 @@ import {
   Wrench,
   Warehouse,
   FileBarChart,
+  Users,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
