@@ -546,6 +546,36 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: string
+          organization_id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          organization_id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          organization_id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sales_order_items: {
         Row: {
           barcode: string | null
@@ -922,15 +952,53 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: string
+          organization_id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted: boolean
+          id?: string
+          organization_id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          organization_id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_manage_permissions: { Args: { _org_id: string }; Returns: boolean }
       current_user_org: { Args: never; Returns: string }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_permission: {
+        Args: {
+          _perm: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       is_module_enabled: { Args: { _module: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
@@ -963,6 +1031,30 @@ export type Database = {
         | "suspended"
         | "cancelled"
         | "rejected"
+      app_permission:
+        | "view_dashboard"
+        | "view_products"
+        | "create_products"
+        | "edit_products"
+        | "delete_products"
+        | "view_costs"
+        | "view_prices"
+        | "view_movements"
+        | "create_movements"
+        | "adjust_stock"
+        | "view_transaction_history"
+        | "export_data"
+        | "view_reports"
+        | "manage_purchase_orders"
+        | "manage_sales_orders"
+        | "record_payments"
+        | "manage_transfer_orders"
+        | "manage_internal_use"
+        | "use_barcode_scanner"
+        | "manage_alerts"
+        | "manage_locations"
+        | "manage_users"
+        | "manage_company_settings"
       app_role: "super_admin" | "owner" | "manager" | "employee"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
@@ -1124,6 +1216,31 @@ export const Constants = {
         "suspended",
         "cancelled",
         "rejected",
+      ],
+      app_permission: [
+        "view_dashboard",
+        "view_products",
+        "create_products",
+        "edit_products",
+        "delete_products",
+        "view_costs",
+        "view_prices",
+        "view_movements",
+        "create_movements",
+        "adjust_stock",
+        "view_transaction_history",
+        "export_data",
+        "view_reports",
+        "manage_purchase_orders",
+        "manage_sales_orders",
+        "record_payments",
+        "manage_transfer_orders",
+        "manage_internal_use",
+        "use_barcode_scanner",
+        "manage_alerts",
+        "manage_locations",
+        "manage_users",
+        "manage_company_settings",
       ],
       app_role: ["super_admin", "owner", "manager", "employee"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],

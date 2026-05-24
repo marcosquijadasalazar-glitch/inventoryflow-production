@@ -27,6 +27,7 @@ import { Route as AuthenticatedSalesOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
+import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
 import { Route as AuthenticatedMovementsRouteImport } from './routes/_authenticated/movements'
 import { Route as AuthenticatedLocationStockRouteImport } from './routes/_authenticated/location-stock'
 import { Route as AuthenticatedInternalUseRouteImport } from './routes/_authenticated/internal-use'
@@ -128,6 +129,12 @@ const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPermissionsRoute =
+  AuthenticatedPermissionsRouteImport.update({
+    id: '/permissions',
+    path: '/permissions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedMovementsRoute = AuthenticatedMovementsRouteImport.update({
   id: '/movements',
   path: '/movements',
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/internal-use': typeof AuthenticatedInternalUseRoute
   '/location-stock': typeof AuthenticatedLocationStockRoute
   '/movements': typeof AuthenticatedMovementsRoute
+  '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/internal-use': typeof AuthenticatedInternalUseRoute
   '/location-stock': typeof AuthenticatedLocationStockRoute
   '/movements': typeof AuthenticatedMovementsRoute
+  '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/reports': typeof AuthenticatedReportsRoute
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/internal-use': typeof AuthenticatedInternalUseRoute
   '/_authenticated/location-stock': typeof AuthenticatedLocationStockRoute
   '/_authenticated/movements': typeof AuthenticatedMovementsRoute
+  '/_authenticated/permissions': typeof AuthenticatedPermissionsRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/internal-use'
     | '/location-stock'
     | '/movements'
+    | '/permissions'
     | '/products'
     | '/purchase-orders'
     | '/reports'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/internal-use'
     | '/location-stock'
     | '/movements'
+    | '/permissions'
     | '/products'
     | '/purchase-orders'
     | '/reports'
@@ -330,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/internal-use'
     | '/_authenticated/location-stock'
     | '/_authenticated/movements'
+    | '/_authenticated/permissions'
     | '/_authenticated/products'
     | '/_authenticated/purchase-orders'
     | '/_authenticated/reports'
@@ -481,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProductsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/permissions': {
+      id: '/_authenticated/permissions'
+      path: '/permissions'
+      fullPath: '/permissions'
+      preLoaderRoute: typeof AuthenticatedPermissionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/movements': {
       id: '/_authenticated/movements'
       path: '/movements'
@@ -549,6 +569,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInternalUseRoute: typeof AuthenticatedInternalUseRoute
   AuthenticatedLocationStockRoute: typeof AuthenticatedLocationStockRoute
   AuthenticatedMovementsRoute: typeof AuthenticatedMovementsRoute
+  AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -568,6 +589,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInternalUseRoute: AuthenticatedInternalUseRoute,
   AuthenticatedLocationStockRoute: AuthenticatedLocationStockRoute,
   AuthenticatedMovementsRoute: AuthenticatedMovementsRoute,
+  AuthenticatedPermissionsRoute: AuthenticatedPermissionsRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
