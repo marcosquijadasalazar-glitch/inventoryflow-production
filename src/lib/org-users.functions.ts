@@ -247,7 +247,7 @@ export const orgUpdateUser = createServerFn({ method: "POST" })
       throw new Error("You cannot change your own role");
     }
     const target = await assertSameOrgTarget(me, data.user_id);
-    if (target.role === "owner" && data.role && data.role !== "owner") {
+    if (target.role === "owner" && data.role) {
       throw new Error("Cannot change owner role");
     }
 
