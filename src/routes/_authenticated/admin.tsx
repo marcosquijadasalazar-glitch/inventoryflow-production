@@ -980,11 +980,9 @@ function UsersTable({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" /> Send password reset
+              <KeyRound className="h-5 w-5 text-primary" /> {t("admin.resetConfirmTitle")}
             </DialogTitle>
-            <DialogDescription>
-              This will send a password reset email to the user. They can use the link to set a new password.
-            </DialogDescription>
+            <DialogDescription>{t("admin.resetConfirmDesc")}</DialogDescription>
           </DialogHeader>
           {resetUserRow?.email && (
             <div className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm">
@@ -993,7 +991,7 @@ function UsersTable({
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setResetUserRow(null)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -1003,7 +1001,7 @@ function UsersTable({
               }}
               disabled={resetMut.isPending}
             >
-              {resetMut.isPending ? "Sending…" : "Send reset email"}
+              {resetMut.isPending ? t("admin.resetSending") : t("admin.resetSendBtn")}
             </Button>
           </DialogFooter>
         </DialogContent>
