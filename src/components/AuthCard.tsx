@@ -14,6 +14,7 @@ import { toast } from "sonner";
 type Mode = "signin" | "signup";
 
 export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
+  const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -27,6 +28,71 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0);
+  const [resetBusy, setResetBusy] = useState(false);
+  const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    };
+  }, []);
+
+  const startCooldown = (seconds: number) => {
+    if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+    if (seconds <= 0) {
+      setResetCooldown(0);
+      return;
+    }
+    setResetCooldown(seconds);
+    cooldownTimer.current = setInterval(() => {
+      setResetCooldown((s) => {
+        if (s <= 1) {
+          if (cooldownTimer.current) clearInterval(cooldownTimer.current);
+          cooldownTimer.current = null;
+          setError((prev) =>
+            prev && /security purposes|seconds/i.test(prev) ? null : prev
+          );
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const sendPasswordReset = async () => {
+    if (resetCooldown > 0 || resetBusy) return;
+    if (!email) {
+      setError(t("auth.resetEnterEmail"));
+      return;
+    }
+    setError(null);
+    setResetBusy(true);
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (err) {
+        const msg = err.message || "";
+        const match = msg.match(/after\s+(\d+)\s*seconds?/i);
+        const remaining = match ? parseInt(match[1], 10) : 0;
+        if (remaining > 0) {
+          startCooldown(remaining);
+          setError(t("auth.resetCooldown", { seconds: remaining }));
+        } else {
+          // Cooldown expired/0 — treat as success to avoid stale error
+          toast.success(t("auth.resetSent"));
+        }
+      } else {
+        toast.success(t("auth.resetSent"));
+        startCooldown(30);
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to send reset email");
+    } finally {
+      setResetBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && session && !signupSuccess) {
