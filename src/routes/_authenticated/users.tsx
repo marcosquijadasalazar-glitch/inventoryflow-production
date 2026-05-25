@@ -94,6 +94,8 @@ function UsersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState<UserRow | null>(null);
+  const [purging, setPurging] = useState<UserRow | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const runImport = useServerFn(orgImportUsers);
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
