@@ -690,6 +690,7 @@ function OrgsTable({
                       )}
                     </div>
                   </TableCell>
+                  <TableCell><OnboardingBadge info={onboardingMap.get(o.id)} /></TableCell>
                   <TableCell className="text-right font-mono">{o.user_count}</TableCell>
                   <TableCell className="text-right font-mono">{o.product_count}</TableCell>
                   <TableCell className="text-right">
