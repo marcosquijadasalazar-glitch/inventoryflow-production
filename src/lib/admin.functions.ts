@@ -68,9 +68,21 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const [users, products] = await Promise.all([
+    const [users, products, settings, owners] = await Promise.all([
       supabaseAdmin.from("profiles").select("organization_id"),
       supabaseAdmin.from("products").select("organization_id"),
+      supabaseAdmin
+        .from("company_settings")
+        .select(
+          "organization_id, phone, email, address, city, country, timezone, currency, website, footer_notes, tax_id, logo_url",
+        ),
+      supabaseAdmin
+        .from("profiles")
+        .select(
+          "organization_id, role, full_name, email, phone, account_status, trial_ends_at, created_at",
+        )
+        .eq("role", "owner")
+        .order("created_at", { ascending: true }),
     ]);
 
     const usersByOrg = new Map<string, number>();
@@ -83,12 +95,24 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       if (!p.organization_id) return;
       productsByOrg.set(p.organization_id, (productsByOrg.get(p.organization_id) ?? 0) + 1);
     });
+    const settingsByOrg = new Map<string, any>();
+    settings.data?.forEach((s: any) => {
+      if (!s.organization_id) return;
+      if (!settingsByOrg.has(s.organization_id)) settingsByOrg.set(s.organization_id, s);
+    });
+    const ownerByOrg = new Map<string, any>();
+    owners.data?.forEach((o: any) => {
+      if (!o.organization_id) return;
+      if (!ownerByOrg.has(o.organization_id)) ownerByOrg.set(o.organization_id, o);
+    });
 
     return (orgs ?? []).map((o: any) => ({
       ...o,
       status: deriveOrgStatus(o),
       user_count: usersByOrg.get(o.id) ?? 0,
       product_count: productsByOrg.get(o.id) ?? 0,
+      settings: settingsByOrg.get(o.id) ?? null,
+      owner: ownerByOrg.get(o.id) ?? null,
     }));
   });
 
