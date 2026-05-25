@@ -735,6 +735,9 @@
     "title": "Products",
     "subtitle": "Manage SKUs, stock levels and supplier details.",
     "addProduct": "Add Product",
+    "importTitle": "Import products",
+    "importAutoCreateSuppliers": "Auto-create missing suppliers",
+
     "quickViews": "Quick views:",
     "view": {
       "lowStock": "Low stock",

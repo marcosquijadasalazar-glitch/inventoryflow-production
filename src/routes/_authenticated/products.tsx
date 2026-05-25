@@ -195,7 +195,9 @@ function ProductsPage() {
   const [costMax, setCostMax] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [importOpen, setImportOpen] = useState(false);
+  const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
   const runImport = useServerFn(importProducts);
+
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -1014,9 +1016,32 @@ function ProductsPage() {
         onOpenChange={setImportOpen}
         schema={PRODUCTS_IMPORT_SCHEMA}
         title={t("products.importTitle", "Import products")}
-        onImport={async (rows) => runImport({ data: { rows, auto_create_categories: true } })}
+        extraControls={
+          <label className="inline-flex items-center gap-2 text-xs">
+            <Checkbox
+              checked={autoCreateSuppliers}
+              onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
+            />
+            <span>
+              {t(
+                "products.importAutoCreateSuppliers",
+                "Auto-create missing suppliers",
+              )}
+            </span>
+          </label>
+        }
+        onImport={async (rows) =>
+          runImport({
+            data: {
+              rows,
+              auto_create_categories: true,
+              auto_create_suppliers: autoCreateSuppliers,
+            },
+          })
+        }
         onDone={refresh}
       />
+
     </div>
   );
 }

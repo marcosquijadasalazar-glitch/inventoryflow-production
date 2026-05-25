@@ -34,9 +34,11 @@ export type ImportDialogProps = {
   title: string;
   onImport: (rows: Record<string, string>[]) => Promise<ImportResult>;
   onDone?: () => void;
+  extraControls?: React.ReactNode;
 };
 
-export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDone }: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDone, extraControls }: ImportDialogProps) {
+
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
@@ -129,6 +131,9 @@ export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDo
           </Button>
           {filename && <span className="text-xs text-muted-foreground self-center">{filename}</span>}
         </div>
+
+        {extraControls && <div className="flex flex-wrap gap-3">{extraControls}</div>}
+
 
         {unknown.length > 0 && (
           <div className="flex items-start gap-2 rounded-md border border-warning/20 bg-warning/5 px-3 py-2 text-xs">

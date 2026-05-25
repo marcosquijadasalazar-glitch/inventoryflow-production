@@ -22,7 +22,9 @@ const Row = z.object({
 const ImportInput = z.object({
   rows: z.array(z.record(z.string(), z.string())).max(2000),
   auto_create_categories: z.boolean().optional().default(true),
+  auto_create_suppliers: z.boolean().optional().default(false),
 });
+
 
 async function getActor(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -86,6 +88,8 @@ export const importProducts = createServerFn({ method: "POST" })
     const toInsert: any[] = [];
     const stockOps: { tmpIdx: number; qty: number }[] = [];
     const newCategories = new Set<string>();
+    const newSuppliers = new Map<string, string>(); // lower -> original name
+
 
     data.rows.forEach((raw, idx) => {
       const rowNum = idx + 2;
@@ -136,9 +140,16 @@ export const importProducts = createServerFn({ method: "POST" })
         return;
       }
       if (v.supplier && !supNames.has(v.supplier.toLowerCase())) {
-        errors.push({ row: rowNum, message: `supplier "${v.supplier}" not found in your organization` });
-        return;
+        if (data.auto_create_suppliers) {
+          const key = v.supplier.toLowerCase();
+          if (!newSuppliers.has(key)) newSuppliers.set(key, v.supplier);
+          supNames.add(key);
+        } else {
+          errors.push({ row: rowNum, message: `supplier "${v.supplier}" not found in your organization` });
+          return;
+        }
       }
+
 
       // Plan limit check (count what we will insert)
       if (cap != null && used + toInsert.length >= cap) {
@@ -184,6 +195,16 @@ export const importProducts = createServerFn({ method: "POST" })
       await supabaseAdmin.from("product_categories").insert(catRows as any);
     }
 
+    // Create new suppliers (org-scoped, dedup by name)
+    if (newSuppliers.size > 0) {
+      const supRows = Array.from(newSuppliers.values()).map((name) => ({
+        organization_id: orgId,
+        name,
+      }));
+      await supabaseAdmin.from("suppliers").insert(supRows as any);
+    }
+
+
     let inserted = 0;
     if (toInsert.length > 0) {
       const { data: ins, error } = await supabaseAdmin.from("products").insert(toInsert).select("id");
@@ -219,6 +240,8 @@ export const importProducts = createServerFn({ method: "POST" })
         failed: errors.length,
         organization_id: orgId,
         new_categories: Array.from(newCategories),
+        new_suppliers: Array.from(newSuppliers.values()),
+
       } as never,
     } as never);
 
