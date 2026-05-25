@@ -429,8 +429,27 @@ function OrgsTable({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [trialFilter, setTrialFilter] = useState<TrialFilter>("any");
   const [dateFilter, setDateFilter] = useState<string>("any"); // any | 7d | 30d | 90d
+  const [onboardingFilter, setOnboardingFilter] = useState<string>("all"); // all | not_started | in_progress | completed | needs_help
   const [sort, setSort] = useState<SortKey>("newest");
   const [includeArchived, setIncludeArchived] = useState(false);
+
+  const listOnboarding = useServerFn(adminListOnboarding);
+  const onboardingQ = useQuery({
+    queryKey: ["admin", "onboarding"],
+    queryFn: () => listOnboarding({}),
+  });
+  const onboardingMap = useMemo(() => {
+    const m = new Map<string, { status: "not_started" | "in_progress" | "completed" | "needs_help"; needs_help: boolean }>();
+    for (const row of (onboardingQ.data ?? []) as any[]) {
+      let status: "not_started" | "in_progress" | "completed" | "needs_help";
+      if (row.onboarding_completed) status = "completed";
+      else if (row.needs_help) status = "needs_help";
+      else if ((row.onboarding_step ?? 0) > 0 || row.demo_data_installed) status = "in_progress";
+      else status = "not_started";
+      m.set(row.id, { status, needs_help: !!row.needs_help });
+    }
+    return m;
+  }, [onboardingQ.data]);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
