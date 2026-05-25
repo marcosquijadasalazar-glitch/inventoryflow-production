@@ -78,6 +78,7 @@ import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { productsToCsv, downloadCsv } from "@/lib/csv";
 import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
+import { usePermissions } from "@/lib/use-permissions";
 import { useOrgUsage } from "@/lib/use-org-usage";
 import { PlanLimitBanner } from "@/components/PlanLimitBanner";
 import { isAtLimit } from "@/lib/plan-limits";
