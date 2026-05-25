@@ -151,7 +151,7 @@ function SiteHeader() {
     { label: t("landing.nav.features"), href: "#features" },
     { label: t("landing.nav.pricing"), href: "#pricing" },
     { label: t("landing.nav.how"), href: "#how" },
-    { label: "FAQ", href: "#faq" },
+    { label: t("landing.footer.faq"), href: "#faq" },
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/85 backdrop-blur-md">
