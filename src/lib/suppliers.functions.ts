@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const Row = z.object({
-  name: z.string().trim().min(1).max(200),
+  supplier_name: z.string().trim().min(1).max(200),
   contact_name: z.string().trim().max(120).optional().or(z.literal("")),
   email: z.string().trim().email().max(255).optional().or(z.literal("")),
   phone: z.string().trim().max(50).optional().or(z.literal("")),
@@ -65,7 +65,7 @@ export const importSuppliers = createServerFn({ method: "POST" })
       ].filter(Boolean).join(" | ");
       valid.push({
         organization_id: orgId,
-        name: v.name,
+        name: v.supplier_name,
         email: v.email || null,
         phone: v.phone || null,
         notes: meta || null,
