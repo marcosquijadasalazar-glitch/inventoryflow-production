@@ -255,6 +255,7 @@ export type Database = {
           id: string
           is_active: boolean
           logo_url: string | null
+          module_overrides_enabled: boolean
           plan_type: Database["public"]["Enums"]["org_plan"]
           subscription_status: string
           suspended_at: string | null
@@ -273,6 +274,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           logo_url?: string | null
+          module_overrides_enabled?: boolean
           plan_type?: Database["public"]["Enums"]["org_plan"]
           subscription_status?: string
           suspended_at?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           logo_url?: string | null
+          module_overrides_enabled?: boolean
           plan_type?: Database["public"]["Enums"]["org_plan"]
           subscription_status?: string
           suspended_at?: string | null
@@ -1042,6 +1045,10 @@ export type Database = {
           max_products: number
           max_users: number
         }[]
+      }
+      plan_modules: {
+        Args: { _plan: Database["public"]["Enums"]["org_plan"] }
+        Returns: Json
       }
     }
     Enums: {
