@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CustomerRow = z.object({
-  name: z.string().trim().min(1).max(200),
+  customer_name: z.string().trim().min(1).max(200),
   email: z.string().trim().email().max(255).optional().or(z.literal("")),
   phone: z.string().trim().max(50).optional().or(z.literal("")),
   address: z.string().trim().max(500).optional().or(z.literal("")),
