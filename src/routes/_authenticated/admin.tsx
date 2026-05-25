@@ -131,6 +131,19 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
+type OnboardingStatus = "not_started" | "in_progress" | "completed" | "needs_help";
+function OnboardingBadge({ info }: { info?: { status: OnboardingStatus; needs_help: boolean } }) {
+  const status = info?.status ?? "not_started";
+  const map: Record<OnboardingStatus, { label: string; cls: string }> = {
+    not_started: { label: "Not started", cls: "bg-muted text-muted-foreground" },
+    in_progress: { label: "In progress", cls: "bg-primary/15 text-primary border-primary/30" },
+    completed: { label: "Completed", cls: "bg-success/15 text-success border-success/30" },
+    needs_help: { label: "Needs help", cls: "bg-warning/15 text-warning border-warning/30" },
+  };
+  const s = map[status];
+  return <Badge variant="outline" className={`text-[10px] ${s.cls}`}>{s.label}</Badge>;
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const profile = useProfile();
