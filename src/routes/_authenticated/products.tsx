@@ -1121,6 +1121,8 @@ function FilterPanel(props: {
   setCostMin: (v: string) => void;
   costMax: string;
   setCostMax: (v: string) => void;
+  showPrice?: boolean;
+  showCost?: boolean;
   reset: () => void;
 }) {
   const { t } = useTranslation();
