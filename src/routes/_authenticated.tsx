@@ -15,6 +15,7 @@ import { ModuleDisabled } from "@/components/ModuleDisabled";
 import { usePermissions } from "@/lib/use-permissions";
 import { permissionForPath } from "@/lib/permissions";
 import { ShieldOff } from "lucide-react";
+import { UpgradeModalProvider } from "@/components/UpgradeDialog";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -93,19 +94,21 @@ function AuthenticatedLayout() {
 
   return (
     <AppLayout>
-      <ErrorBoundary
-        name="AuthenticatedOutlet"
-        resetKeys={[pathname]}
-        context={{
-          userId: session.user.id,
-          email: session.user.email,
-          pathname,
-        }}
-      >
-        <ModuleGate pathname={pathname}>
-          <Outlet />
-        </ModuleGate>
-      </ErrorBoundary>
+      <UpgradeModalProvider>
+        <ErrorBoundary
+          name="AuthenticatedOutlet"
+          resetKeys={[pathname]}
+          context={{
+            userId: session.user.id,
+            email: session.user.email,
+            pathname,
+          }}
+        >
+          <ModuleGate pathname={pathname}>
+            <Outlet />
+          </ModuleGate>
+        </ErrorBoundary>
+      </UpgradeModalProvider>
     </AppLayout>
   );
 }
