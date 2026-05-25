@@ -1727,6 +1727,28 @@ function UsersTable({
           onChanged();
         }}
       />
+      <PurgeConfirmDialog
+        open={!!purgeUserRow}
+        onOpenChange={(o) => !o && setPurgeUserRow(null)}
+        texts={{
+          title: "Purge user permanently",
+          description:
+            "This permanently deletes the user record and revokes login. Audit logs are preserved. This action cannot be undone.",
+          targetLabel: purgeUserRow?.email ?? purgeUserRow?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await purgeUser({
+            data: {
+              user_id: purgeUserRow!.user_id,
+              password,
+              confirmation: "PURGE",
+              reason,
+            },
+          });
+          toast.success("User purged");
+          onChanged();
+        }}
+      />
       <Dialog open={!!resetUserRow} onOpenChange={(o) => !o && setResetUserRow(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
