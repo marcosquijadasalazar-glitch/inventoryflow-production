@@ -153,11 +153,23 @@ function UsersPage() {
             <div className="text-sm text-destructive">{(list.error as Error).message}</div>
           ) : (
             <>
+              <div className="flex items-center justify-end gap-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                  />
+                  {t("orgUsers.showArchived", "Show archived/deleted users")}
+                </label>
+              </div>
               <SectionTable
                 title={t("orgUsers.active", "Active users")}
                 users={active}
                 onEdit={setEditing}
                 onDelete={setDeleting}
+                onPurge={role === "super_admin" ? setPurging : undefined}
                 onChanged={invalidate}
               />
               {suspended.length > 0 && (
@@ -166,21 +178,24 @@ function UsersPage() {
                   users={suspended}
                   onEdit={setEditing}
                   onDelete={setDeleting}
+                  onPurge={role === "super_admin" ? setPurging : undefined}
                   onChanged={invalidate}
                 />
               )}
-              {archived.length > 0 && (
+              {showArchived && archived.length > 0 && (
                 <SectionTable
                   title={t("orgUsers.archived", "Archived users")}
                   users={archived}
                   onEdit={setEditing}
                   onDelete={setDeleting}
+                  onPurge={role === "super_admin" ? setPurging : undefined}
                   onChanged={invalidate}
                 />
               )}
             </>
           )}
         </TabsContent>
+
 
         {/* ROLES */}
         <TabsContent value="roles" className="mt-4">
