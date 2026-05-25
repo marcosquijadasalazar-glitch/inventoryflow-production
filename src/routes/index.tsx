@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 
 // Contact / WhatsApp configuration
-const WHATSAPP_NUMBER = "16159180793";
+const WHATSAPP_NUMBER = "16159180792";
 const WHATSAPP_MESSAGE = `Hola 👋 / Hi 👋
 
 Quiero información sobre InventoryFlow y cómo puede ayudar a mi negocio.
