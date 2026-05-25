@@ -60,8 +60,11 @@ import {
   Eye,
   ShieldCheck,
   CreditCard,
+  Database,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { BackupPanel } from "@/components/admin/BackupPanel";
+
 import {
   Sheet,
   SheetContent,
