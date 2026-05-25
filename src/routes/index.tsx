@@ -45,8 +45,6 @@ I would like information about InventoryFlow and how it can help my business.`;
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 const SUPPORT_EMAIL = "support@inventoryflowapp.com";
 const SALES_EMAIL = "sales@inventoryflowapp.com";
-const SUPPORT_EMAIL = "support@inventoryflowapp.com";
-const SALES_EMAIL = "sales@inventoryflowapp.com";
 
 export const Route = createFileRoute("/")({
   head: () => ({
