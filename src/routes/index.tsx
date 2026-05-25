@@ -151,7 +151,7 @@ function SiteHeader() {
     { label: t("landing.nav.features"), href: "#features" },
     { label: t("landing.nav.pricing"), href: "#pricing" },
     { label: t("landing.nav.how"), href: "#how" },
-    { label: "FAQ", href: "#faq" },
+    { label: t("landing.footer.faq"), href: "#faq" },
   ];
   return (
     <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/85 backdrop-blur-md">
@@ -197,11 +197,11 @@ function SiteHeader() {
 function Hero() {
   const { t } = useTranslation();
   const badges = [
-    { icon: Smartphone, label: "Mobile friendly" },
-    { icon: MapPin, label: "Multi-location" },
-    { icon: Globe, label: "EN / ES" },
-    { icon: ShieldCheck, label: "Secure" },
-    { icon: Cloud, label: "Cloud based" },
+    { icon: Smartphone, label: t("landing.hero.badges.mobile") },
+    { icon: MapPin, label: t("landing.hero.badges.multilocation") },
+    { icon: Globe, label: t("landing.hero.badges.bilingual") },
+    { icon: ShieldCheck, label: t("landing.hero.badges.secure") },
+    { icon: Cloud, label: t("landing.hero.badges.cloud") },
   ];
   return (
     <section className="relative overflow-hidden">
@@ -212,13 +212,12 @@ function Hero() {
         </div>
 
         <h1 className="mt-6 text-4xl sm:text-5xl lg:text-[64px] font-semibold tracking-[-0.025em] max-w-4xl mx-auto leading-[1.02] text-black">
-          Stop losing inventory.{" "}
-          <span className="text-[#0066FF]">Control your business from anywhere.</span>
+          {t("landing.hero.titleA")}{" "}
+          <span className="text-[#0066FF]">{t("landing.hero.titleB")}</span>
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-black/60 max-w-2xl mx-auto leading-relaxed">
-          InventoryFlow helps businesses manage inventory, products, movements, locations and
-          operations from a modern bilingual platform built for real-world operations.
+          {t("landing.hero.subtitle")}
         </p>
 
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -228,7 +227,7 @@ function Hero() {
             className="h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
           >
             <Link to="/signup">
-              Start Free Trial
+              {t("landing.hero.ctaPrimary")}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -238,7 +237,7 @@ function Hero() {
             size="lg"
             className="h-11 px-5 border-black/15 text-black hover:bg-black/5 bg-white"
           >
-            <a href="#demo">Book Demo</a>
+            <a href="#demo">{t("landing.hero.ctaDemo")}</a>
           </Button>
           <Button
             asChild
@@ -247,7 +246,7 @@ function Hero() {
           >
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="h-4 w-4" />
-              Chat on WhatsApp
+              {t("landing.hero.ctaWhatsapp")}
             </a>
           </Button>
         </div>
@@ -273,6 +272,7 @@ function Hero() {
 /* ---------- Dashboard preview ---------- */
 
 function DashboardPreview() {
+  const { t } = useTranslation();
   return (
     <section className="pb-20 sm:pb-28">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
@@ -284,19 +284,19 @@ function DashboardPreview() {
               <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
             </div>
             <div className="mx-auto text-[11px] text-black/50 font-mono">
-              app.inventoryflow / dashboard
+              {t("landing.dashboardPreview.urlbar")}
             </div>
           </div>
 
           <div className="grid grid-cols-12 min-h-[440px]">
             <div className="hidden md:flex col-span-2 flex-col gap-0.5 p-3 border-r border-black/[0.06] bg-white">
               {[
-                { icon: LayoutDashboard, label: "Dashboard", active: true },
-                { icon: Package, label: "Products" },
-                { icon: ArrowLeftRight, label: "Movements" },
-                { icon: Receipt, label: "Orders" },
-                { icon: ScanLine, label: "Scanner" },
-                { icon: AlertTriangle, label: "Alerts" },
+                { icon: LayoutDashboard, label: t("landing.dashboardPreview.nav.dashboard"), active: true },
+                { icon: Package, label: t("landing.dashboardPreview.nav.products") },
+                { icon: ArrowLeftRight, label: t("landing.dashboardPreview.nav.movements") },
+                { icon: Receipt, label: t("landing.dashboardPreview.nav.orders") },
+                { icon: ScanLine, label: t("landing.dashboardPreview.nav.scanner") },
+                { icon: AlertTriangle, label: t("landing.dashboardPreview.nav.alerts") },
               ].map((i) => (
                 <div
                   key={i.label}
@@ -315,10 +315,10 @@ function DashboardPreview() {
             <div className="col-span-12 md:col-span-10 p-5 space-y-4 bg-[#FAFAFA]/60">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total SKUs", value: "1,284", trend: "+3.2%" },
-                  { label: "Stock value", value: "$842k", trend: "+5.4%" },
-                  { label: "Low stock", value: "27", trend: "-12%" },
-                  { label: "Movements / 24h", value: "318", trend: "+8.1%" },
+                  { label: t("landing.dashboardPreview.kpis.totalSkus"), value: "1,284", trend: "+3.2%" },
+                  { label: t("landing.dashboardPreview.kpis.stockValue"), value: "$842k", trend: "+5.4%" },
+                  { label: t("landing.dashboardPreview.kpis.lowStock"), value: "27", trend: "-12%" },
+                  { label: t("landing.dashboardPreview.kpis.movements24"), value: "318", trend: "+8.1%" },
                 ].map((s) => (
                   <div
                     key={s.label}
@@ -338,8 +338,8 @@ function DashboardPreview() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2 rounded-xl border border-black/[0.06] bg-white p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">Recent movements</span>
-                    <span className="text-[11px] text-black/50">Last 24 hours</span>
+                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.recent")}</span>
+                    <span className="text-[11px] text-black/50">{t("landing.dashboardPreview.last24")}</span>
                   </div>
                   <div className="space-y-1.5">
                     {[
@@ -367,14 +367,14 @@ function DashboardPreview() {
                 </div>
                 <div className="rounded-xl border border-black/[0.06] bg-white p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">Stock health</span>
+                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.stockHealth")}</span>
                     <TrendingUp className="h-3.5 w-3.5 text-black/40" />
                   </div>
                   <div className="space-y-3">
                     {[
-                      { label: "In stock", pct: 78, color: "bg-[#0066FF]" },
-                      { label: "Low stock", pct: 16, color: "bg-black/40" },
-                      { label: "Out of stock", pct: 6, color: "bg-black/15" },
+                      { label: t("landing.dashboardPreview.inStock"), pct: 78, color: "bg-[#0066FF]" },
+                      { label: t("landing.dashboardPreview.lowStockLabel"), pct: 16, color: "bg-black/40" },
+                      { label: t("landing.dashboardPreview.outOfStock"), pct: 6, color: "bg-black/15" },
                     ].map((b) => (
                       <div key={b.label}>
                         <div className="flex items-center justify-between text-[11px] mb-1">
@@ -400,23 +400,19 @@ function DashboardPreview() {
 /* ---------- Problem / Solution ---------- */
 
 function ProblemSolution() {
-  const problems = [
-    "Losing products or stock you can't account for?",
-    "Inventory disorganized across spreadsheets and notebooks?",
-    "Running out of stock unexpectedly?",
-    "Still tracking inventory in Excel?",
-    "Managing multiple locations manually?",
-  ];
+  const { t } = useTranslation();
+  const problems = t("landing.problemSolution.problems", { returnObjects: true }) as string[];
+  const solutions = t("landing.problemSolution.solutions", { returnObjects: true }) as string[];
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              The problem
+              {t("landing.problemSolution.problemEyebrow")}
             </p>
             <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-              Operations are messy. Inventory is the first thing that breaks.
+              {t("landing.problemSolution.problemTitle")}
             </h2>
             <ul className="mt-6 space-y-3">
               {problems.map((p) => (
@@ -433,24 +429,16 @@ function ProblemSolution() {
 
           <div className="lg:sticky lg:top-24">
             <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              The solution
+              {t("landing.problemSolution.solutionEyebrow")}
             </p>
             <h3 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-black">
-              InventoryFlow puts your operations back in control.
+              {t("landing.problemSolution.solutionTitle")}
             </h3>
             <p className="mt-3 text-black/60">
-              One bilingual platform for products, movements, barcodes, multi-location stock,
-              orders, alerts and reports — built for real businesses, not complicated ERP
-              systems.
+              {t("landing.problemSolution.solutionSubtitle")}
             </p>
             <ul className="mt-6 space-y-2.5">
-              {[
-                "Real-time stock across every location",
-                "Barcode scanning from any phone",
-                "Low-stock alerts before you run out",
-                "Clean reports your accountant will love",
-                "Bilingual (EN / ES) from day one",
-              ].map((s) => (
+              {solutions.map((s) => (
                 <li key={s} className="flex items-center gap-2.5 text-sm text-black/85">
                   <Check className="h-4 w-4 text-[#0066FF] shrink-0" />
                   {s}
@@ -463,7 +451,7 @@ function ProblemSolution() {
               className="mt-6 h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
             >
               <Link to="/signup">
-                Start Free Trial
+                {t("landing.problemSolution.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -477,25 +465,21 @@ function ProblemSolution() {
 /* ---------- Features ---------- */
 
 function Features() {
-  const features = [
-    { icon: Package, title: "Products & catalog", desc: "One clean catalog with SKUs, barcodes, categories, suppliers, locations and live stock." },
-    { icon: ArrowLeftRight, title: "Stock movements", desc: "Add, remove and adjust stock with a full audit trail — every change attributed and timestamped." },
-    { icon: Receipt, title: "Sales & purchase orders", desc: "Issue orders, track fulfillment, and automatically reduce inventory when sales are confirmed." },
-    { icon: ScanLine, title: "Barcode workflows", desc: "Scan in, scan out, and manage stock from any phone — no scanner hardware required." },
-    { icon: AlertTriangle, title: "Low-stock alerts", desc: "Smart thresholds notify your team before something runs out, not after." },
-    { icon: TrendingUp, title: "Reports & insights", desc: "Sales, inventory, movements and operations reports — exportable to CSV and PDF." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Package, ArrowLeftRight, Receipt, ScanLine, AlertTriangle, TrendingUp];
+  const items = t("landing.features.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const features = items.map((it, i) => ({ ...it, icon: icons[i] }));
 
   return (
     <section id="features" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Features</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.features.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Everything you need to run your operations.
+            {t("landing.features.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            A focused set of tools designed for the day-to-day reality of small businesses and warehouses.
+            {t("landing.features.subtitle")}
           </p>
         </div>
 
@@ -518,26 +502,22 @@ function Features() {
 /* ---------- Screenshots gallery ---------- */
 
 function ScreenshotsGallery() {
-  const shots = [
-    { icon: LayoutDashboard, title: "Dashboard", desc: "KPIs, stock health and recent movements at a glance." },
-    { icon: Package, title: "Products page", desc: "Clean catalog with SKUs, categories, suppliers and stock." },
-    { icon: ScanLine, title: "Barcode scanner", desc: "Scan with your phone — no extra hardware required." },
-    { icon: TrendingUp, title: "Reports", desc: "Sales, inventory and movements — exportable to CSV / PDF." },
-    { icon: ArrowLeftRight, title: "Transfers & orders", desc: "Move stock across locations and fulfill orders end-to-end." },
-    { icon: ShieldCheck, title: "Users & roles", desc: "Granular permissions per team member, per module." },
-  ];
+  const { t } = useTranslation();
+  const icons = [LayoutDashboard, Package, ScanLine, TrendingUp, ArrowLeftRight, ShieldCheck];
+  const items = t("landing.screenshots.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const shots = items.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Product tour
+            {t("landing.screenshots.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            See InventoryFlow in action.
+            {t("landing.screenshots.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Real screens from the platform — desktop and mobile, designed for clarity.
+            {t("landing.screenshots.subtitle")}
           </p>
         </div>
 
@@ -552,7 +532,7 @@ function ScreenshotsGallery() {
                   <s.icon className="h-5 w-5 text-[#0066FF]" />
                 </div>
                 <div className="text-[11px] uppercase tracking-wider text-black/40">
-                  Screenshot
+                  {t("landing.screenshots.label")}
                 </div>
                 <div className="mt-1 text-sm font-medium text-black">{s.title}</div>
               </div>
@@ -571,19 +551,19 @@ function ScreenshotsGallery() {
 /* ---------- Demo video ---------- */
 
 function DemoVideo() {
+  const { t } = useTranslation();
   return (
     <section id="demo" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Watch the demo
+            {t("landing.demoVideo.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            See InventoryFlow in action — in under a minute.
+            {t("landing.demoVideo.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Dashboard, scanning, imports, reports, mobile usage, multi-location and roles —
-            all in one short walkthrough.
+            {t("landing.demoVideo.subtitle")}
           </p>
         </div>
 
@@ -592,14 +572,14 @@ function DemoVideo() {
           <div className="absolute inset-0 flex items-center justify-center">
             <button
               type="button"
-              aria-label="Play demo video"
+              aria-label={t("landing.demoVideo.play")}
               className="h-20 w-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110"
             >
               <Play className="h-8 w-8 text-[#0066FF] fill-[#0066FF] ml-1" />
             </button>
           </div>
           <div className="absolute bottom-4 left-4 text-white/80 text-xs font-medium">
-            30–60 second product demo
+            {t("landing.demoVideo.duration")}
           </div>
         </div>
 
@@ -612,7 +592,7 @@ function DemoVideo() {
           >
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="h-4 w-4" />
-              Request a live walkthrough
+              {t("landing.demoVideo.walkthrough")}
             </a>
           </Button>
         </div>
@@ -624,18 +604,16 @@ function DemoVideo() {
 /* ---------- How it works ---------- */
 
 function HowItWorks() {
-  const steps = [
-    { n: "01", title: "Import your catalog", desc: "Bring in your products with a CSV import or add them as you go. Categories, suppliers, locations — all included." },
-    { n: "02", title: "Track every movement", desc: "Add stock, remove stock, scan barcodes, fulfill orders. Inventory updates in real time across your team." },
-    { n: "03", title: "Stay ahead with insights", desc: "Get alerts before you run out, see what's moving, and export reports your accountant will actually like." },
-  ];
+  const { t } = useTranslation();
+  const stepItems = t("landing.howItWorks.steps", { returnObjects: true }) as { title: string; desc: string }[];
+  const steps = stepItems.map((s, i) => ({ ...s, n: String(i + 1).padStart(2, "0") }));
   return (
     <section id="how" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">How it works</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.howItWorks.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            From spreadsheets to running smoothly — in an afternoon.
+            {t("landing.howItWorks.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -655,19 +633,17 @@ function HowItWorks() {
 /* ---------- Who it's for ---------- */
 
 function WhoItsFor() {
-  const audiences = [
-    { icon: Building2, title: "Warehouses", desc: "Real-time stock across locations, with barcode-driven receiving and picking." },
-    { icon: Store, title: "Retail & e-commerce", desc: "Keep online and in-store inventory in sync. Reduce overselling and stockouts." },
-    { icon: Truck, title: "Distributors", desc: "Manage purchase and sales orders end-to-end with full visibility." },
-    { icon: Wrench, title: "Workshops & service", desc: "Track parts, internal usage and reorder points without the spreadsheet pain." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Building2, Store, Truck, Wrench];
+  const items = t("landing.whoItsFor.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const audiences = items.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section id="who" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Who it's for</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.whoItsFor.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Built for B2B teams that move fast.
+            {t("landing.whoItsFor.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -687,35 +663,17 @@ function WhoItsFor() {
 /* ---------- Testimonials / Social proof ---------- */
 
 function Testimonials() {
-  const items = [
-    {
-      quote:
-        "We replaced three spreadsheets with InventoryFlow in a weekend. Our stock counts finally match reality.",
-      name: "Operations lead",
-      role: "Retail store",
-    },
-    {
-      quote:
-        "Bilingual interface was a huge win for our team. Onboarding took an afternoon, not weeks.",
-      name: "Warehouse manager",
-      role: "Distribution business",
-    },
-    {
-      quote:
-        "Barcode scanning from the phone changed how we receive shipments. No more clipboards.",
-      name: "Owner",
-      role: "Small market",
-    },
-  ];
+  const { t } = useTranslation();
+  const items = t("landing.testimonials.items", { returnObjects: true }) as { quote: string; name: string; role: string }[];
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Built for growing businesses
+            {t("landing.testimonials.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Trusted by operational teams that need real results.
+            {t("landing.testimonials.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -736,7 +694,7 @@ function Testimonials() {
           ))}
         </div>
         <p className="mt-8 text-center text-xs text-black/45">
-          Early-access customer quotes. Names withheld for privacy during beta.
+          {t("landing.testimonials.note")}
         </p>
       </div>
     </section>
@@ -828,7 +786,7 @@ function Pricing() {
               billing === "monthly" ? "bg-black text-white" : "text-black/60 hover:text-black"
             }`}
           >
-            Monthly
+            {t("landing.pricingExtra.billingMonthly")}
           </button>
           <button
             type="button"
@@ -837,15 +795,15 @@ function Pricing() {
               billing === "yearly" ? "bg-black text-white" : "text-black/60 hover:text-black"
             }`}
           >
-            Yearly
+            {t("landing.pricingExtra.billingYearly")}
             <span className="text-[10px] font-semibold text-[#0066FF] bg-[#0066FF]/10 px-1.5 py-0.5 rounded-full">
-              Save 2 months
+              {t("landing.pricingExtra.billingSave")}
             </span>
           </button>
         </div>
         {billing === "yearly" && (
           <p className="mt-2 text-xs text-black/50">
-            Yearly billing launches with Stripe. Contact sales for early-access pricing.
+            {t("landing.pricingExtra.yearlyNote")}
           </p>
         )}
 
@@ -1006,25 +964,22 @@ function CompareTable() {
 /* ---------- LATAM positioning ---------- */
 
 function LatamPositioning() {
-  const items = [
-    { icon: Globe, title: "Bilingual EN / ES", desc: "Switch languages per user. Built for teams across the Americas." },
-    { icon: Smartphone, title: "Mobile-first", desc: "Use it on the warehouse floor, in the store, or on a delivery route." },
-    { icon: Sparkles, title: "Simple onboarding", desc: "Up and running in an afternoon — not weeks of consulting." },
-    { icon: Cloud, title: "No complicated ERP", desc: "Only the features you'll actually use, designed for real businesses." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Globe, Smartphone, Sparkles, Cloud];
+  const raw = t("landing.latam.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const items = raw.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Built for real businesses
+            {t("landing.latam.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Built for real businesses, not complicated ERP systems.
+            {t("landing.latam.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Designed with LATAM and growing businesses in mind: bilingual, mobile-first, and
-            fast to set up.
+            {t("landing.latam.subtitle")}
           </p>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1046,48 +1001,16 @@ function LatamPositioning() {
 /* ---------- FAQ ---------- */
 
 function FAQ() {
-  const items = [
-    {
-      q: "Does InventoryFlow work on mobile?",
-      a: "Yes — InventoryFlow is mobile-first. The entire platform, including the barcode scanner, runs in any modern smartphone browser. No app install required.",
-    },
-    {
-      q: "Can I import my existing products?",
-      a: "Yes. You can import products, categories and suppliers from CSV. Most teams import their full catalog in a few minutes.",
-    },
-    {
-      q: "Do I need barcode scanner hardware?",
-      a: "No. Your phone's camera works as the scanner. If you already have USB or Bluetooth scanners, those work too.",
-    },
-    {
-      q: "Is there a free trial?",
-      a: "Yes — a full-featured 7-day free trial, no credit card required. Cancel anytime.",
-    },
-    {
-      q: "Can I manage multiple locations?",
-      a: "Yes. Track stock per location, transfer between locations, and see real-time totals across your business. Starter supports 2 locations, Pro up to 10, Enterprise unlimited.",
-    },
-    {
-      q: "Can I control what each user can see and do?",
-      a: "Yes. Per-user, per-module permissions let you give the right access to owners, managers and employees.",
-    },
-    {
-      q: "Is InventoryFlow available in Spanish?",
-      a: "Yes — the entire platform is fully bilingual (English and Spanish). Each user picks their language.",
-    },
-    {
-      q: "How does setup work?",
-      a: "Sign up, complete a short onboarding wizard, import your products, and you're live. Guided onboarding is included in all paid plans.",
-    },
-  ];
+  const { t } = useTranslation();
+  const items = t("landing.faqSection.items", { returnObjects: true }) as { q: string; a: string }[];
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <section id="faq" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-3xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">FAQ</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.faqSection.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Frequently asked questions.
+            {t("landing.faqSection.title")}
           </h2>
         </div>
         <div className="mt-10 space-y-2">
@@ -1243,6 +1166,7 @@ function FinalCTA() {
 /* ---------- Footer ---------- */
 
 function SiteFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-14">
@@ -1255,27 +1179,26 @@ function SiteFooter() {
               <span className="font-semibold tracking-tight text-black">InventoryFlow</span>
             </div>
             <p className="mt-3 text-xs text-black/55 leading-relaxed max-w-xs">
-              Smart bilingual inventory management for growing businesses. Built by SamVic
-              Technologies.
+              {t("landing.footer.tagline")}
             </p>
           </div>
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Product
+              {t("landing.footer.product")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><a href="#features" className="hover:text-black">Features</a></li>
-              <li><a href="#pricing" className="hover:text-black">Pricing</a></li>
-              <li><a href="#demo" className="hover:text-black">Demo</a></li>
-              <li><a href="#faq" className="hover:text-black">FAQ</a></li>
-              <li><Link to="/login" className="hover:text-black">Login</Link></li>
+              <li><a href="#features" className="hover:text-black">{t("landing.footer.features")}</a></li>
+              <li><a href="#pricing" className="hover:text-black">{t("landing.footer.pricing")}</a></li>
+              <li><a href="#demo" className="hover:text-black">{t("landing.footer.demo")}</a></li>
+              <li><a href="#faq" className="hover:text-black">{t("landing.footer.faq")}</a></li>
+              <li><Link to="/login" className="hover:text-black">{t("landing.footer.login")}</Link></li>
             </ul>
           </div>
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Contact
+              {t("landing.footer.contact")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
               <li>
@@ -1316,20 +1239,20 @@ function SiteFooter() {
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Legal
+              {t("landing.footer.legal")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><Link to="/privacy" className="hover:text-black">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-black">Terms of Service</Link></li>
-              <li><Link to="/disclaimer" className="hover:text-black">Disclaimer</Link></li>
-              <li><Link to="/service-agreement" className="hover:text-black">Service Agreement</Link></li>
+              <li><Link to="/privacy" className="hover:text-black">{t("landing.footer.privacy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-black">{t("landing.footer.terms")}</Link></li>
+              <li><Link to="/disclaimer" className="hover:text-black">{t("landing.footer.disclaimer")}</Link></li>
+              <li><Link to="/service-agreement" className="hover:text-black">{t("landing.footer.serviceAgreement")}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-black/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-black/50">
-          <span>© {new Date().getFullYear()} SamVic Technologies. All rights reserved.</span>
-          <span>Built for growing businesses · Bilingual EN / ES</span>
+          <span>{t("landing.footer.copyright", { year: new Date().getFullYear() })}</span>
+          <span>{t("landing.footer.builtFor")}</span>
         </div>
       </div>
     </footer>
@@ -1339,6 +1262,7 @@ function SiteFooter() {
 /* ---------- Floating WhatsApp ---------- */
 
 function FloatingWhatsApp() {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -1348,14 +1272,14 @@ function FloatingWhatsApp() {
     >
       {hovered && (
         <div className="mb-1 rounded-2xl bg-white border border-black/[0.08] px-4 py-2.5 text-sm text-black shadow-[0_8px_24px_-6px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-200">
-          Chat with us on WhatsApp
+          {t("landing.floatingWhatsapp.tooltip")}
         </div>
       )}
       <a
         href={WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
+        aria-label={t("landing.floatingWhatsapp.aria")}
         className="group relative inline-flex items-center justify-center rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white w-14 h-14 shadow-[0_12px_30px_-8px_rgba(37,211,102,0.55)] transition-all hover:scale-105 active:scale-95"
       >
         <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />

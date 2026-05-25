@@ -136,13 +136,19 @@
       "startTrial": "Iniciar prueba gratis"
     },
     "hero": {
-      "badge": "Hecho para operaciones B2B",
-      "title1": "Inventario inteligente para",
-      "title2": "pequeñas empresas modernas.",
-      "subtitle": "InventoryFlow ayuda a equipos B2B en crecimiento a centralizar inventario, órdenes y operaciones entre ubicaciones — con el control y visibilidad para escalar.",
-      "ctaPrimary": "Iniciar prueba gratuita de 7 días",
-      "ctaSecondary": "Ver cómo funciona",
-      "fineprint": "No se requiere tarjeta · Puede requerir aprobación de configuración · Cancela cuando quieras"
+      "titleA": "Deja de perder inventario.",
+      "titleB": "Controla tu negocio desde donde estés.",
+      "subtitle": "InventoryFlow ayuda a las empresas a gestionar inventario, productos, movimientos, ubicaciones y operaciones desde una plataforma bilingüe moderna, diseñada para operaciones del mundo real.",
+      "ctaPrimary": "Empezar prueba gratis",
+      "ctaDemo": "Solicitar demo",
+      "ctaWhatsapp": "Chatear por WhatsApp",
+      "badges": {
+        "mobile": "Apto móvil",
+        "multilocation": "Multi-ubicación",
+        "bilingual": "EN / ES",
+        "secure": "Seguro",
+        "cloud": "En la nube"
+      }
     },
     "pricing": {
       "eyebrow": "Precios",
@@ -347,6 +353,272 @@
       "instant": "Respuesta inmediata",
       "chat": "Chatear por WhatsApp",
       "book": "Solicitar Demo"
+    },
+    "dashboardPreview": {
+      "urlbar": "app.inventoryflow / panel",
+      "nav": {
+        "dashboard": "Panel",
+        "products": "Productos",
+        "movements": "Movimientos",
+        "orders": "Órdenes",
+        "scanner": "Escáner",
+        "alerts": "Alertas"
+      },
+      "kpis": {
+        "totalSkus": "Total SKUs",
+        "stockValue": "Valor del stock",
+        "lowStock": "Stock bajo",
+        "movements24": "Movimientos / 24h"
+      },
+      "recent": "Movimientos recientes",
+      "last24": "Últimas 24 horas",
+      "stockHealth": "Salud del stock",
+      "inStock": "En stock",
+      "lowStockLabel": "Stock bajo",
+      "outOfStock": "Agotado"
+    },
+    "problemSolution": {
+      "problemEyebrow": "El problema",
+      "problemTitle": "Las operaciones son caóticas. El inventario es lo primero que se rompe.",
+      "problems": [
+        "¿Pierdes productos o stock que no puedes explicar?",
+        "¿Inventario desordenado entre hojas de cálculo y cuadernos?",
+        "¿Te quedas sin stock de forma inesperada?",
+        "¿Sigues llevando el inventario en Excel?",
+        "¿Gestionas varias ubicaciones manualmente?"
+      ],
+      "solutionEyebrow": "La solución",
+      "solutionTitle": "InventoryFlow devuelve el control a tus operaciones.",
+      "solutionSubtitle": "Una sola plataforma bilingüe para productos, movimientos, códigos de barras, stock multi-ubicación, órdenes, alertas y reportes — pensada para negocios reales, no para ERPs complicados.",
+      "solutions": [
+        "Stock en tiempo real en cada ubicación",
+        "Escaneo de códigos de barras desde cualquier teléfono",
+        "Alertas de stock bajo antes de quedarte sin productos",
+        "Reportes claros que tu contador adorará",
+        "Bilingüe (EN / ES) desde el primer día"
+      ],
+      "cta": "Empezar prueba gratis"
+    },
+    "features": {
+      "eyebrow": "Funcionalidades",
+      "title": "Todo lo que necesitas para operar tu negocio.",
+      "subtitle": "Un conjunto de herramientas enfocado en la realidad diaria de pequeñas empresas y bodegas.",
+      "items": [
+        {
+          "title": "Productos y catálogo",
+          "desc": "Un catálogo limpio con SKUs, códigos de barras, categorías, proveedores, ubicaciones y stock en vivo."
+        },
+        {
+          "title": "Movimientos de stock",
+          "desc": "Suma, resta y ajusta stock con un historial completo — cada cambio atribuido y con marca de tiempo."
+        },
+        {
+          "title": "Órdenes de venta y compra",
+          "desc": "Genera órdenes, controla cumplimiento y reduce inventario automáticamente al confirmar la venta."
+        },
+        {
+          "title": "Flujo con códigos de barras",
+          "desc": "Escanea entradas y salidas y gestiona stock desde cualquier teléfono — sin hardware adicional."
+        },
+        {
+          "title": "Alertas de stock bajo",
+          "desc": "Umbrales inteligentes avisan a tu equipo antes de que algo se agote, no después."
+        },
+        {
+          "title": "Reportes e insights",
+          "desc": "Reportes de ventas, inventario, movimientos y operaciones — exportables a CSV y PDF."
+        }
+      ]
+    },
+    "screenshots": {
+      "eyebrow": "Tour del producto",
+      "title": "Mira InventoryFlow en acción.",
+      "subtitle": "Pantallas reales de la plataforma — escritorio y móvil, diseñadas para la claridad.",
+      "label": "Captura",
+      "items": [
+        {
+          "title": "Panel",
+          "desc": "KPIs, salud del stock y movimientos recientes de un vistazo."
+        },
+        {
+          "title": "Página de productos",
+          "desc": "Catálogo limpio con SKUs, categorías, proveedores y stock."
+        },
+        {
+          "title": "Escáner de códigos",
+          "desc": "Escanea con tu teléfono — sin hardware extra."
+        },
+        {
+          "title": "Reportes",
+          "desc": "Ventas, inventario y movimientos — exportables a CSV / PDF."
+        },
+        {
+          "title": "Transferencias y órdenes",
+          "desc": "Mueve stock entre ubicaciones y cumple órdenes de extremo a extremo."
+        },
+        {
+          "title": "Usuarios y roles",
+          "desc": "Permisos granulares por miembro del equipo y por módulo."
+        }
+      ]
+    },
+    "demoVideo": {
+      "eyebrow": "Mira la demo",
+      "title": "Conoce InventoryFlow en acción — en menos de un minuto.",
+      "subtitle": "Panel, escaneo, importaciones, reportes, uso móvil, multi-ubicación y roles — todo en un breve recorrido.",
+      "duration": "Demo del producto de 30 a 60 segundos",
+      "walkthrough": "Solicita un recorrido en vivo",
+      "play": "Reproducir video demo"
+    },
+    "howItWorks": {
+      "eyebrow": "Cómo funciona",
+      "title": "De las hojas de cálculo a operar sin fricción — en una tarde.",
+      "steps": [
+        {
+          "title": "Importa tu catálogo",
+          "desc": "Carga tus productos con una importación CSV o agrégalos sobre la marcha. Categorías, proveedores y ubicaciones incluidos."
+        },
+        {
+          "title": "Registra cada movimiento",
+          "desc": "Agrega y descuenta stock, escanea códigos y cumple órdenes. El inventario se actualiza en tiempo real para todo el equipo."
+        },
+        {
+          "title": "Anticípate con insights",
+          "desc": "Recibe alertas antes de quedarte sin stock, conoce lo que se mueve y exporta reportes que tu contador agradecerá."
+        }
+      ]
+    },
+    "whoItsFor": {
+      "eyebrow": "Para quién es",
+      "title": "Hecho para equipos B2B que se mueven rápido.",
+      "items": [
+        {
+          "title": "Bodegas y almacenes",
+          "desc": "Stock en tiempo real entre ubicaciones, con recepción y picking por código de barras."
+        },
+        {
+          "title": "Retail y e-commerce",
+          "desc": "Mantén el inventario online y de tienda sincronizado. Reduce sobreventas y faltantes."
+        },
+        {
+          "title": "Distribuidores",
+          "desc": "Gestiona órdenes de compra y venta de principio a fin con visibilidad total."
+        },
+        {
+          "title": "Talleres y servicios",
+          "desc": "Controla repuestos, uso interno y puntos de reorden sin el dolor de la hoja de cálculo."
+        }
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "Hecho para negocios en crecimiento",
+      "title": "Equipos operativos que necesitan resultados reales confían en nosotros.",
+      "note": "Citas de clientes de acceso anticipado. Nombres reservados por privacidad durante la beta.",
+      "items": [
+        {
+          "quote": "Reemplazamos tres hojas de cálculo con InventoryFlow en un fin de semana. El conteo por fin coincide con la realidad.",
+          "name": "Líder de operaciones",
+          "role": "Tienda minorista"
+        },
+        {
+          "quote": "La interfaz bilingüe fue una gran victoria para el equipo. La capacitación tomó una tarde, no semanas.",
+          "name": "Gerente de bodega",
+          "role": "Empresa de distribución"
+        },
+        {
+          "quote": "Escanear códigos desde el teléfono cambió cómo recibimos mercadería. Se acabaron las planillas en papel.",
+          "name": "Dueño",
+          "role": "Mercado pequeño"
+        }
+      ]
+    },
+    "latam": {
+      "eyebrow": "Hecho para negocios reales",
+      "title": "Hecho para negocios reales, no para ERPs complicados.",
+      "subtitle": "Diseñado pensando en LATAM y en empresas en crecimiento: bilingüe, mobile-first y rápido de implementar.",
+      "items": [
+        {
+          "title": "Bilingüe EN / ES",
+          "desc": "Cambia el idioma por usuario. Pensado para equipos en toda América."
+        },
+        {
+          "title": "Primero en móvil",
+          "desc": "Úsalo en el piso de la bodega, en la tienda o en ruta de reparto."
+        },
+        {
+          "title": "Onboarding simple",
+          "desc": "Operando en una tarde — sin semanas de consultoría."
+        },
+        {
+          "title": "Sin ERP complicado",
+          "desc": "Solo las funciones que realmente usarás, diseñadas para negocios reales."
+        }
+      ]
+    },
+    "faqSection": {
+      "eyebrow": "Preguntas frecuentes",
+      "title": "Preguntas frecuentes.",
+      "items": [
+        {
+          "q": "¿InventoryFlow funciona en móvil?",
+          "a": "Sí — InventoryFlow es mobile-first. Toda la plataforma, incluido el escáner de códigos, funciona en cualquier navegador móvil moderno. No necesitas instalar una app."
+        },
+        {
+          "q": "¿Puedo importar mis productos existentes?",
+          "a": "Sí. Puedes importar productos, categorías y proveedores desde CSV. La mayoría de equipos importa su catálogo completo en pocos minutos."
+        },
+        {
+          "q": "¿Necesito un lector de códigos de barras?",
+          "a": "No. La cámara de tu teléfono funciona como escáner. Si ya tienes lectores USB o Bluetooth, también funcionan."
+        },
+        {
+          "q": "¿Hay prueba gratis?",
+          "a": "Sí — una prueba gratuita de 7 días con todas las funciones, sin tarjeta de crédito. Cancela cuando quieras."
+        },
+        {
+          "q": "¿Puedo gestionar varias ubicaciones?",
+          "a": "Sí. Controla stock por ubicación, transfiere entre ubicaciones y mira totales en tiempo real. Starter incluye 2 ubicaciones, Pro hasta 10 y Enterprise ilimitado."
+        },
+        {
+          "q": "¿Puedo controlar lo que cada usuario ve y hace?",
+          "a": "Sí. Permisos por usuario y por módulo te permiten dar el acceso correcto a dueños, gerentes y empleados."
+        },
+        {
+          "q": "¿InventoryFlow está disponible en español?",
+          "a": "Sí — toda la plataforma es totalmente bilingüe (inglés y español). Cada usuario elige su idioma."
+        },
+        {
+          "q": "¿Cómo es el proceso de configuración?",
+          "a": "Regístrate, completa un breve asistente de onboarding, importa tus productos y estás listo. La guía de onboarding está incluida en todos los planes de pago."
+        }
+      ]
+    },
+    "pricingExtra": {
+      "billingMonthly": "Mensual",
+      "billingYearly": "Anual",
+      "billingSave": "Ahorra 2 meses",
+      "yearlyNote": "El cobro anual se habilitará con Stripe. Contacta a ventas para precios de acceso anticipado."
+    },
+    "footer": {
+      "tagline": "Gestión de inventario bilingüe e inteligente para negocios en crecimiento. Hecho por SamVic Technologies.",
+      "product": "Producto",
+      "contact": "Contacto",
+      "legal": "Legal",
+      "features": "Funcionalidades",
+      "pricing": "Precios",
+      "demo": "Demo",
+      "faq": "Preguntas",
+      "login": "Iniciar sesión",
+      "privacy": "Política de privacidad",
+      "terms": "Términos del servicio",
+      "disclaimer": "Aviso legal",
+      "serviceAgreement": "Acuerdo de servicio",
+      "copyright": "© {{year}} SamVic Technologies. Todos los derechos reservados.",
+      "builtFor": "Hecho para negocios en crecimiento · Bilingüe EN / ES"
+    },
+    "floatingWhatsapp": {
+      "tooltip": "Chatea con nosotros en WhatsApp",
+      "aria": "Chatear por WhatsApp"
     }
   },
   "auth": {
