@@ -964,25 +964,22 @@ function CompareTable() {
 /* ---------- LATAM positioning ---------- */
 
 function LatamPositioning() {
-  const items = [
-    { icon: Globe, title: "Bilingual EN / ES", desc: "Switch languages per user. Built for teams across the Americas." },
-    { icon: Smartphone, title: "Mobile-first", desc: "Use it on the warehouse floor, in the store, or on a delivery route." },
-    { icon: Sparkles, title: "Simple onboarding", desc: "Up and running in an afternoon — not weeks of consulting." },
-    { icon: Cloud, title: "No complicated ERP", desc: "Only the features you'll actually use, designed for real businesses." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Globe, Smartphone, Sparkles, Cloud];
+  const raw = t("landing.latam.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const items = raw.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Built for real businesses
+            {t("landing.latam.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Built for real businesses, not complicated ERP systems.
+            {t("landing.latam.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Designed with LATAM and growing businesses in mind: bilingual, mobile-first, and
-            fast to set up.
+            {t("landing.latam.subtitle")}
           </p>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1004,48 +1001,16 @@ function LatamPositioning() {
 /* ---------- FAQ ---------- */
 
 function FAQ() {
-  const items = [
-    {
-      q: "Does InventoryFlow work on mobile?",
-      a: "Yes — InventoryFlow is mobile-first. The entire platform, including the barcode scanner, runs in any modern smartphone browser. No app install required.",
-    },
-    {
-      q: "Can I import my existing products?",
-      a: "Yes. You can import products, categories and suppliers from CSV. Most teams import their full catalog in a few minutes.",
-    },
-    {
-      q: "Do I need barcode scanner hardware?",
-      a: "No. Your phone's camera works as the scanner. If you already have USB or Bluetooth scanners, those work too.",
-    },
-    {
-      q: "Is there a free trial?",
-      a: "Yes — a full-featured 7-day free trial, no credit card required. Cancel anytime.",
-    },
-    {
-      q: "Can I manage multiple locations?",
-      a: "Yes. Track stock per location, transfer between locations, and see real-time totals across your business. Starter supports 2 locations, Pro up to 10, Enterprise unlimited.",
-    },
-    {
-      q: "Can I control what each user can see and do?",
-      a: "Yes. Per-user, per-module permissions let you give the right access to owners, managers and employees.",
-    },
-    {
-      q: "Is InventoryFlow available in Spanish?",
-      a: "Yes — the entire platform is fully bilingual (English and Spanish). Each user picks their language.",
-    },
-    {
-      q: "How does setup work?",
-      a: "Sign up, complete a short onboarding wizard, import your products, and you're live. Guided onboarding is included in all paid plans.",
-    },
-  ];
+  const { t } = useTranslation();
+  const items = t("landing.faqSection.items", { returnObjects: true }) as { q: string; a: string }[];
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <section id="faq" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-3xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">FAQ</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.faqSection.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Frequently asked questions.
+            {t("landing.faqSection.title")}
           </h2>
         </div>
         <div className="mt-10 space-y-2">
