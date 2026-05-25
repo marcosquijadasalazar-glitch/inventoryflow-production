@@ -1191,45 +1191,49 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label={t("products.priceRange")}>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder={t("products.min")}
-            value={props.priceMin}
-            onChange={(e) => props.setPriceMin(e.target.value)}
-            className="bg-surface"
-          />
-          <span className="text-muted-foreground">–</span>
-          <Input
-            type="number"
-            placeholder={t("products.max")}
-            value={props.priceMax}
-            onChange={(e) => props.setPriceMax(e.target.value)}
-            className="bg-surface"
-          />
-        </div>
-      </FilterRow>
+      {props.showPrice !== false && (
+        <FilterRow label={t("products.priceRange")}>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder={t("products.min")}
+              value={props.priceMin}
+              onChange={(e) => props.setPriceMin(e.target.value)}
+              className="bg-surface"
+            />
+            <span className="text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder={t("products.max")}
+              value={props.priceMax}
+              onChange={(e) => props.setPriceMax(e.target.value)}
+              className="bg-surface"
+            />
+          </div>
+        </FilterRow>
+      )}
 
-      <FilterRow label={t("products.costRange")}>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder={t("products.min")}
-            value={props.costMin}
-            onChange={(e) => props.setCostMin(e.target.value)}
-            className="bg-surface"
-          />
-          <span className="text-muted-foreground">–</span>
-          <Input
-            type="number"
-            placeholder={t("products.max")}
-            value={props.costMax}
-            onChange={(e) => props.setCostMax(e.target.value)}
-            className="bg-surface"
-          />
-        </div>
-      </FilterRow>
+      {props.showCost !== false && (
+        <FilterRow label={t("products.costRange")}>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder={t("products.min")}
+              value={props.costMin}
+              onChange={(e) => props.setCostMin(e.target.value)}
+              className="bg-surface"
+            />
+            <span className="text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder={t("products.max")}
+              value={props.costMax}
+              onChange={(e) => props.setCostMax(e.target.value)}
+              className="bg-surface"
+            />
+          </div>
+        </FilterRow>
+      )}
 
       <div className="flex justify-end pt-2 border-t border-border">
         <Button variant="ghost" size="sm" onClick={props.reset}>
