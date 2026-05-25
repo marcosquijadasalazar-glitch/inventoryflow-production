@@ -107,3 +107,42 @@ export function moduleForPath(pathname: string): ModuleKey | null {
   }
   return null;
 }
+
+// Minimum plan tier required to access each module. Drives the "visible
+// locked" upsell UX in the sidebar — modules above the org's current plan
+// are shown but rendered as locked; clicking opens the Upgrade dialog.
+import type { PlanType } from "./plan-limits";
+
+export const MODULE_MIN_PLAN: Record<ModuleKey, PlanType> = {
+  dashboard: "free",
+  products: "free",
+  movements: "free",
+  scanner: "free",
+  alerts: "free",
+  settings: "free",
+  users: "free",
+  purchase_orders: "starter",
+  sales_orders: "starter",
+  history: "starter",
+  transfer_orders: "pro",
+  internal_use: "pro",
+  location_stock: "pro",
+  reports: "pro",
+  exports: "pro",
+};
+
+const PLAN_RANK: Record<PlanType, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  enterprise: 3,
+};
+
+export function isPlanSufficient(current: PlanType, required: PlanType): boolean {
+  return PLAN_RANK[current] >= PLAN_RANK[required];
+}
+
+export function isModuleLockedByPlan(key: ModuleKey, plan: PlanType): boolean {
+  return !isPlanSufficient(plan, MODULE_MIN_PLAN[key]);
+}
+
