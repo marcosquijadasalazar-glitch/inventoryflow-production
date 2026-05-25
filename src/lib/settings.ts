@@ -34,9 +34,11 @@ export async function updateCompanySettings(
   if (error) throw error;
 }
 
-export async function uploadLogo(file: File): Promise<string> {
-  const ext = file.name.split(".").pop() ?? "png";
-  const path = `logo-${Date.now()}.${ext}`;
+export async function uploadLogo(file: File, organizationId: string): Promise<string> {
+  if (!organizationId) throw new Error("organizationId is required to upload a logo");
+  const ext = (file.name.split(".").pop() ?? "png").toLowerCase().replace(/[^a-z0-9]/g, "");
+  // RLS on storage.objects requires the first folder segment to equal the org id.
+  const path = `${organizationId}/logo-${Date.now()}.${ext || "png"}`;
   const { error } = await supabase.storage
     .from("branding")
     .upload(path, file, { upsert: true, contentType: file.type });
