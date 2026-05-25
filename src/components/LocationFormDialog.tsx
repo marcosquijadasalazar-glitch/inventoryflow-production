@@ -26,6 +26,7 @@ import {
   type Location,
   type LocationType,
 } from "@/lib/locations";
+import { useUpgradeModal } from "@/components/UpgradeDialog";
 
 export function LocationFormDialog({
   open,
@@ -39,6 +40,7 @@ export function LocationFormDialog({
   defaultName?: string;
 }) {
   const { t } = useTranslation();
+  const upgrade = useUpgradeModal();
   const [name, setName] = useState("");
   const [type, setType] = useState<LocationType>("warehouse");
   const [address, setAddress] = useState("");
@@ -72,8 +74,10 @@ export function LocationFormDialog({
       onClose();
     } catch (e: any) {
       const { parsePlanLimitError } = await import("@/lib/plan-limits");
-      if (parsePlanLimitError(e)) {
-        toast.error(`${t("plan.limitReached")} ${t("plan.upgradePrompt")}`);
+      const kind = parsePlanLimitError(e);
+      if (kind) {
+        onClose();
+        upgrade.open({ reason: kind });
       } else {
         toast.error(e.message ?? String(e));
       }

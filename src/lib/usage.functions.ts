@@ -4,16 +4,24 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { PLAN_LIMITS, type OrgUsage, type PlanType } from "./plan-limits";
 
-async function usageForOrg(orgId: string): Promise<OrgUsage | null> {
+async function usageForOrg(orgId: string, userId?: string): Promise<OrgUsage | null> {
   const { data: org } = await supabaseAdmin
     .from("organizations")
-    .select("plan_type")
+    .select("plan_type, company_name")
     .eq("id", orgId)
     .maybeSingle();
   if (!org) return null;
   const plan = ((org as any).plan_type ?? "free") as PlanType;
 
-  const [{ count: users }, { count: products }, { count: locations }] = await Promise.all([
+  const trialQ = userId
+    ? supabaseAdmin
+        .from("profiles")
+        .select("trial_ends_at")
+        .eq("user_id", userId)
+        .maybeSingle()
+    : Promise.resolve({ data: null });
+
+  const [{ count: users }, { count: products }, { count: locations }, trialRes] = await Promise.all([
     supabaseAdmin
       .from("profiles")
       .select("user_id", { count: "exact", head: true })
@@ -30,6 +38,7 @@ async function usageForOrg(orgId: string): Promise<OrgUsage | null> {
       .select("id", { count: "exact", head: true })
       .eq("organization_id", orgId)
       .eq("is_active", true),
+    trialQ,
   ]);
 
   return {
@@ -40,6 +49,8 @@ async function usageForOrg(orgId: string): Promise<OrgUsage | null> {
       products: products ?? 0,
       locations: locations ?? 0,
     },
+    trial_ends_at: ((trialRes as any)?.data?.trial_ends_at as string | null) ?? null,
+    organization_name: ((org as any).company_name as string | null) ?? null,
   };
 }
 
@@ -54,7 +65,7 @@ export const getMyOrgUsage = createServerFn({ method: "GET" })
       .maybeSingle();
     const orgId = (profile as any)?.organization_id as string | null;
     if (!orgId) return null;
-    return usageForOrg(orgId);
+    return usageForOrg(orgId, context.userId);
   });
 
 const OrgSchema = z.object({ organization_id: z.string().uuid() });
