@@ -78,8 +78,109 @@ export const getCompanyProfile = createServerFn({ method: "POST" })
       if (ins.error) throw new Error(ins.error.message);
       row = ins.data;
     }
-    return { profile: row, canEdit: actor.role === "super_admin" || actor.role === "owner" };
+    return {
+      profile: row,
+      canEdit: actor.role === "super_admin" || actor.role === "owner",
+      canEditRestricted: actor.role === "super_admin",
+      actorRole: actor.role,
+    };
   });
+
+// Fields an organization owner is allowed to edit on their company profile.
+// Super Admins can edit all fields. Anyone else cannot edit at all.
+const OWNER_ALLOWED_FIELDS = new Set([
+  "phone",
+  "email",
+  "website",
+  "address",
+  "city",
+  "country",
+  "logo_url",
+  "footer_notes",
+]);
+
+async function notifySuperAdminsOfOwnerEdit(opts: {
+  organizationId: string;
+  companyName: string | null;
+  changed: Record<string, { from: unknown; to: unknown }>;
+  actorEmail: string | null;
+  actorName: string | null;
+}) {
+  if (Object.keys(opts.changed).length === 0) return;
+
+  // Pull super-admin recipients
+  const { data: admins } = await supabaseAdmin
+    .from("profiles")
+    .select("email")
+    .eq("role", "super_admin");
+  const adminEmails = Array.from(
+    new Set(
+      (admins ?? [])
+        .map((a: any) => a.email as string | null)
+        .filter((e): e is string => !!e),
+    ),
+  );
+  const fallback = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL;
+  if (adminEmails.length === 0 && fallback) adminEmails.push(fallback);
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || adminEmails.length === 0) {
+    console.log(
+      `[company-profile] owner edited org ${opts.organizationId} (${opts.companyName}); admin email skipped (not configured)`,
+    );
+    return;
+  }
+
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+    );
+  const fmt = (v: unknown) =>
+    v === null || v === undefined || v === "" ? "—" : esc(String(v));
+
+  const rows = Object.entries(opts.changed)
+    .map(
+      ([field, { from, to }]) =>
+        `<tr><td style="padding:8px 12px;background:#f7f7f9;border:1px solid #eee;font-weight:600">${esc(field)}</td><td style="padding:8px 12px;border:1px solid #eee;color:#888">${fmt(from)}</td><td style="padding:8px 12px;border:1px solid #eee">${fmt(to)}</td></tr>`,
+    )
+    .join("");
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#111">
+      <h2 style="margin:0 0 8px">Company profile updated</h2>
+      <p style="margin:0 0 16px;color:#555">
+        <strong>${esc(opts.companyName ?? "—")}</strong> was edited by
+        ${esc(opts.actorName ?? opts.actorEmail ?? "an owner")} on ${new Date().toISOString()}.
+      </p>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 12px;background:#eee;border:1px solid #ddd">Field</th>
+          <th style="text-align:left;padding:8px 12px;background:#eee;border:1px solid #ddd">Old value</th>
+          <th style="text-align:left;padding:8px 12px;background:#eee;border:1px solid #ddd">New value</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="color:#888;font-size:12px;margin-top:24px">InventoryFlow audit notification.</p>
+    </div>`;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "InventoryFlow <onboarding@resend.dev>",
+        to: adminEmails,
+        subject: `Company profile updated: ${opts.companyName ?? opts.organizationId}`,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      console.error(`[company-profile] Resend failed [${res.status}]: ${await res.text()}`);
+    }
+  } catch (e: any) {
+    console.error("[company-profile] notify error:", e?.message ?? e);
+  }
+}
 
 export const updateCompanyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
