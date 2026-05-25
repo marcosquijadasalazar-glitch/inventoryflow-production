@@ -136,13 +136,19 @@
       "startTrial": "Start Free Trial"
     },
     "hero": {
-      "badge": "Built for B2B operations",
-      "title1": "Smart inventory for",
-      "title2": "modern small businesses.",
-      "subtitle": "InventoryFlow helps growing B2B teams centralize inventory, orders, and operations across locations — with the control and visibility to scale.",
-      "ctaPrimary": "Start Free 7-Day Trial",
-      "ctaSecondary": "See how it works",
-      "fineprint": "No credit card required · Setup approval may be required · Cancel anytime"
+      "titleA": "Stop losing inventory.",
+      "titleB": "Control your business from anywhere.",
+      "subtitle": "InventoryFlow helps businesses manage inventory, products, movements, locations and operations from a modern bilingual platform built for real-world operations.",
+      "ctaPrimary": "Start Free Trial",
+      "ctaDemo": "Book Demo",
+      "ctaWhatsapp": "Chat on WhatsApp",
+      "badges": {
+        "mobile": "Mobile friendly",
+        "multilocation": "Multi-location",
+        "bilingual": "EN / ES",
+        "secure": "Secure",
+        "cloud": "Cloud based"
+      }
     },
     "pricing": {
       "eyebrow": "Pricing",
@@ -347,6 +353,272 @@
       "instant": "Instant reply",
       "chat": "Chat on WhatsApp",
       "book": "Book Demo"
+    },
+    "dashboardPreview": {
+      "urlbar": "app.inventoryflow / dashboard",
+      "nav": {
+        "dashboard": "Dashboard",
+        "products": "Products",
+        "movements": "Movements",
+        "orders": "Orders",
+        "scanner": "Scanner",
+        "alerts": "Alerts"
+      },
+      "kpis": {
+        "totalSkus": "Total SKUs",
+        "stockValue": "Stock value",
+        "lowStock": "Low stock",
+        "movements24": "Movements / 24h"
+      },
+      "recent": "Recent movements",
+      "last24": "Last 24 hours",
+      "stockHealth": "Stock health",
+      "inStock": "In stock",
+      "lowStockLabel": "Low stock",
+      "outOfStock": "Out of stock"
+    },
+    "problemSolution": {
+      "problemEyebrow": "The problem",
+      "problemTitle": "Operations are messy. Inventory is the first thing that breaks.",
+      "problems": [
+        "Losing products or stock you can't account for?",
+        "Inventory disorganized across spreadsheets and notebooks?",
+        "Running out of stock unexpectedly?",
+        "Still tracking inventory in Excel?",
+        "Managing multiple locations manually?"
+      ],
+      "solutionEyebrow": "The solution",
+      "solutionTitle": "InventoryFlow puts your operations back in control.",
+      "solutionSubtitle": "One bilingual platform for products, movements, barcodes, multi-location stock, orders, alerts and reports — built for real businesses, not complicated ERP systems.",
+      "solutions": [
+        "Real-time stock across every location",
+        "Barcode scanning from any phone",
+        "Low-stock alerts before you run out",
+        "Clean reports your accountant will love",
+        "Bilingual (EN / ES) from day one"
+      ],
+      "cta": "Start Free Trial"
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Everything you need to run your operations.",
+      "subtitle": "A focused set of tools designed for the day-to-day reality of small businesses and warehouses.",
+      "items": [
+        {
+          "title": "Products & catalog",
+          "desc": "One clean catalog with SKUs, barcodes, categories, suppliers, locations and live stock."
+        },
+        {
+          "title": "Stock movements",
+          "desc": "Add, remove and adjust stock with a full audit trail — every change attributed and timestamped."
+        },
+        {
+          "title": "Sales & purchase orders",
+          "desc": "Issue orders, track fulfillment, and automatically reduce inventory when sales are confirmed."
+        },
+        {
+          "title": "Barcode workflows",
+          "desc": "Scan in, scan out, and manage stock from any phone — no scanner hardware required."
+        },
+        {
+          "title": "Low-stock alerts",
+          "desc": "Smart thresholds notify your team before something runs out, not after."
+        },
+        {
+          "title": "Reports & insights",
+          "desc": "Sales, inventory, movements and operations reports — exportable to CSV and PDF."
+        }
+      ]
+    },
+    "screenshots": {
+      "eyebrow": "Product tour",
+      "title": "See InventoryFlow in action.",
+      "subtitle": "Real screens from the platform — desktop and mobile, designed for clarity.",
+      "label": "Screenshot",
+      "items": [
+        {
+          "title": "Dashboard",
+          "desc": "KPIs, stock health and recent movements at a glance."
+        },
+        {
+          "title": "Products page",
+          "desc": "Clean catalog with SKUs, categories, suppliers and stock."
+        },
+        {
+          "title": "Barcode scanner",
+          "desc": "Scan with your phone — no extra hardware required."
+        },
+        {
+          "title": "Reports",
+          "desc": "Sales, inventory and movements — exportable to CSV / PDF."
+        },
+        {
+          "title": "Transfers & orders",
+          "desc": "Move stock across locations and fulfill orders end-to-end."
+        },
+        {
+          "title": "Users & roles",
+          "desc": "Granular permissions per team member, per module."
+        }
+      ]
+    },
+    "demoVideo": {
+      "eyebrow": "Watch the demo",
+      "title": "See InventoryFlow in action — in under a minute.",
+      "subtitle": "Dashboard, scanning, imports, reports, mobile usage, multi-location and roles — all in one short walkthrough.",
+      "duration": "30–60 second product demo",
+      "walkthrough": "Request a live walkthrough",
+      "play": "Play demo video"
+    },
+    "howItWorks": {
+      "eyebrow": "How it works",
+      "title": "From spreadsheets to running smoothly — in an afternoon.",
+      "steps": [
+        {
+          "title": "Import your catalog",
+          "desc": "Bring in your products with a CSV import or add them as you go. Categories, suppliers, locations — all included."
+        },
+        {
+          "title": "Track every movement",
+          "desc": "Add stock, remove stock, scan barcodes, fulfill orders. Inventory updates in real time across your team."
+        },
+        {
+          "title": "Stay ahead with insights",
+          "desc": "Get alerts before you run out, see what's moving, and export reports your accountant will actually like."
+        }
+      ]
+    },
+    "whoItsFor": {
+      "eyebrow": "Who it's for",
+      "title": "Built for B2B teams that move fast.",
+      "items": [
+        {
+          "title": "Warehouses",
+          "desc": "Real-time stock across locations, with barcode-driven receiving and picking."
+        },
+        {
+          "title": "Retail & e-commerce",
+          "desc": "Keep online and in-store inventory in sync. Reduce overselling and stockouts."
+        },
+        {
+          "title": "Distributors",
+          "desc": "Manage purchase and sales orders end-to-end with full visibility."
+        },
+        {
+          "title": "Workshops & service",
+          "desc": "Track parts, internal usage and reorder points without the spreadsheet pain."
+        }
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "Built for growing businesses",
+      "title": "Trusted by operational teams that need real results.",
+      "note": "Early-access customer quotes. Names withheld for privacy during beta.",
+      "items": [
+        {
+          "quote": "We replaced three spreadsheets with InventoryFlow in a weekend. Our stock counts finally match reality.",
+          "name": "Operations lead",
+          "role": "Retail store"
+        },
+        {
+          "quote": "Bilingual interface was a huge win for our team. Onboarding took an afternoon, not weeks.",
+          "name": "Warehouse manager",
+          "role": "Distribution business"
+        },
+        {
+          "quote": "Barcode scanning from the phone changed how we receive shipments. No more clipboards.",
+          "name": "Owner",
+          "role": "Small market"
+        }
+      ]
+    },
+    "latam": {
+      "eyebrow": "Built for real businesses",
+      "title": "Built for real businesses, not complicated ERP systems.",
+      "subtitle": "Designed with LATAM and growing businesses in mind: bilingual, mobile-first, and fast to set up.",
+      "items": [
+        {
+          "title": "Bilingual EN / ES",
+          "desc": "Switch languages per user. Built for teams across the Americas."
+        },
+        {
+          "title": "Mobile-first",
+          "desc": "Use it on the warehouse floor, in the store, or on a delivery route."
+        },
+        {
+          "title": "Simple onboarding",
+          "desc": "Up and running in an afternoon — not weeks of consulting."
+        },
+        {
+          "title": "No complicated ERP",
+          "desc": "Only the features you'll actually use, designed for real businesses."
+        }
+      ]
+    },
+    "faqSection": {
+      "eyebrow": "FAQ",
+      "title": "Frequently asked questions.",
+      "items": [
+        {
+          "q": "Does InventoryFlow work on mobile?",
+          "a": "Yes — InventoryFlow is mobile-first. The entire platform, including the barcode scanner, runs in any modern smartphone browser. No app install required."
+        },
+        {
+          "q": "Can I import my existing products?",
+          "a": "Yes. You can import products, categories and suppliers from CSV. Most teams import their full catalog in a few minutes."
+        },
+        {
+          "q": "Do I need barcode scanner hardware?",
+          "a": "No. Your phone's camera works as the scanner. If you already have USB or Bluetooth scanners, those work too."
+        },
+        {
+          "q": "Is there a free trial?",
+          "a": "Yes — a full-featured 7-day free trial, no credit card required. Cancel anytime."
+        },
+        {
+          "q": "Can I manage multiple locations?",
+          "a": "Yes. Track stock per location, transfer between locations, and see real-time totals across your business. Starter supports 2 locations, Pro up to 10, Enterprise unlimited."
+        },
+        {
+          "q": "Can I control what each user can see and do?",
+          "a": "Yes. Per-user, per-module permissions let you give the right access to owners, managers and employees."
+        },
+        {
+          "q": "Is InventoryFlow available in Spanish?",
+          "a": "Yes — the entire platform is fully bilingual (English and Spanish). Each user picks their language."
+        },
+        {
+          "q": "How does setup work?",
+          "a": "Sign up, complete a short onboarding wizard, import your products, and you're live. Guided onboarding is included in all paid plans."
+        }
+      ]
+    },
+    "pricingExtra": {
+      "billingMonthly": "Monthly",
+      "billingYearly": "Yearly",
+      "billingSave": "Save 2 months",
+      "yearlyNote": "Yearly billing launches with Stripe. Contact sales for early-access pricing."
+    },
+    "footer": {
+      "tagline": "Smart bilingual inventory management for growing businesses. Built by SamVic Technologies.",
+      "product": "Product",
+      "contact": "Contact",
+      "legal": "Legal",
+      "features": "Features",
+      "pricing": "Pricing",
+      "demo": "Demo",
+      "faq": "FAQ",
+      "login": "Login",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "disclaimer": "Disclaimer",
+      "serviceAgreement": "Service Agreement",
+      "copyright": "© {{year}} SamVic Technologies. All rights reserved.",
+      "builtFor": "Built for growing businesses · Bilingual EN / ES"
+    },
+    "floatingWhatsapp": {
+      "tooltip": "Chat with us on WhatsApp",
+      "aria": "Chat on WhatsApp"
     }
   },
   "auth": {
