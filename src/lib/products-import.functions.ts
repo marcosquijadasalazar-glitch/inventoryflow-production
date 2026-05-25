@@ -240,6 +240,8 @@ export const importProducts = createServerFn({ method: "POST" })
         failed: errors.length,
         organization_id: orgId,
         new_categories: Array.from(newCategories),
+        new_suppliers: Array.from(newSuppliers.values()),
+
       } as never,
     } as never);
 
