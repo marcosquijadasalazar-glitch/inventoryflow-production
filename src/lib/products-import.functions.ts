@@ -22,7 +22,9 @@ const Row = z.object({
 const ImportInput = z.object({
   rows: z.array(z.record(z.string(), z.string())).max(2000),
   auto_create_categories: z.boolean().optional().default(true),
+  auto_create_suppliers: z.boolean().optional().default(false),
 });
+
 
 async function getActor(userId: string) {
   const { data, error } = await supabaseAdmin
