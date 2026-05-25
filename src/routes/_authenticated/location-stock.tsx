@@ -49,40 +49,57 @@ function LocationStockPage() {
     queryFn: listProducts,
   });
 
-  // Per-location stock derived from completed transfers (in − out).
-  // total product stock comes from products.stock.
+  // Per-location stock = initial product.location seed + completed transfers (in − out).
   const perLoc = useQuery({
-    queryKey: ["location_stock"],
+    queryKey: ["location_stock", locations.data?.length ?? 0, products.data?.length ?? 0],
+    enabled: !!locations.data && !!products.data,
     queryFn: async () => {
+      const map: Record<string, Record<string, number>> = {};
+
+      // 1) Seed initial stock from products.location (name → id, case/whitespace insensitive)
+      const nameToId = new Map<string, string>();
+      for (const l of locations.data ?? []) {
+        nameToId.set((l.name ?? "").trim().toLowerCase(), l.id);
+      }
+      for (const p of products.data ?? []) {
+        const locName = (p as any).location?.trim().toLowerCase();
+        if (!locName) continue;
+        const lid = nameToId.get(locName);
+        if (!lid) continue;
+        map[lid] ??= {};
+        map[lid][p.id] = (map[lid][p.id] ?? 0) + (p.stock ?? 0);
+      }
+
+      // 2) Apply completed transfers
       const { data: transfers, error: tErr } = await sb
         .from("transfer_orders")
         .select("id, from_location_id, to_location_id, status")
         .eq("status", "completed");
       if (tErr) throw tErr;
       const ids = (transfers ?? []).map((t: any) => t.id);
-      if (ids.length === 0) return {} as Record<string, Record<string, number>>;
-      const { data: items, error: iErr } = await sb
-        .from("transfer_order_items")
-        .select("transfer_order_id, product_id, quantity")
-        .in("transfer_order_id", ids);
-      if (iErr) throw iErr;
-      const tMap = new Map<string, any>(
-        (transfers ?? []).map((t: any) => [t.id, t]),
-      );
-      const map: Record<string, Record<string, number>> = {};
-      for (const it of items ?? []) {
-        if (!it.product_id) continue;
-        const tr = tMap.get(it.transfer_order_id);
-        if (!tr) continue;
-        if (tr.to_location_id) {
-          map[tr.to_location_id] ??= {};
-          map[tr.to_location_id][it.product_id] =
-            (map[tr.to_location_id][it.product_id] ?? 0) + it.quantity;
-        }
-        if (tr.from_location_id) {
-          map[tr.from_location_id] ??= {};
-          map[tr.from_location_id][it.product_id] =
-            (map[tr.from_location_id][it.product_id] ?? 0) - it.quantity;
+      if (ids.length > 0) {
+        const { data: items, error: iErr } = await sb
+          .from("transfer_order_items")
+          .select("transfer_order_id, product_id, quantity")
+          .in("transfer_order_id", ids);
+        if (iErr) throw iErr;
+        const tMap = new Map<string, any>(
+          (transfers ?? []).map((t: any) => [t.id, t]),
+        );
+        for (const it of items ?? []) {
+          if (!it.product_id) continue;
+          const tr = tMap.get(it.transfer_order_id);
+          if (!tr) continue;
+          if (tr.to_location_id) {
+            map[tr.to_location_id] ??= {};
+            map[tr.to_location_id][it.product_id] =
+              (map[tr.to_location_id][it.product_id] ?? 0) + it.quantity;
+          }
+          if (tr.from_location_id) {
+            map[tr.from_location_id] ??= {};
+            map[tr.from_location_id][it.product_id] =
+              (map[tr.from_location_id][it.product_id] ?? 0) - it.quantity;
+          }
         }
       }
       return map;
