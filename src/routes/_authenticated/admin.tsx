@@ -1610,6 +1610,14 @@ function UsersTable({
                         <DropdownMenuItem className="text-destructive" onClick={() => setDeleteUserRow(u)}>
                           <Trash2 className="h-3.5 w-3.5" /> Delete user…
                         </DropdownMenuItem>
+                        {(u.archived_at || (u as any).deleted_at) && u.role !== "super_admin" && (
+                          <DropdownMenuItem
+                            className="text-destructive font-medium"
+                            onClick={() => setPurgeUserRow(u)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Purge permanently…
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
