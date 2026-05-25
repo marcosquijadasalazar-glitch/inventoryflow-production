@@ -1137,5 +1137,17 @@
     "help1": "add — incrementa el stock según quantity",
     "help2": "remove — reduce el stock según quantity",
     "help3": "adjustment — establece el stock absoluto a quantity"
+  },
+  "purge": {
+    "failed": "Error al purgar",
+    "irreversibleWarning": "Esto elimina permanentemente el registro y los datos relacionados. Esta acción no se puede deshacer.",
+    "password": "Contraseña actual de la cuenta",
+    "typeToConfirm": "Escribe",
+    "toConfirm": "para confirmar",
+    "forceAck": "Esta empresa tiene inventario u órdenes. Escribe",
+    "toForce": "para forzar la purga",
+    "reason": "Motivo (opcional)",
+    "purging": "Purgando…",
+    "purgePermanently": "Purgar permanentemente"
   }
 }
