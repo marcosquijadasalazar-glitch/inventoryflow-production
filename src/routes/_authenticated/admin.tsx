@@ -57,7 +57,18 @@ import {
   Inbox,
   Mail as MailIcon,
   KeyRound,
+  Eye,
+  ShieldCheck,
+  CreditCard,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
 import {
