@@ -1166,6 +1166,7 @@ function FinalCTA() {
 /* ---------- Footer ---------- */
 
 function SiteFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-14">
@@ -1178,27 +1179,26 @@ function SiteFooter() {
               <span className="font-semibold tracking-tight text-black">InventoryFlow</span>
             </div>
             <p className="mt-3 text-xs text-black/55 leading-relaxed max-w-xs">
-              Smart bilingual inventory management for growing businesses. Built by SamVic
-              Technologies.
+              {t("landing.footer.tagline")}
             </p>
           </div>
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Product
+              {t("landing.footer.product")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><a href="#features" className="hover:text-black">Features</a></li>
-              <li><a href="#pricing" className="hover:text-black">Pricing</a></li>
-              <li><a href="#demo" className="hover:text-black">Demo</a></li>
-              <li><a href="#faq" className="hover:text-black">FAQ</a></li>
-              <li><Link to="/login" className="hover:text-black">Login</Link></li>
+              <li><a href="#features" className="hover:text-black">{t("landing.footer.features")}</a></li>
+              <li><a href="#pricing" className="hover:text-black">{t("landing.footer.pricing")}</a></li>
+              <li><a href="#demo" className="hover:text-black">{t("landing.footer.demo")}</a></li>
+              <li><a href="#faq" className="hover:text-black">{t("landing.footer.faq")}</a></li>
+              <li><Link to="/login" className="hover:text-black">{t("landing.footer.login")}</Link></li>
             </ul>
           </div>
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Contact
+              {t("landing.footer.contact")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
               <li>
@@ -1239,20 +1239,20 @@ function SiteFooter() {
 
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              Legal
+              {t("landing.footer.legal")}
             </div>
             <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><Link to="/privacy" className="hover:text-black">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-black">Terms of Service</Link></li>
-              <li><Link to="/disclaimer" className="hover:text-black">Disclaimer</Link></li>
-              <li><Link to="/service-agreement" className="hover:text-black">Service Agreement</Link></li>
+              <li><Link to="/privacy" className="hover:text-black">{t("landing.footer.privacy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-black">{t("landing.footer.terms")}</Link></li>
+              <li><Link to="/disclaimer" className="hover:text-black">{t("landing.footer.disclaimer")}</Link></li>
+              <li><Link to="/service-agreement" className="hover:text-black">{t("landing.footer.serviceAgreement")}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-black/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-black/50">
-          <span>© {new Date().getFullYear()} SamVic Technologies. All rights reserved.</span>
-          <span>Built for growing businesses · Bilingual EN / ES</span>
+          <span>{t("landing.footer.copyright", { year: new Date().getFullYear() })}</span>
+          <span>{t("landing.footer.builtFor")}</span>
         </div>
       </div>
     </footer>
@@ -1262,6 +1262,7 @@ function SiteFooter() {
 /* ---------- Floating WhatsApp ---------- */
 
 function FloatingWhatsApp() {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   return (
     <div
@@ -1271,14 +1272,14 @@ function FloatingWhatsApp() {
     >
       {hovered && (
         <div className="mb-1 rounded-2xl bg-white border border-black/[0.08] px-4 py-2.5 text-sm text-black shadow-[0_8px_24px_-6px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-200">
-          Chat with us on WhatsApp
+          {t("landing.floatingWhatsapp.tooltip")}
         </div>
       )}
       <a
         href={WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
+        aria-label={t("landing.floatingWhatsapp.aria")}
         className="group relative inline-flex items-center justify-center rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white w-14 h-14 shadow-[0_12px_30px_-8px_rgba(37,211,102,0.55)] transition-all hover:scale-105 active:scale-95"
       >
         <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
