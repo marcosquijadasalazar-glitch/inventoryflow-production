@@ -496,6 +496,12 @@ function OrgsTable({
 
     let list = orgs.filter((o) => {
       if (!includeArchived && (o.status === "archived" || (o as any).deleted_at)) return false;
+      if (onboardingFilter !== "all") {
+        const ob = onboardingMap.get(o.id);
+        const s = ob?.status ?? "not_started";
+        if (onboardingFilter === "needs_help" && !ob?.needs_help) return false;
+        else if (onboardingFilter !== "needs_help" && s !== onboardingFilter) return false;
+      }
       if (planFilter !== "all" && o.plan_type !== planFilter) return false;
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (trialFilter !== "any") {
