@@ -904,9 +904,9 @@
       "generic": "límites más altos y más funciones"
     },
     "kinds": {
-      "users": "usuarios",
-      "products": "productos",
-      "locations": "ubicaciones"
+      "users": "Usuarios",
+      "products": "Productos",
+      "locations": "Ubicaciones"
     }
   },
   "admin": {
