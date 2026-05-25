@@ -1,13 +1,16 @@
 import type { Product } from "./inventory";
 
-export function productsToCsv(products: Product[]): string {
-  const headers = [
+export function productsToCsv(
+  products: Product[],
+  opts: { includeCost?: boolean; includePrice?: boolean } = { includeCost: true, includePrice: true },
+): string {
+  const headers: string[] = [
     "name",
     "sku",
     "barcode",
     "category",
-    "cost",
-    "price",
+    ...(opts.includeCost ? ["cost"] : []),
+    ...(opts.includePrice ? ["price"] : []),
     "stock",
     "min_stock",
     "location",
