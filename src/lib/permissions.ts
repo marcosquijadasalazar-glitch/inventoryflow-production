@@ -134,14 +134,19 @@ export const PERMISSION_FOR_PATH: Record<string, AppPermission | null> = {
   "/movements": "view_movements",
   "/purchase-orders": "manage_purchase_orders",
   "/sales-orders": "manage_sales_orders",
+  "/customers": "manage_sales_orders",
+  "/suppliers": "manage_purchase_orders",
   "/transfer-orders": "manage_transfer_orders",
+  "/locations": "manage_locations",
   "/location-stock": "manage_locations",
+  "/adjustments": "adjust_stock",
   "/internal-use": "manage_internal_use",
   "/history": "view_transaction_history",
   "/reports": "view_reports",
   "/scanner": "use_barcode_scanner",
   "/alerts": "manage_alerts",
   "/settings": "manage_company_settings",
+  "/users": "manage_users",
 };
 
 export function permissionForPath(pathname: string): AppPermission | null {
