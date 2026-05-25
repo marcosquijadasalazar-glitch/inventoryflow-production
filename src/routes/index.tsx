@@ -604,18 +604,16 @@ function DemoVideo() {
 /* ---------- How it works ---------- */
 
 function HowItWorks() {
-  const steps = [
-    { n: "01", title: "Import your catalog", desc: "Bring in your products with a CSV import or add them as you go. Categories, suppliers, locations — all included." },
-    { n: "02", title: "Track every movement", desc: "Add stock, remove stock, scan barcodes, fulfill orders. Inventory updates in real time across your team." },
-    { n: "03", title: "Stay ahead with insights", desc: "Get alerts before you run out, see what's moving, and export reports your accountant will actually like." },
-  ];
+  const { t } = useTranslation();
+  const stepItems = t("landing.howItWorks.steps", { returnObjects: true }) as { title: string; desc: string }[];
+  const steps = stepItems.map((s, i) => ({ ...s, n: String(i + 1).padStart(2, "0") }));
   return (
     <section id="how" className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">How it works</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.howItWorks.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            From spreadsheets to running smoothly — in an afternoon.
+            {t("landing.howItWorks.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -635,19 +633,17 @@ function HowItWorks() {
 /* ---------- Who it's for ---------- */
 
 function WhoItsFor() {
-  const audiences = [
-    { icon: Building2, title: "Warehouses", desc: "Real-time stock across locations, with barcode-driven receiving and picking." },
-    { icon: Store, title: "Retail & e-commerce", desc: "Keep online and in-store inventory in sync. Reduce overselling and stockouts." },
-    { icon: Truck, title: "Distributors", desc: "Manage purchase and sales orders end-to-end with full visibility." },
-    { icon: Wrench, title: "Workshops & service", desc: "Track parts, internal usage and reorder points without the spreadsheet pain." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Building2, Store, Truck, Wrench];
+  const items = t("landing.whoItsFor.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const audiences = items.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section id="who" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Who it's for</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.whoItsFor.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Built for B2B teams that move fast.
+            {t("landing.whoItsFor.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -667,35 +663,17 @@ function WhoItsFor() {
 /* ---------- Testimonials / Social proof ---------- */
 
 function Testimonials() {
-  const items = [
-    {
-      quote:
-        "We replaced three spreadsheets with InventoryFlow in a weekend. Our stock counts finally match reality.",
-      name: "Operations lead",
-      role: "Retail store",
-    },
-    {
-      quote:
-        "Bilingual interface was a huge win for our team. Onboarding took an afternoon, not weeks.",
-      name: "Warehouse manager",
-      role: "Distribution business",
-    },
-    {
-      quote:
-        "Barcode scanning from the phone changed how we receive shipments. No more clipboards.",
-      name: "Owner",
-      role: "Small market",
-    },
-  ];
+  const { t } = useTranslation();
+  const items = t("landing.testimonials.items", { returnObjects: true }) as { quote: string; name: string; role: string }[];
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Built for growing businesses
+            {t("landing.testimonials.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Trusted by operational teams that need real results.
+            {t("landing.testimonials.title")}
           </h2>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -716,7 +694,7 @@ function Testimonials() {
           ))}
         </div>
         <p className="mt-8 text-center text-xs text-black/45">
-          Early-access customer quotes. Names withheld for privacy during beta.
+          {t("landing.testimonials.note")}
         </p>
       </div>
     </section>
