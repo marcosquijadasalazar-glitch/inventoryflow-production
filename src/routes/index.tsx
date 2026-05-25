@@ -35,11 +35,16 @@ import {
   Quote,
 } from "lucide-react";
 
-// Contact / WhatsApp configuration — replace with real values when ready
-const WHATSAPP_NUMBER = "16159180793"; // international format, digits only
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hi InventoryFlow team, I'd like a quick demo."
-)}`;
+// Contact / WhatsApp configuration
+const WHATSAPP_NUMBER = "16159180793";
+const WHATSAPP_MESSAGE = `Hola 👋 / Hi 👋
+
+Quiero información sobre InventoryFlow y cómo puede ayudar a mi negocio.
+
+I would like information about InventoryFlow and how it can help my business.`;
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+const SUPPORT_EMAIL = "support@inventoryflowapp.com";
+const SALES_EMAIL = "sales@inventoryflowapp.com";
 const SUPPORT_EMAIL = "support@inventoryflowapp.com";
 const SALES_EMAIL = "sales@inventoryflowapp.com";
 
@@ -1166,6 +1171,69 @@ function FAQ() {
   );
 }
 
+/* ---------- WhatsApp CTA ---------- */
+
+function WhatsAppCTA() {
+  const { t } = useTranslation();
+  return (
+    <section id="whatsapp-cta" className="border-t border-black/[0.06] bg-[#f8faf8]">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div className="rounded-3xl bg-white border border-black/[0.06] p-10 sm:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#25D366]/10 px-3 py-1 text-xs font-semibold text-[#1B8C4A] mb-4">
+              <MessageCircle className="h-3.5 w-3.5" />
+              WhatsApp
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
+              {t("landing.whatsappCta.title", "Need a quick demo?")}
+            </h2>
+            <p className="mt-3 text-black/60 max-w-md leading-relaxed">
+              {t("landing.whatsappCta.subtitle", "Chat directly with us on WhatsApp and learn how InventoryFlow can help your business.")}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-black/50">
+              <span className="inline-flex items-center gap-1.5">
+                <Smartphone className="h-4 w-4" />
+                {t("landing.whatsappCta.mobile", "Mobile friendly")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Globe className="h-4 w-4" />
+                {t("landing.whatsappCta.bilingual", "EN / ES")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-[#25D366]" />
+                {t("landing.whatsappCta.instant", "Instant reply")}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 px-6 bg-[#25D366] hover:bg-[#1FB855] text-white shadow-none text-base"
+            >
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-5 w-5" />
+                {t("landing.whatsappCta.chat", "Chat on WhatsApp")}
+              </a>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 px-6 border-black/10 hover:bg-black/[0.03] text-black shadow-none text-base"
+            >
+              <a href={`mailto:${SALES_EMAIL}`}>
+                <Mail className="h-4 w-4" />
+                {t("landing.whatsappCta.book", "Book Demo")}
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- Final CTA ---------- */
 
 function FinalCTA() {
@@ -1210,7 +1278,7 @@ function FinalCTA() {
             >
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />
-                Chat on WhatsApp
+                {t("landing.whatsappCta.chat", "Chat on WhatsApp")}
               </a>
             </Button>
           </div>
