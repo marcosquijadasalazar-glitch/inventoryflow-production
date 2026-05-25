@@ -551,19 +551,19 @@ function ScreenshotsGallery() {
 /* ---------- Demo video ---------- */
 
 function DemoVideo() {
+  const { t } = useTranslation();
   return (
     <section id="demo" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Watch the demo
+            {t("landing.demoVideo.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            See InventoryFlow in action — in under a minute.
+            {t("landing.demoVideo.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Dashboard, scanning, imports, reports, mobile usage, multi-location and roles —
-            all in one short walkthrough.
+            {t("landing.demoVideo.subtitle")}
           </p>
         </div>
 
@@ -572,14 +572,14 @@ function DemoVideo() {
           <div className="absolute inset-0 flex items-center justify-center">
             <button
               type="button"
-              aria-label="Play demo video"
+              aria-label={t("landing.demoVideo.play")}
               className="h-20 w-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110"
             >
               <Play className="h-8 w-8 text-[#0066FF] fill-[#0066FF] ml-1" />
             </button>
           </div>
           <div className="absolute bottom-4 left-4 text-white/80 text-xs font-medium">
-            30–60 second product demo
+            {t("landing.demoVideo.duration")}
           </div>
         </div>
 
@@ -592,7 +592,7 @@ function DemoVideo() {
           >
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="h-4 w-4" />
-              Request a live walkthrough
+              {t("landing.demoVideo.walkthrough")}
             </a>
           </Button>
         </div>
