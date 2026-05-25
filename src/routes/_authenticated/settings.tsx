@@ -68,6 +68,7 @@ function SettingsPage() {
   const [uploading, setUploading] = useState(false);
 
   const canEdit = !!data?.canEdit;
+  const canEditRestricted = !!(data as any)?.canEditRestricted;
 
   useEffect(() => {
     if (data?.profile) {
