@@ -645,6 +645,7 @@ function OrgsTable({
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Account</TableHead>
+                <TableHead>Onboarding</TableHead>
                 <TableHead className="text-right">Users</TableHead>
                 <TableHead className="text-right">Products</TableHead>
                 <TableHead className="w-16"></TableHead>
