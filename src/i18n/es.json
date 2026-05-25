@@ -1007,6 +1007,32 @@
       "suspended": "Suspendido",
       "archived": "Archivado",
       "inactive": "Inactivo"
+    },
+    "tab": {
+      "users": "Usuarios",
+      "roles": "Roles",
+      "permissions": "Matriz de permisos",
+      "invitations": "Invitaciones",
+      "audit": "Auditoría"
+    },
+    "inviteActions": "Invitar o agregar usuarios",
+    "defaultPerms": "{{n}} permisos por defecto",
+    "customHint": "Configura desde la Matriz de Permisos",
+    "rolesNote": "Los roles integrados son propietario, gerente y empleado. Usa el rol 'custom' junto con la Matriz de Permisos para definir un rol a medida. Los privilegios de propietario no pueden otorgarse desde esta página.",
+    "roleDesc": {
+      "owner": "Control total de la organización, incluyendo facturación y miembros.",
+      "manager": "Gestiona operaciones diarias, productos, pedidos y miembros.",
+      "employee": "Trabajo diario: ver productos, registrar movimientos, usar el escáner.",
+      "custom": "Los permisos los define completamente el propietario de la organización."
+    },
+    "auditTitle": "Cambios recientes de usuarios, roles y permisos",
+    "audit": {
+      "when": "Cuándo",
+      "action": "Acción",
+      "target": "Objetivo",
+      "by": "Realizado por",
+      "details": "Detalles",
+      "empty": "Aún no hay entradas de auditoría."
     }
   },
   "customers": {
