@@ -160,6 +160,7 @@ function AdminPage() {
 
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
   const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [detailOrg, setDetailOrg] = useState<OrgRow | null>(null);
 
   const refetchAll = () => {
     orgs.refetch();
@@ -178,8 +179,12 @@ function AdminPage() {
   }
   if (profile.data?.role !== "super_admin") return null;
 
+  const pendingCount = (users.data ?? []).filter(
+    (u: any) => u.account_status === "pending_approval",
+  ).length;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
@@ -190,7 +195,7 @@ function AdminPage() {
             Super Admin
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage companies, users, statuses, and audit history.
+            Companies dashboard. Drill into any company for full details.
           </p>
         </div>
         <div className="flex gap-2">
@@ -215,63 +220,99 @@ function AdminPage() {
         <StatCard icon={Package} label="Movements" value={stats.data?.movements} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-primary" /> New Access Requests
-            {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length > 0 && (
-              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">
-                {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length}
+      <Tabs defaultValue="companies" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="companies" className="gap-2">
+            <Building2 className="h-3.5 w-3.5" /> Companies
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="gap-2">
+            <Inbox className="h-3.5 w-3.5" /> Access Requests
+            {pendingCount > 0 && (
+              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30 ml-1">
+                {pendingCount}
               </Badge>
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <AccessRequestsTable
-            users={(users.data ?? []).filter((u: any) => u.account_status === "pending_approval")}
-            loading={users.isLoading}
-            onChanged={refetchAll}
-          />
-        </CardContent>
-      </Card>
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-3.5 w-3.5" /> Global User Search
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2">
+            <History className="h-3.5 w-3.5" /> Audit Log
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-primary" /> Companies
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <OrgsTable orgs={orgs.data ?? []} loading={orgs.isLoading} onChanged={refetchAll} />
-        </CardContent>
-      </Card>
+        <TabsContent value="companies">
+          <Card>
+            <CardContent className="p-0">
+              <OrgsTable
+                orgs={orgs.data ?? []}
+                loading={orgs.isLoading}
+                onChanged={refetchAll}
+                onView={setDetailOrg}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" /> Users
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <UsersTable
-            users={users.data ?? []}
-            orgs={orgs.data ?? []}
-            loading={users.isLoading}
-            onChanged={refetchAll}
-          />
-        </CardContent>
-      </Card>
+        <TabsContent value="requests">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Inbox className="h-4 w-4 text-primary" /> New Access Requests
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AccessRequestsTable
+                users={(users.data ?? []).filter(
+                  (u: any) => u.account_status === "pending_approval",
+                )}
+                loading={users.isLoading}
+                onChanged={refetchAll}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" /> Admin audit log
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <AuditTable rows={audit.data ?? []} loading={audit.isLoading} />
-        </CardContent>
-      </Card>
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" /> Global User Search
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <UsersTable
+                users={users.data ?? []}
+                orgs={orgs.data ?? []}
+                loading={users.isLoading}
+                onChanged={refetchAll}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" /> Admin audit log
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AuditTable rows={audit.data ?? []} loading={audit.isLoading} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <CompanyDetailSheet
+        org={detailOrg}
+        orgs={orgs.data ?? []}
+        users={users.data ?? []}
+        audit={audit.data ?? []}
+        onOpenChange={(o) => !o && setDetailOrg(null)}
+        onChanged={refetchAll}
+      />
 
       <CreateOrgDialog
         open={createOrgOpen}
