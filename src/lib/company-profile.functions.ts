@@ -155,7 +155,7 @@ export const updateCompanyProfile = createServerFn({ method: "POST" })
       target_id: orgId,
       performed_by: context.userId,
       performed_by_email: actor.email,
-      metadata: { changed },
+      metadata: { changed } as any,
     });
 
     return { profile: updated };
