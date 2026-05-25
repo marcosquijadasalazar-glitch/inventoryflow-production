@@ -1118,16 +1118,23 @@ function AccessRequestsTable({
   );
 }
 
+type UserSortKey = "newest" | "name" | "company" | "role" | "status";
+type PendingChange =
+  | { kind: "role"; user: UserRow; nextRole: (typeof ROLES)[number] }
+  | { kind: "company"; user: UserRow; nextOrgId: string | null; nextOrgName: string };
+
 function UsersTable({
   users,
   orgs,
   loading,
   onChanged,
+  scoped = false,
 }: {
   users: UserRow[];
   orgs: OrgRow[];
   loading: boolean;
   onChanged: () => void;
+  scoped?: boolean;
 }) {
   const assign = useServerFn(adminAssignUser);
   const setStatus = useServerFn(adminSetUserStatus);
@@ -1136,7 +1143,19 @@ function UsersTable({
   const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
   const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
+  const [pending, setPending] = useState<PendingChange | null>(null);
+  const [confirmText, setConfirmText] = useState("");
   const { t } = useTranslation();
+
+  // Filters / sort / search
+  const [search, setSearch] = useState("");
+  const [filterCompany, setFilterCompany] = useState<string>("all");
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterAccount, setFilterAccount] = useState<string>("all");
+  const [filterPlan, setFilterPlan] = useState<string>("all");
+  const [filterTrial, setFilterTrial] = useState<"any" | "trial" | "no_trial" | "expiring">("any");
+  const [sortBy, setSortBy] = useState<UserSortKey>("newest");
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -1182,178 +1201,395 @@ function UsersTable({
   });
 
   const orgMap = useMemo(() => {
-    const m = new Map<string, string>();
-    orgs.forEach((o) => m.set(o.id, o.company_name));
+    const m = new Map<string, OrgRow>();
+    orgs.forEach((o) => m.set(o.id, o));
     return m;
   }, [orgs]);
 
+  // Search + filter + sort
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const soonMs = 7 * 24 * 60 * 60 * 1000;
+    const filteredRows = users.filter((u) => {
+      const org = u.organization_id ? orgMap.get(u.organization_id) : null;
+      const company = org?.company_name ?? u.company_name ?? "";
+      if (q) {
+        const hay = [
+          u.full_name ?? "",
+          u.email ?? "",
+          company,
+          u.role,
+          u.status,
+          u.account_status ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (filterCompany !== "all") {
+        if (filterCompany === "__none") {
+          if (u.organization_id) return false;
+        } else if (u.organization_id !== filterCompany) return false;
+      }
+      if (filterRole !== "all" && u.role !== filterRole) return false;
+      if (filterStatus !== "all" && u.status !== filterStatus) return false;
+      if (filterAccount !== "all" && (u.account_status ?? "active") !== filterAccount) return false;
+      if (filterPlan !== "all" && (org?.plan_type ?? "") !== filterPlan) return false;
+      if (filterTrial !== "any") {
+        const isTrial = u.account_status === "trial_active";
+        if (filterTrial === "trial" && !isTrial) return false;
+        if (filterTrial === "no_trial" && isTrial) return false;
+        if (filterTrial === "expiring") {
+          if (!isTrial || !u.trial_ends_at) return false;
+          const diff = new Date(u.trial_ends_at).getTime() - now;
+          if (diff < 0 || diff > soonMs) return false;
+        }
+      }
+      return true;
+    });
+    const sorted = [...filteredRows].sort((a, b) => {
+      const aOrg = a.organization_id ? orgMap.get(a.organization_id)?.company_name ?? "" : "";
+      const bOrg = b.organization_id ? orgMap.get(b.organization_id)?.company_name ?? "" : "";
+      switch (sortBy) {
+        case "name":
+          return (a.full_name ?? a.email ?? "").localeCompare(b.full_name ?? b.email ?? "");
+        case "company":
+          return aOrg.localeCompare(bOrg);
+        case "role":
+          return a.role.localeCompare(b.role);
+        case "status":
+          return a.status.localeCompare(b.status);
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return sorted;
+  }, [users, orgMap, search, filterCompany, filterRole, filterStatus, filterAccount, filterPlan, filterTrial, sortBy]);
+
+  function requestRoleChange(u: UserRow, nextRole: (typeof ROLES)[number]) {
+    if (nextRole === u.role) return;
+    if (nextRole === "super_admin") {
+      toast.error("Assigning super_admin is not allowed from this view");
+      return;
+    }
+    setConfirmText("");
+    setPending({ kind: "role", user: u, nextRole });
+  }
+  function requestCompanyChange(u: UserRow, nextOrgId: string | null) {
+    if (nextOrgId === u.organization_id) return;
+    const nextOrgName =
+      nextOrgId ? orgMap.get(nextOrgId)?.company_name ?? "Unknown" : "Unassigned";
+    setConfirmText("");
+    setPending({ kind: "company", user: u, nextOrgId, nextOrgName });
+  }
+  function applyPending() {
+    if (!pending) return;
+    if (pending.kind === "role") {
+      assignMut.mutate({
+        user_id: pending.user.user_id,
+        organization_id: pending.user.organization_id,
+        role: pending.nextRole,
+      });
+    } else {
+      if (confirmText.trim() !== "CONFIRM") return;
+      assignMut.mutate({
+        user_id: pending.user.user_id,
+        organization_id: pending.nextOrgId,
+      });
+    }
+    setPending(null);
+    setConfirmText("");
+  }
+
   if (loading) return <Skeleton className="h-32 w-full" />;
-  if (users.length === 0)
-    return <p className="p-6 text-sm text-muted-foreground">No users yet.</p>;
+
+  const assignableRoles = ROLES.filter((r) => r !== "super_admin");
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Account</TableHead>
-            <TableHead className="w-16"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((u) => (
-            <TableRow key={u.id}>
-              <TableCell>
-                <div className="font-medium">{u.full_name ?? u.email}</div>
-                <div className="text-xs text-muted-foreground">{u.email}</div>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={u.role}
-                  onValueChange={(v) =>
-                    assignMut.mutate({
-                      user_id: u.user_id,
-                      organization_id: u.organization_id,
-                      role: v as any,
-                    })
-                  }
-                >
-                  <SelectTrigger className="h-8 w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={u.organization_id ?? "__none"}
-                  onValueChange={(v) =>
-                    assignMut.mutate({
-                      user_id: u.user_id,
-                      organization_id: v === "__none" ? null : v,
-                    })
-                  }
-                >
-                  <SelectTrigger className="h-8 w-[200px]">
-                    <SelectValue
-                      placeholder={
-                        u.organization_id
-                          ? orgMap.get(u.organization_id) ?? "Unknown"
-                          : "Unassigned"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none">Unassigned</SelectItem>
-                    {orgs.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.company_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={u.status} />
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col gap-0.5">
-                  <Badge variant="outline" className="w-fit capitalize text-[10px]">
-                    {(u.account_status ?? "active").replace("_", " ")}
-                  </Badge>
-                  {u.account_status === "trial_active" && u.trial_ends_at && (
-                    <span className="text-[10px] text-muted-foreground">
-                      ends {new Date(u.trial_ends_at).toLocaleDateString()}
-                    </span>
+    <div className="space-y-3">
+      {/* Filters bar */}
+      <div className="flex flex-col gap-2 p-3 border-b">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, email, company, role, status…"
+              className="h-8 pl-7"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as UserSortKey)}>
+            <SelectTrigger className="h-8 w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Sort: Newest</SelectItem>
+              <SelectItem value="name">Sort: Name</SelectItem>
+              <SelectItem value="company">Sort: Company</SelectItem>
+              <SelectItem value="role">Sort: Role</SelectItem>
+              <SelectItem value="status">Sort: Status</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {!scoped && (
+            <Select value={filterCompany} onValueChange={setFilterCompany}>
+              <SelectTrigger className="h-8 w-[180px]">
+                <SelectValue placeholder="Company" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All companies</SelectItem>
+                <SelectItem value="__none">Unassigned</SelectItem>
+                {orgs.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.company_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="h-8 w-[130px]"><SelectValue placeholder="Role" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="h-8 w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterAccount} onValueChange={setFilterAccount}>
+            <SelectTrigger className="h-8 w-[150px]"><SelectValue placeholder="Account" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All accounts</SelectItem>
+              <SelectItem value="pending_approval">Pending approval</SelectItem>
+              <SelectItem value="trial_active">Trial active</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterPlan} onValueChange={setFilterPlan}>
+            <SelectTrigger className="h-8 w-[120px]"><SelectValue placeholder="Plan" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All plans</SelectItem>
+              {PLANS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterTrial} onValueChange={(v) => setFilterTrial(v as any)}>
+            <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Trial" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any trial state</SelectItem>
+              <SelectItem value="trial">On trial</SelectItem>
+              <SelectItem value="expiring">Trial ending ≤7d</SelectItem>
+              <SelectItem value="no_trial">Not on trial</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {filtered.length} of {users.length}
+          </span>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="p-6 text-sm text-muted-foreground">No users match your filters.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                {!scoped && <TableHead>Company</TableHead>}
+                <TableHead>Status</TableHead>
+                <TableHead>Account</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className="font-medium">{u.full_name ?? u.email}</div>
+                    <div className="text-xs text-muted-foreground">{u.email}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={u.role}
+                      onValueChange={(v) => requestRoleChange(u, v as (typeof ROLES)[number])}
+                      disabled={u.role === "super_admin"}
+                    >
+                      <SelectTrigger className="h-8 w-[140px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {u.role === "super_admin" && (
+                          <SelectItem value="super_admin" disabled>super_admin</SelectItem>
+                        )}
+                        {assignableRoles.map((r) => (
+                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  {!scoped && (
+                    <TableCell>
+                      <Select
+                        value={u.organization_id ?? "__none"}
+                        onValueChange={(v) => requestCompanyChange(u, v === "__none" ? null : v)}
+                      >
+                        <SelectTrigger className="h-8 w-[200px]">
+                          <SelectValue
+                            placeholder={
+                              u.organization_id
+                                ? orgMap.get(u.organization_id)?.company_name ?? "Unknown"
+                                : "Unassigned"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none">Unassigned</SelectItem>
+                          {orgs.map((o) => (
+                            <SelectItem key={o.id} value={o.id}>{o.company_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                   )}
+                  <TableCell><StatusBadge status={u.status} /></TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <Badge variant="outline" className="w-fit capitalize text-[10px]">
+                        {(u.account_status ?? "active").replace("_", " ")}
+                      </Badge>
+                      {u.account_status === "trial_active" && u.trial_ends_at && (
+                        <span className="text-[10px] text-muted-foreground">
+                          ends {new Date(u.trial_ends_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Approval</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => accountMut.mutate({ user_id: u.user_id, status: "active" })}>Approve / Activate</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => accountMut.mutate({ user_id: u.user_id, status: "trial_active", trial_days: 14 })}>Start 14-day Trial</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => accountMut.mutate({ user_id: u.user_id, status: "suspended" })}>Suspend</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => accountMut.mutate({ user_id: u.user_id, status: "cancelled" })}>Cancel</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => accountMut.mutate({ user_id: u.user_id, status: "rejected" })}>Reject</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setResetUserRow(u)}>
+                          <KeyRound className="h-3.5 w-3.5 mr-2" /> {t("admin.sendPasswordReset")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}>Reactivate</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => statusMut.mutate({ user_id: u.user_id, status: "inactive" })}>Deactivate</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => statusMut.mutate({ user_id: u.user_id, status: "suspended" })}>Suspend (legacy)</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => statusMut.mutate({ user_id: u.user_id, status: "archived" })}>Archive</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteUserRow(u)}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete user…
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Confirmation modal for role/company changes */}
+      <Dialog open={!!pending} onOpenChange={(o) => { if (!o) { setPending(null); setConfirmText(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pending?.kind === "role" ? "Change user role" : "Reassign user to another company"}
+            </DialogTitle>
+            <DialogDescription>
+              {pending?.kind === "company"
+                ? "Changing a user's company may affect access, permissions, and customer data visibility."
+                : "Confirm the role change for this user."}
+            </DialogDescription>
+          </DialogHeader>
+          {pending && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border p-3 bg-muted/30">
+                <div className="font-medium">{pending.user.full_name ?? pending.user.email}</div>
+                <div className="text-xs text-muted-foreground">{pending.user.email}</div>
+              </div>
+              {pending.kind === "role" ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Current role</Label>
+                    <div className="mt-1 font-mono text-xs">{pending.user.role}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">New role</Label>
+                    <div className="mt-1 font-mono text-xs text-primary">{pending.nextRole}</div>
+                  </div>
                 </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Approval</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "active" })}
-                    >
-                      Approve / Activate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "trial_active", trial_days: 14 })}
-                    >
-                      Start 14-day Trial
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "suspended" })}
-                    >
-                      Suspend
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "cancelled" })}
-                    >
-                      Cancel
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => accountMut.mutate({ user_id: u.user_id, status: "rejected" })}
-                    >
-                      Reject
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setResetUserRow(u)}>
-                      <KeyRound className="h-3.5 w-3.5 mr-2" /> {t("admin.sendPasswordReset")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Legacy Status</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "active" })}
-                    >
-                      Reactivate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "inactive" })}
-                    >
-                      Deactivate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "suspended" })}
-                    >
-                      Suspend (legacy)
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => statusMut.mutate({ user_id: u.user_id, status: "archived" })}
-                    >
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => setDeleteUserRow(u)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete user…
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Current company</Label>
+                      <div className="mt-1 text-xs">
+                        {pending.user.organization_id
+                          ? orgMap.get(pending.user.organization_id)?.company_name ?? "Unknown"
+                          : "Unassigned"}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">New company</Label>
+                      <div className="mt-1 text-xs text-primary">{pending.nextOrgName}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+                    Warning: Changing a user's company may affect access, permissions, and customer data visibility.
+                  </div>
+                  <div>
+                    <Label className="text-xs">Type <span className="font-mono">CONFIRM</span> to proceed</Label>
+                    <Input
+                      value={confirmText}
+                      onChange={(e) => setConfirmText(e.target.value)}
+                      placeholder="CONFIRM"
+                      className="h-8 mt-1"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setPending(null); setConfirmText(""); }}>Cancel</Button>
+            <Button
+              onClick={applyPending}
+              disabled={
+                assignMut.isPending ||
+                (pending?.kind === "company" && confirmText.trim() !== "CONFIRM")
+              }
+            >
+              {pending?.kind === "company" ? "Reassign company" : "Change role"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <DeleteConfirmDialog
         open={!!deleteUserRow}
         onOpenChange={(o) => !o && setDeleteUserRow(null)}
@@ -1876,6 +2112,7 @@ function CompanyDetailSheet({
                           orgs={orgs}
                           loading={false}
                           onChanged={onChanged}
+                          scoped
                         />
                       </CardContent>
                     </Card>
