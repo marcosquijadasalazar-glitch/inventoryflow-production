@@ -1369,7 +1369,7 @@ function UsersTable({
       }
     });
     return sorted;
-  }, [users, orgMap, search, filterCompany, filterRole, filterStatus, filterAccount, filterPlan, filterTrial, sortBy]);
+  }, [users, orgMap, search, filterCompany, filterRole, filterStatus, filterAccount, filterPlan, filterTrial, sortBy, includeArchivedUsers]);
 
   function requestRoleChange(u: UserRow, nextRole: (typeof ROLES)[number]) {
     if (nextRole === u.role) return;
