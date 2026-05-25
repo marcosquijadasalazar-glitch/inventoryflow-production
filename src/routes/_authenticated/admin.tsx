@@ -419,6 +419,7 @@ function OrgsTable({
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
   const [editOrg, setEditOrg] = useState<OrgRow | null>(null);
   const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
+  const [purgeOrgRow, setPurgeOrgRow] = useState<OrgRow | null>(null);
 
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
@@ -426,6 +427,7 @@ function OrgsTable({
   const [trialFilter, setTrialFilter] = useState<TrialFilter>("any");
   const [dateFilter, setDateFilter] = useState<string>("any"); // any | 7d | 30d | 90d
   const [sort, setSort] = useState<SortKey>("newest");
+  const [includeArchived, setIncludeArchived] = useState(false);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
