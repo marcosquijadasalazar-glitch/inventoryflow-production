@@ -490,7 +490,8 @@
     "country": "País",
     "timezone": "Zona horaria",
     "currency": "Moneda",
-    "readOnly": "Solo lectura"
+    "readOnly": "Solo lectura",
+    "ownerLockedHint": "Los campos bloqueados (nombre de la empresa, tipo de negocio, NIF, zona horaria, moneda) solo los puede modificar un administrador. Contacta a soporte si necesitas un cambio."
   },
   "pdf": {
     "inventoryList": "Lista de inventario",
