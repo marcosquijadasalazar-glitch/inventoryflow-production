@@ -730,6 +730,32 @@ function OrgsTable({
           onChanged();
         }}
       />
+      <PurgeConfirmDialog
+        open={!!purgeOrgRow}
+        onOpenChange={(o) => !o && setPurgeOrgRow(null)}
+        requireForceConfirmation={
+          !!purgeOrgRow && ((purgeOrgRow.user_count ?? 0) > 0 || (purgeOrgRow.product_count ?? 0) > 0)
+        }
+        texts={{
+          title: "Purge company permanently",
+          description:
+            "This permanently deletes the company record and related data. Audit logs are preserved. This action cannot be undone.",
+          targetLabel: purgeOrgRow?.company_name ?? null,
+        }}
+        onConfirm={async ({ password, reason, forceConfirmation }) => {
+          await purgeOrg({
+            data: {
+              organization_id: purgeOrgRow!.id,
+              password,
+              confirmation: "PURGE",
+              force_confirmation: forceConfirmation ?? undefined,
+              reason,
+            },
+          });
+          toast.success("Company purged");
+          onChanged();
+        }}
+      />
     </div>
   );
 }
