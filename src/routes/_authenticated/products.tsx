@@ -194,6 +194,8 @@ function ProductsPage() {
   const [costMin, setCostMin] = useState("");
   const [costMax, setCostMax] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
+  const [importOpen, setImportOpen] = useState(false);
+  const runImport = useServerFn(importProducts);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
