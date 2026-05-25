@@ -68,7 +68,7 @@ export const importCustomers = createServerFn({ method: "POST" })
       const v = parsed.data;
       valid.push({
         organization_id: orgId,
-        name: v.name,
+        name: v.customer_name,
         email: v.email ? v.email : null,
         phone: v.phone ? v.phone : null,
         address: v.address ? v.address : null,
