@@ -687,6 +687,14 @@ function OrgsTable({
                           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOrgRow(o)}>
                             <Trash2 className="h-3.5 w-3.5" /> Delete company…
                           </DropdownMenuItem>
+                          {(o.status === "archived" || (o as any).deleted_at) && (
+                            <DropdownMenuItem
+                              className="text-destructive font-medium"
+                              onClick={() => setPurgeOrgRow(o)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Purge permanently…
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
