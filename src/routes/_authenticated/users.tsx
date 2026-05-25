@@ -28,6 +28,8 @@ import {
   orgListUsers, orgInviteUser, orgUpdateUser, orgSetUserStatus,
   orgDeleteUser, orgResetUserPassword, orgImportUsers, orgListAudit,
 } from "@/lib/org-users.functions";
+import { purgeUserSecure } from "@/lib/delete.functions";
+import { PurgeConfirmDialog } from "@/components/PurgeConfirmDialog";
 import { ImportDialog } from "@/components/ImportDialog";
 import type { ImportSchema } from "@/lib/import-utils";
 import { PermissionsMatrix } from "@/components/PermissionsMatrix";
