@@ -140,9 +140,16 @@ export const importProducts = createServerFn({ method: "POST" })
         return;
       }
       if (v.supplier && !supNames.has(v.supplier.toLowerCase())) {
-        errors.push({ row: rowNum, message: `supplier "${v.supplier}" not found in your organization` });
-        return;
+        if (data.auto_create_suppliers) {
+          const key = v.supplier.toLowerCase();
+          if (!newSuppliers.has(key)) newSuppliers.set(key, v.supplier);
+          supNames.add(key);
+        } else {
+          errors.push({ row: rowNum, message: `supplier "${v.supplier}" not found in your organization` });
+          return;
+        }
       }
+
 
       // Plan limit check (count what we will insert)
       if (cap != null && used + toInsert.length >= cap) {
