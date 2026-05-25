@@ -395,8 +395,14 @@ export const adminAssignUser = createServerFn({ method: "POST" })
       .select("organization_id, role, email")
       .eq("user_id", data.user_id)
       .maybeSingle();
+
+    // Guard: super_admin role must never carry an organization_id, otherwise
+    // it could leak cross-org access through current_user_org().
+    const nextRole = data.role ?? ((existing as any)?.role as typeof data.role | undefined);
+    const nextOrg = nextRole === "super_admin" ? null : data.organization_id;
+
     const patch: { organization_id: string | null; role?: typeof data.role } = {
-      organization_id: data.organization_id,
+      organization_id: nextOrg,
     };
     if (data.role) patch.role = data.role;
     const { error } = await supabaseAdmin
@@ -404,6 +410,34 @@ export const adminAssignUser = createServerFn({ method: "POST" })
       .update(patch)
       .eq("user_id", data.user_id);
     if (error) throw new Error(error.message);
+
+    const prevOrg = (existing as any)?.organization_id ?? null;
+    const orgChanged = prevOrg !== nextOrg;
+
+    if (orgChanged) {
+      // Scrub stale per-user permission overrides that no longer match the
+      // user's current organization. Prevents reassigned users from
+      // retaining old organization access via leftover override rows.
+      await supabaseAdmin
+        .from("user_permissions")
+        .delete()
+        .eq("user_id", data.user_id)
+        .neq("organization_id", nextOrg ?? "00000000-0000-0000-0000-000000000000");
+      if (nextOrg === null) {
+        await supabaseAdmin
+          .from("user_permissions")
+          .delete()
+          .eq("user_id", data.user_id);
+      }
+
+      // Revoke active sessions so any in-flight requests stop running with
+      // the old organization context on the next call.
+      try {
+        await supabaseAdmin.auth.admin.signOut(data.user_id);
+      } catch (e) {
+        console.error("[adminAssignUser] signOut failed", (e as Error).message);
+      }
+    }
 
     if (data.role && (existing as any)?.role !== data.role) {
       await writeAudit({
@@ -417,7 +451,7 @@ export const adminAssignUser = createServerFn({ method: "POST" })
         new_status: data.role,
       });
     }
-    if ((existing as any)?.organization_id !== data.organization_id) {
+    if (orgChanged) {
       await writeAudit({
         action_type: "change_organization",
         target_type: "user",
@@ -425,8 +459,9 @@ export const adminAssignUser = createServerFn({ method: "POST" })
         target_label: (existing as any)?.email ?? null,
         performed_by: context.userId,
         performed_by_email: me?.email ?? null,
-        previous_status: (existing as any)?.organization_id ?? null,
-        new_status: data.organization_id,
+        previous_status: prevOrg,
+        new_status: nextOrg,
+        metadata: { revoked_sessions: true, scrubbed_user_permissions: true },
       });
     }
     return { ok: true };
