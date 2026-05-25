@@ -735,6 +735,9 @@
     "title": "Productos",
     "subtitle": "Gestiona SKUs, niveles de stock y proveedores.",
     "addProduct": "Agregar producto",
+    "importTitle": "Importar productos",
+    "importAutoCreateSuppliers": "Crear proveedores faltantes automáticamente",
+
     "quickViews": "Vistas rápidas:",
     "view": {
       "lowStock": "Stock bajo",
