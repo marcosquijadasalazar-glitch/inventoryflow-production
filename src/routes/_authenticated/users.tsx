@@ -99,6 +99,7 @@ function UsersPage() {
   const [purging, setPurging] = useState<UserRow | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const runImport = useServerFn(orgImportUsers);
+  const purgeUserFn = useServerFn(purgeUserSecure);
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
 
