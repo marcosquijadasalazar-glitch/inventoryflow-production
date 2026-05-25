@@ -274,10 +274,13 @@ function SettingsPage() {
   );
 }
 
-function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+function Field({ label, className, locked, children }: { label: string; className?: string; locked?: boolean; children: React.ReactNode }) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label>{label}</Label>
+      <Label className="flex items-center gap-1.5">
+        {label}
+        {locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+      </Label>
       {children}
     </div>
   );
