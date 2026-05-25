@@ -272,6 +272,7 @@ function Hero() {
 /* ---------- Dashboard preview ---------- */
 
 function DashboardPreview() {
+  const { t } = useTranslation();
   return (
     <section className="pb-20 sm:pb-28">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
@@ -283,19 +284,19 @@ function DashboardPreview() {
               <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
             </div>
             <div className="mx-auto text-[11px] text-black/50 font-mono">
-              app.inventoryflow / dashboard
+              {t("landing.dashboardPreview.urlbar")}
             </div>
           </div>
 
           <div className="grid grid-cols-12 min-h-[440px]">
             <div className="hidden md:flex col-span-2 flex-col gap-0.5 p-3 border-r border-black/[0.06] bg-white">
               {[
-                { icon: LayoutDashboard, label: "Dashboard", active: true },
-                { icon: Package, label: "Products" },
-                { icon: ArrowLeftRight, label: "Movements" },
-                { icon: Receipt, label: "Orders" },
-                { icon: ScanLine, label: "Scanner" },
-                { icon: AlertTriangle, label: "Alerts" },
+                { icon: LayoutDashboard, label: t("landing.dashboardPreview.nav.dashboard"), active: true },
+                { icon: Package, label: t("landing.dashboardPreview.nav.products") },
+                { icon: ArrowLeftRight, label: t("landing.dashboardPreview.nav.movements") },
+                { icon: Receipt, label: t("landing.dashboardPreview.nav.orders") },
+                { icon: ScanLine, label: t("landing.dashboardPreview.nav.scanner") },
+                { icon: AlertTriangle, label: t("landing.dashboardPreview.nav.alerts") },
               ].map((i) => (
                 <div
                   key={i.label}
@@ -314,10 +315,10 @@ function DashboardPreview() {
             <div className="col-span-12 md:col-span-10 p-5 space-y-4 bg-[#FAFAFA]/60">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                  { label: "Total SKUs", value: "1,284", trend: "+3.2%" },
-                  { label: "Stock value", value: "$842k", trend: "+5.4%" },
-                  { label: "Low stock", value: "27", trend: "-12%" },
-                  { label: "Movements / 24h", value: "318", trend: "+8.1%" },
+                  { label: t("landing.dashboardPreview.kpis.totalSkus"), value: "1,284", trend: "+3.2%" },
+                  { label: t("landing.dashboardPreview.kpis.stockValue"), value: "$842k", trend: "+5.4%" },
+                  { label: t("landing.dashboardPreview.kpis.lowStock"), value: "27", trend: "-12%" },
+                  { label: t("landing.dashboardPreview.kpis.movements24"), value: "318", trend: "+8.1%" },
                 ].map((s) => (
                   <div
                     key={s.label}
@@ -337,8 +338,8 @@ function DashboardPreview() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2 rounded-xl border border-black/[0.06] bg-white p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">Recent movements</span>
-                    <span className="text-[11px] text-black/50">Last 24 hours</span>
+                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.recent")}</span>
+                    <span className="text-[11px] text-black/50">{t("landing.dashboardPreview.last24")}</span>
                   </div>
                   <div className="space-y-1.5">
                     {[
@@ -366,14 +367,14 @@ function DashboardPreview() {
                 </div>
                 <div className="rounded-xl border border-black/[0.06] bg-white p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">Stock health</span>
+                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.stockHealth")}</span>
                     <TrendingUp className="h-3.5 w-3.5 text-black/40" />
                   </div>
                   <div className="space-y-3">
                     {[
-                      { label: "In stock", pct: 78, color: "bg-[#0066FF]" },
-                      { label: "Low stock", pct: 16, color: "bg-black/40" },
-                      { label: "Out of stock", pct: 6, color: "bg-black/15" },
+                      { label: t("landing.dashboardPreview.inStock"), pct: 78, color: "bg-[#0066FF]" },
+                      { label: t("landing.dashboardPreview.lowStockLabel"), pct: 16, color: "bg-black/40" },
+                      { label: t("landing.dashboardPreview.outOfStock"), pct: 6, color: "bg-black/15" },
                     ].map((b) => (
                       <div key={b.label}>
                         <div className="flex items-center justify-between text-[11px] mb-1">
