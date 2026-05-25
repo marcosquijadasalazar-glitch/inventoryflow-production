@@ -475,6 +475,7 @@ function ProductsPage() {
 
   return (
     <div className="space-y-6">
+      <FirstTimeTooltip storageKey="products" i18nKey="onboarding.tips.products" />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
