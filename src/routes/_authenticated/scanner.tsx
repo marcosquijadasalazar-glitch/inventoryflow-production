@@ -85,6 +85,7 @@ function ScannerPage() {
 
   return (
     <div className="space-y-6">
+      <FirstTimeTooltip storageKey="scanner" i18nKey="onboarding.tips.scanner" />
       <header>
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
