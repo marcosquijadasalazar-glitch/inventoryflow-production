@@ -338,6 +338,15 @@
       ],
       "primary": "Start Free 7-Day Trial",
       "secondary": "Talk to sales"
+    },
+    "whatsappCta": {
+      "title": "Need a quick demo?",
+      "subtitle": "Chat directly with us on WhatsApp and learn how InventoryFlow can help your business.",
+      "mobile": "Mobile friendly",
+      "bilingual": "EN / ES",
+      "instant": "Instant reply",
+      "chat": "Chat on WhatsApp",
+      "book": "Book Demo"
     }
   },
   "auth": {
