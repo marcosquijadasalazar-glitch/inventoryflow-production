@@ -78,6 +78,7 @@ import { getStockStatus, type StockStatus } from "@/lib/stock";
 import { productsToCsv, downloadCsv } from "@/lib/csv";
 import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
+import { usePermissions } from "@/lib/use-permissions";
 import { useOrgUsage } from "@/lib/use-org-usage";
 import { PlanLimitBanner } from "@/components/PlanLimitBanner";
 import { isAtLimit } from "@/lib/plan-limits";
@@ -144,7 +145,7 @@ const SORT_OPTIONS: { value: SortKey; key: string }[] = [
   { value: "location", key: "products.sort.location" },
 ];
 
-const PRODUCT_EXPORT_COLUMNS: ExportColumn<Product>[] = [
+const PRODUCT_EXPORT_BASE_COLUMNS: ExportColumn<Product>[] = [
   { key: "name", header: "Name" },
   { key: "sku", header: "SKU" },
   { key: "barcode", header: "Barcode" },
@@ -153,10 +154,16 @@ const PRODUCT_EXPORT_COLUMNS: ExportColumn<Product>[] = [
   { key: "location", header: "Location" },
   { key: "stock", header: "Stock", align: "right" },
   { key: "min_stock", header: "Min", align: "right" },
-  { key: "cost", header: "Cost", align: "right", get: (p) => Number(p.cost).toFixed(2) },
-  { key: "price", header: "Price", align: "right", get: (p) => Number(p.price).toFixed(2) },
-  { key: "value", header: "Value", align: "right", get: (p) => (Number(p.cost) * p.stock).toFixed(2) },
 ];
+const PRODUCT_EXPORT_COST_COLUMN: ExportColumn<Product> = {
+  key: "cost", header: "Cost", align: "right", get: (p) => Number(p.cost).toFixed(2),
+};
+const PRODUCT_EXPORT_PRICE_COLUMN: ExportColumn<Product> = {
+  key: "price", header: "Price", align: "right", get: (p) => Number(p.price).toFixed(2),
+};
+const PRODUCT_EXPORT_VALUE_COLUMN: ExportColumn<Product> = {
+  key: "value", header: "Value", align: "right", get: (p) => (Number(p.cost) * p.stock).toFixed(2),
+};
 
 function ProductsPage() {
   const { t } = useTranslation();
@@ -165,6 +172,16 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: listProducts,
   });
+  const perms = usePermissions();
+  const canCost = perms.can("view_costs");
+  const canPrice = perms.can("view_prices");
+  const exportColumns = useMemo<ExportColumn<Product>[]>(() => {
+    const cols = [...PRODUCT_EXPORT_BASE_COLUMNS];
+    if (canCost) cols.push(PRODUCT_EXPORT_COST_COLUMN);
+    if (canPrice) cols.push(PRODUCT_EXPORT_PRICE_COLUMN);
+    if (canCost) cols.push(PRODUCT_EXPORT_VALUE_COLUMN);
+    return cols;
+  }, [canCost, canPrice]);
   const usageQ = useOrgUsage();
   const productsAtLimit = isAtLimit(usageQ.data ?? undefined, "products");
 
@@ -419,13 +436,13 @@ function ProductsPage() {
   const exportSelected = () => {
     const items = (data ?? []).filter((p) => selected.has(p.id));
     if (items.length === 0) return toast.error(t("products.selectToExport"));
-    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items));
+    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items, { includeCost: canCost, includePrice: canPrice }));
     toast.success(t("products.exported", { count: items.length }));
   };
 
   const exportAll = () => {
     if (!filtered.length) return toast.error(t("products.nothingToExport"));
-    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered));
+    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered, { includeCost: canCost, includePrice: canPrice }));
     toast.success(t("products.exported", { count: filtered.length }));
   };
 
@@ -450,6 +467,8 @@ function ProductsPage() {
       setCostMin={setCostMin}
       costMax={costMax}
       setCostMax={setCostMax}
+      showPrice={canPrice}
+      showCost={canCost}
       reset={resetFilters}
     />
   );
@@ -472,7 +491,7 @@ function ProductsPage() {
             filename="products"
             rows={filtered}
             selectedRows={(data ?? []).filter((p) => selected.has(p.id))}
-            columns={PRODUCT_EXPORT_COLUMNS}
+            columns={exportColumns}
           />
           <Button variant="outline" onClick={() => setImportOpen(true)} disabled={productsAtLimit}>
             <Upload className="h-4 w-4" /> {t("importer.button", "Import")}
@@ -1102,6 +1121,8 @@ function FilterPanel(props: {
   setCostMin: (v: string) => void;
   costMax: string;
   setCostMax: (v: string) => void;
+  showPrice?: boolean;
+  showCost?: boolean;
   reset: () => void;
 }) {
   const { t } = useTranslation();
@@ -1170,45 +1191,49 @@ function FilterPanel(props: {
         </Select>
       </FilterRow>
 
-      <FilterRow label={t("products.priceRange")}>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder={t("products.min")}
-            value={props.priceMin}
-            onChange={(e) => props.setPriceMin(e.target.value)}
-            className="bg-surface"
-          />
-          <span className="text-muted-foreground">–</span>
-          <Input
-            type="number"
-            placeholder={t("products.max")}
-            value={props.priceMax}
-            onChange={(e) => props.setPriceMax(e.target.value)}
-            className="bg-surface"
-          />
-        </div>
-      </FilterRow>
+      {props.showPrice !== false && (
+        <FilterRow label={t("products.priceRange")}>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder={t("products.min")}
+              value={props.priceMin}
+              onChange={(e) => props.setPriceMin(e.target.value)}
+              className="bg-surface"
+            />
+            <span className="text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder={t("products.max")}
+              value={props.priceMax}
+              onChange={(e) => props.setPriceMax(e.target.value)}
+              className="bg-surface"
+            />
+          </div>
+        </FilterRow>
+      )}
 
-      <FilterRow label={t("products.costRange")}>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder={t("products.min")}
-            value={props.costMin}
-            onChange={(e) => props.setCostMin(e.target.value)}
-            className="bg-surface"
-          />
-          <span className="text-muted-foreground">–</span>
-          <Input
-            type="number"
-            placeholder={t("products.max")}
-            value={props.costMax}
-            onChange={(e) => props.setCostMax(e.target.value)}
-            className="bg-surface"
-          />
-        </div>
-      </FilterRow>
+      {props.showCost !== false && (
+        <FilterRow label={t("products.costRange")}>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder={t("products.min")}
+              value={props.costMin}
+              onChange={(e) => props.setCostMin(e.target.value)}
+              className="bg-surface"
+            />
+            <span className="text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder={t("products.max")}
+              value={props.costMax}
+              onChange={(e) => props.setCostMax(e.target.value)}
+              className="bg-surface"
+            />
+          </div>
+        </FilterRow>
+      )}
 
       <div className="flex justify-end pt-2 border-t border-border">
         <Button variant="ghost" size="sm" onClick={props.reset}>

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { StockBadge } from "./StockBadge";
 import type { Product } from "@/lib/inventory";
+import { usePermissions } from "@/lib/use-permissions";
 
 export function ProductDetailsDialog({
   product,
@@ -15,18 +16,23 @@ export function ProductDetailsDialog({
   product: Product | null;
   onClose: () => void;
 }) {
+  const perms = usePermissions();
   if (!product) return null;
+  const canCost = perms.can("view_costs");
+  const canPrice = perms.can("view_prices");
   const rows: [string, string | number | null][] = [
     ["SKU", product.sku],
     ["Barcode", product.barcode],
     ["Category", product.category],
     ["Location", product.location],
     ["Supplier", product.supplier],
-    ["Cost", `$${Number(product.cost).toFixed(2)}`],
-    ["Price", `$${Number(product.price).toFixed(2)}`],
+    ...(canCost ? ([["Cost", `$${Number(product.cost).toFixed(2)}`]] as [string, string][]) : []),
+    ...(canPrice ? ([["Price", `$${Number(product.price).toFixed(2)}`]] as [string, string][]) : []),
     ["Stock", product.stock],
     ["Min stock", product.min_stock],
-    ["Inventory value", `$${(Number(product.cost) * product.stock).toFixed(2)}`],
+    ...(canCost
+      ? ([["Inventory value", `$${(Number(product.cost) * product.stock).toFixed(2)}`]] as [string, string][])
+      : []),
   ];
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

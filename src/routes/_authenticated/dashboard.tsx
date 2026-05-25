@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listProducts, listMovements } from "@/lib/inventory";
+import { usePermissions } from "@/lib/use-permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Package,
@@ -42,6 +43,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { t } = useTranslation();
+  const perms = usePermissions();
+  const canCost = perms.can("view_costs");
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
   const usageQ = useOrgUsage();
@@ -213,18 +216,20 @@ function Dashboard() {
           sub={t("dashboard.unitsOnHand", { count: totalUnits.toLocaleString() as any })}
           trend="up"
         />
-        <Stat
-          icon={DollarSign}
-          label={t("dashboard.inventoryValue")}
-          value={
-            products.isLoading
-              ? null
-              : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-          }
-          sub={t("dashboard.totalStockValue")}
-          trend="up"
-          accent="primary"
-        />
+        {canCost && (
+          <Stat
+            icon={DollarSign}
+            label={t("dashboard.inventoryValue")}
+            value={
+              products.isLoading
+                ? null
+                : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+            }
+            sub={t("dashboard.totalStockValue")}
+            trend="up"
+            accent="primary"
+          />
+        )}
         <Stat
           icon={AlertTriangle}
           label={t("dashboard.lowStock")}
