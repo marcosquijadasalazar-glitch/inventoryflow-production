@@ -521,7 +521,7 @@ function OrgsTable({
       }
     });
     return list;
-  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, sort]);
+  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, sort, includeArchived]);
 
   return (
     <div>
