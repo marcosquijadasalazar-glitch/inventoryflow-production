@@ -407,12 +407,13 @@ function AuditTab() {
 }
 
 function SectionTable({
-  title, users, onEdit, onDelete, onChanged, hint,
+  title, users, onEdit, onDelete, onPurge, onChanged, hint,
 }: {
   title: string;
   users: UserRow[];
   onEdit: (u: UserRow) => void;
   onDelete: (u: UserRow) => void;
+  onPurge?: (u: UserRow) => void;
   onChanged: () => void;
   hint?: string;
 }) {
