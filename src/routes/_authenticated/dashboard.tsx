@@ -42,6 +42,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { t } = useTranslation();
+  const perms = usePermissions();
+  const canCost = perms.can("view_costs");
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
   const usageQ = useOrgUsage();
