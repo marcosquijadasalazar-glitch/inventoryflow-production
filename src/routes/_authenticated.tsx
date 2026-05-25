@@ -16,6 +16,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { permissionForPath } from "@/lib/permissions";
 import { ShieldOff } from "lucide-react";
 import { UpgradeModalProvider } from "@/components/UpgradeDialog";
+import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -108,6 +109,7 @@ function AuthenticatedLayout() {
             <Outlet />
           </ModuleGate>
         </ErrorBoundary>
+        <OnboardingGate />
       </UpgradeModalProvider>
     </AppLayout>
   );

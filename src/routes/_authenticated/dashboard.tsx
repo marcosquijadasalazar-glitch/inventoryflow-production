@@ -36,6 +36,7 @@ import { OperationsWidgets } from "@/components/OperationsWidgets";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UsageSummaryCard } from "@/components/PlanLimitBanner";
 import { useOrgUsage } from "@/lib/use-org-usage";
+import { GettingStartedCard } from "@/components/onboarding/GettingStartedCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -100,6 +101,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <GettingStartedCard />
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
