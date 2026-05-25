@@ -203,6 +203,13 @@ export const updateCompanyProfile = createServerFn({ method: "POST" })
       v[k] = typeof val === "string" && val.trim() === "" ? null : val;
     }
 
+    // Owners can only edit a restricted subset; silently strip anything else.
+    if (actor.role === "owner") {
+      for (const k of Object.keys(v)) {
+        if (!OWNER_ALLOWED_FIELDS.has(k)) delete v[k];
+      }
+    }
+
     // Find existing row
     const existing = await supabaseAdmin
       .from("company_settings")
@@ -233,15 +240,19 @@ export const updateCompanyProfile = createServerFn({ method: "POST" })
       updated = ins.data;
     }
 
-    // Mirror company_name to organizations for consistency
+    // Mirror company_name/business_type to organizations for consistency
+    // (only super_admin can change these since owners had them stripped above).
     if (typeof v.company_name === "string" && v.company_name) {
       await supabaseAdmin
         .from("organizations")
-        .update({ company_name: v.company_name as string, business_type: (v.business_type as string) ?? null })
+        .update({
+          company_name: v.company_name as string,
+          business_type: (v.business_type as string) ?? null,
+        })
         .eq("id", orgId);
     }
 
-    // Audit log
+    // Compute change set
     const changed: Record<string, { from: unknown; to: unknown }> = {};
     if (existing.data) {
       for (const k of Object.keys(v)) {
@@ -249,15 +260,36 @@ export const updateCompanyProfile = createServerFn({ method: "POST" })
         const after = v[k] ?? null;
         if (before !== after) changed[k] = { from: before, to: after };
       }
+    } else {
+      for (const k of Object.keys(v)) changed[k] = { from: null, to: v[k] ?? null };
     }
+
+    const { data: orgRow } = await supabaseAdmin
+      .from("organizations")
+      .select("company_name")
+      .eq("id", orgId)
+      .maybeSingle();
+
     await supabaseAdmin.from("admin_audit_log").insert({
-      action_type: "company_profile_update",
+      action_type:
+        actor.role === "owner" ? "company_profile_update_by_owner" : "company_profile_update",
       target_type: "organization",
       target_id: orgId,
+      target_label: orgRow?.company_name ?? null,
       performed_by: context.userId,
       performed_by_email: actor.email,
-      metadata: { changed } as any,
+      metadata: { changed, actor_role: actor.role } as any,
     });
+
+    if (actor.role === "owner" && Object.keys(changed).length > 0) {
+      await notifySuperAdminsOfOwnerEdit({
+        organizationId: orgId,
+        companyName: orgRow?.company_name ?? null,
+        changed,
+        actorEmail: actor.email,
+        actorName: null,
+      });
+    }
 
     return { profile: updated };
   });
