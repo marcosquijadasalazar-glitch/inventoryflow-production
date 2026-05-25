@@ -114,7 +114,9 @@ function SettingsPage() {
     if (!file || !canEdit) return;
     setUploading(true);
     try {
-      const url = await uploadLogo(file);
+      const orgId = (data?.profile as any)?.organization_id as string | undefined;
+      if (!orgId) throw new Error("Missing organization");
+      const url = await uploadLogo(file, orgId);
       set("logo_url", url);
       await saveProfile({ data: { values: { ...form, logo_url: url } as any } });
       qc.invalidateQueries({ queryKey: ["company-profile"] });
