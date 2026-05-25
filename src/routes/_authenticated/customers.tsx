@@ -26,7 +26,7 @@ const CUSTOMERS_SCHEMA: ImportSchema = {
   entity: "customers",
   sheetName: "Customers",
   fields: [
-    { key: "name", required: true, aliases: ["full_name", "customer_name"], example: "Acme Corp" },
+    { key: "customer_name", required: true, aliases: ["name", "full_name"], example: "Acme Corp" },
     { key: "email", aliases: ["e-mail"], example: "billing@acme.com" },
     { key: "phone", example: "+1 555 1234" },
     { key: "address", example: "123 Main St" },

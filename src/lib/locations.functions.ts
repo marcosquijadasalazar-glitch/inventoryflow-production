@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { PLAN_LIMITS, type PlanType } from "./plan-limits";
 
 const Row = z.object({
-  name: z.string().trim().min(1).max(120),
+  location_name: z.string().trim().min(1).max(120),
   address: z.string().trim().max(500).optional().or(z.literal("")),
   city: z.string().trim().max(120).optional().or(z.literal("")),
   country: z.string().trim().max(120).optional().or(z.literal("")),
@@ -86,7 +86,7 @@ export const importLocations = createServerFn({ method: "POST" })
       const type = v.type && VALID_TYPES.has(v.type.toLowerCase()) ? v.type.toLowerCase() : "warehouse";
       valid.push({
         organization_id: orgId,
-        name: v.name,
+        name: v.location_name,
         type,
         address: addrParts || null,
         notes,
