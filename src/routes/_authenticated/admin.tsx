@@ -417,6 +417,7 @@ function OrgsTable({
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
   const deleteOrg = useServerFn(deleteOrganizationSecure);
+  const purgeOrg = useServerFn(purgeOrganizationSecure);
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
   const [editOrg, setEditOrg] = useState<OrgRow | null>(null);
   const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
