@@ -25,6 +25,7 @@ async function writeAudit(input: {
   previous_status?: string | null;
   new_status?: string | null;
   reason?: string | null;
+  metadata?: Record<string, unknown> | null;
 }) {
   await supabaseAdmin.from("admin_audit_log" as never).insert(input as never);
 }
