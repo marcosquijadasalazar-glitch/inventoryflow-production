@@ -606,6 +606,16 @@ function OrgsTable({
             <SelectItem value="90d">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={onboardingFilter} onValueChange={setOnboardingFilter}>
+          <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Onboarding" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All onboarding</SelectItem>
+            <SelectItem value="not_started">Not started</SelectItem>
+            <SelectItem value="in_progress">In progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="needs_help">Needs help</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
           <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Sort" /></SelectTrigger>
           <SelectContent>
