@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { AlertCircle, Plus } from "lucide-react";
 import { ScanFieldButton } from "@/components/ScanFieldButton";
+import { useUpgradeModal } from "@/components/UpgradeDialog";
 
 const NEW_CATEGORY_VALUE = "__new__";
 
@@ -43,6 +44,7 @@ export function ProductForm({
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const upgrade = useUpgradeModal();
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState("");
@@ -125,9 +127,8 @@ export function ProductForm({
     } catch (e: any) {
       const planKind = (await import("@/lib/plan-limits")).parsePlanLimitError(e);
       if (planKind) {
-        const msg = `${t("plan.limitReached")} ${t("plan.upgradePrompt")}`;
-        setErrorMsg(msg);
-        toast.error(msg);
+        onOpenChange(false);
+        upgrade.open({ reason: planKind });
       } else {
         const msg =
           [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
