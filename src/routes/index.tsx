@@ -1043,52 +1043,6 @@ function LatamPositioning() {
   );
 }
 
-/* ---------- WhatsApp CTA ---------- */
-
-function WhatsAppCTA() {
-  return (
-    <section className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div className="rounded-3xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white p-8 sm:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs">
-              <MessageCircle className="h-3.5 w-3.5" />
-              WhatsApp
-            </div>
-            <h2 className="mt-4 text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">
-              Need a quick demo?
-            </h2>
-            <p className="mt-2 text-white/85 max-w-md">
-              Chat directly with us on WhatsApp. We'll answer your questions and walk you
-              through InventoryFlow live.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row lg:justify-end gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 px-6 bg-white text-[#128C7E] hover:bg-white/90 shadow-none text-base"
-            >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-4 w-4" />
-                Chat on WhatsApp
-              </a>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="h-12 px-6 bg-transparent border-white/40 text-white hover:bg-white/10 text-base"
-            >
-              <a href="#demo">Schedule Demo</a>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ---------- FAQ ---------- */
 
 function FAQ() {
