@@ -25,30 +25,41 @@ File format: `inventoryflow-backup-<timestamp>.json.gz`
 
 ## Where backups live
 
-- Generated **on demand** by a super_admin from the Admin → Backups tab.
-- Downloaded directly to the operator's machine — **nothing is stored
-  server-side** in this iteration.
-- Recommended storage: a private Google Drive folder shared only with
-  the founding team. Future iteration: push to AWS S3 (`s3://inventoryflow-backups/`).
+- **Private Supabase Storage bucket** `backups`, organized by type:
+  - `backups/daily/`   — auto-generated daily at 02:00 UTC
+  - `backups/monthly/` — auto-generated on the 1st of each month at 03:00 UTC
+  - `backups/manual/`  — generated on demand from Admin → Backups
+- The bucket is **private**; only `super_admin` users can list, download, or
+  delete files (enforced by Storage RLS + server-fn checks).
+- Optional future destination: mirror to S3 / Google Drive (not yet wired).
+
+## Automatic schedule & retention
+
+| Type    | Cadence                | Trigger          | Retention  |
+| ------- | ---------------------- | ---------------- | ---------- |
+| Daily   | 02:00 UTC every day    | pg_cron → endpoint | 30 days   |
+| Monthly | 03:00 UTC on the 1st   | pg_cron → endpoint | 12 months |
+| Manual  | On demand              | Admin UI          | indefinite |
+
+Retention sweep runs after every scheduled job; expired files are deleted
+from storage automatically.
+
+## How it works
+
+`pg_cron` hits `POST /api/public/hooks/run-backup` with the project's
+publishable key in the `apikey` header. The handler validates the key,
+runs the same backup logic used by the manual UI, uploads the gzipped JSON
+file to the `backups/<type>/` folder, writes an entry to `admin_audit_log`
+(`action_type = 'backup_generated'`, with type / size / status / error),
+and then sweeps expired files.
 
 ## Who has access
 
-- Generation: any user with `role = 'super_admin'` (enforced by RLS +
-  server-function assertion).
-- Every generation writes an entry to `admin_audit_log` with
-  `action_type = 'backup_generated'`, size, row counts, and operator email.
-- Downloaded files should be treated as **highly sensitive** (they contain
-  all customer data) and stored encrypted at rest.
-
-## Recommended schedule (beta)
-
-| Cadence  | Who           | Storage                                 |
-| -------- | ------------- | --------------------------------------- |
-| Daily    | On-call admin | Google Drive `/Backups/Daily/` (keep 14) |
-| Monthly  | Founder       | Google Drive `/Backups/Monthly/` (keep 12) |
-| Pre-deploy | Releaser    | Local + Drive, retain until next deploy |
-
-Move to automated S3 + lifecycle rules before public GA.
+- Generation & download: any user with `role = 'super_admin'`.
+- Endpoint: anyone with the publishable key (cron only — not exposed in UI).
+- Audit log row is written for **every** run, including failures.
+- Files are highly sensitive (full customer data) — treat downloads as
+  confidential.
 
 ## How to restore
 
