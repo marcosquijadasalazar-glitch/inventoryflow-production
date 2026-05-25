@@ -467,6 +467,8 @@ function ProductsPage() {
       setCostMin={setCostMin}
       costMax={costMax}
       setCostMax={setCostMax}
+      showPrice={canPrice}
+      showCost={canCost}
       reset={resetFilters}
     />
   );
