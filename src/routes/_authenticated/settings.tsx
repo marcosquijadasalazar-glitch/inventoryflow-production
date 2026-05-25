@@ -202,11 +202,11 @@ function SettingsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label={t("settings.companyName")}>
-              <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} disabled={disabled} />
+            <Field label={t("settings.companyName")} locked={!canEditRestricted}>
+              <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} disabled={disabled || !canEditRestricted} />
             </Field>
-            <Field label={t("settings.businessType")}>
-              <Input value={form.business_type} onChange={(e) => set("business_type", e.target.value)} disabled={disabled} />
+            <Field label={t("settings.businessType")} locked={!canEditRestricted}>
+              <Input value={form.business_type} onChange={(e) => set("business_type", e.target.value)} disabled={disabled || !canEditRestricted} />
             </Field>
             <Field label={t("settings.phone")}>
               <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} disabled={disabled} />
@@ -217,8 +217,8 @@ function SettingsPage() {
             <Field label={t("settings.website")}>
               <Input value={form.website} onChange={(e) => set("website", e.target.value)} disabled={disabled} placeholder="https://" />
             </Field>
-            <Field label={t("settings.taxId")}>
-              <Input value={form.tax_id} onChange={(e) => set("tax_id", e.target.value)} disabled={disabled} />
+            <Field label={t("settings.taxId")} locked={!canEditRestricted}>
+              <Input value={form.tax_id} onChange={(e) => set("tax_id", e.target.value)} disabled={disabled || !canEditRestricted} />
             </Field>
             <Field label={t("settings.address")} className="sm:col-span-2">
               <Input value={form.address} onChange={(e) => set("address", e.target.value)} disabled={disabled} />
@@ -229,16 +229,23 @@ function SettingsPage() {
             <Field label={t("settings.country")}>
               <Input value={form.country} onChange={(e) => set("country", e.target.value)} disabled={disabled} />
             </Field>
-            <Field label={t("settings.timezone")}>
-              <Input value={form.timezone} onChange={(e) => set("timezone", e.target.value)} disabled={disabled} placeholder="America/New_York" />
+            <Field label={t("settings.timezone")} locked={!canEditRestricted}>
+              <Input value={form.timezone} onChange={(e) => set("timezone", e.target.value)} disabled={disabled || !canEditRestricted} placeholder="America/New_York" />
             </Field>
-            <Field label={t("settings.currency")}>
-              <Input value={form.currency} onChange={(e) => set("currency", e.target.value)} disabled={disabled} placeholder="USD" maxLength={10} />
+            <Field label={t("settings.currency")} locked={!canEditRestricted}>
+              <Input value={form.currency} onChange={(e) => set("currency", e.target.value)} disabled={disabled || !canEditRestricted} placeholder="USD" maxLength={10} />
             </Field>
             <Field label={t("settings.footerNotes")} className="sm:col-span-2">
               <Textarea rows={2} value={form.footer_notes} onChange={(e) => set("footer_notes", e.target.value)} disabled={disabled} />
             </Field>
           </div>
+
+          {canEdit && !canEditRestricted && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Lock className="h-3 w-3" />
+              {t("settings.ownerLockedHint")}
+            </p>
+          )}
 
           {canEdit && (
             <div className="flex justify-end pt-2">
