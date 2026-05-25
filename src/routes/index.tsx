@@ -400,23 +400,19 @@ function DashboardPreview() {
 /* ---------- Problem / Solution ---------- */
 
 function ProblemSolution() {
-  const problems = [
-    "Losing products or stock you can't account for?",
-    "Inventory disorganized across spreadsheets and notebooks?",
-    "Running out of stock unexpectedly?",
-    "Still tracking inventory in Excel?",
-    "Managing multiple locations manually?",
-  ];
+  const { t } = useTranslation();
+  const problems = t("landing.problemSolution.problems", { returnObjects: true }) as string[];
+  const solutions = t("landing.problemSolution.solutions", { returnObjects: true }) as string[];
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              The problem
+              {t("landing.problemSolution.problemEyebrow")}
             </p>
             <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-              Operations are messy. Inventory is the first thing that breaks.
+              {t("landing.problemSolution.problemTitle")}
             </h2>
             <ul className="mt-6 space-y-3">
               {problems.map((p) => (
@@ -433,24 +429,16 @@ function ProblemSolution() {
 
           <div className="lg:sticky lg:top-24">
             <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              The solution
+              {t("landing.problemSolution.solutionEyebrow")}
             </p>
             <h3 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-black">
-              InventoryFlow puts your operations back in control.
+              {t("landing.problemSolution.solutionTitle")}
             </h3>
             <p className="mt-3 text-black/60">
-              One bilingual platform for products, movements, barcodes, multi-location stock,
-              orders, alerts and reports — built for real businesses, not complicated ERP
-              systems.
+              {t("landing.problemSolution.solutionSubtitle")}
             </p>
             <ul className="mt-6 space-y-2.5">
-              {[
-                "Real-time stock across every location",
-                "Barcode scanning from any phone",
-                "Low-stock alerts before you run out",
-                "Clean reports your accountant will love",
-                "Bilingual (EN / ES) from day one",
-              ].map((s) => (
+              {solutions.map((s) => (
                 <li key={s} className="flex items-center gap-2.5 text-sm text-black/85">
                   <Check className="h-4 w-4 text-[#0066FF] shrink-0" />
                   {s}
@@ -463,7 +451,7 @@ function ProblemSolution() {
               className="mt-6 h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
             >
               <Link to="/signup">
-                Start Free Trial
+                {t("landing.problemSolution.cta")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
