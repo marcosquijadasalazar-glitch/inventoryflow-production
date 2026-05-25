@@ -404,10 +404,12 @@ function OrgsTable({
   orgs,
   loading,
   onChanged,
+  onView,
 }: {
   orgs: OrgRow[];
   loading: boolean;
   onChanged: () => void;
+  onView?: (org: OrgRow) => void;
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
