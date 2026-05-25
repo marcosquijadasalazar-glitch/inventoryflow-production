@@ -40,6 +40,7 @@ export function LocationFormDialog({
   defaultName?: string;
 }) {
   const { t } = useTranslation();
+  const upgrade = useUpgradeModal();
   const [name, setName] = useState("");
   const [type, setType] = useState<LocationType>("warehouse");
   const [address, setAddress] = useState("");
