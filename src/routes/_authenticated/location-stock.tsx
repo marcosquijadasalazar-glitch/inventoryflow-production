@@ -305,7 +305,7 @@ function LocationStockPage() {
             <p className="text-xs text-muted-foreground">
               {t(
                 "ls.note",
-                "Per-location stock is derived from completed transfer orders (incoming − outgoing).",
+                "Per-location stock = product's assigned location (initial stock) plus completed transfers in/out.",
               )}
             </p>
           )}
