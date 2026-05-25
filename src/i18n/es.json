@@ -866,13 +866,47 @@
   },
   "plan": {
     "limitReached": "Has alcanzado el límite de tu plan actual.",
+    "limitHeadline": "Alcanzaste el máximo de {{kind}} en {{plan}} ({{used}}/{{max}} usados).",
     "upgradePrompt": "Mejora tu plan para continuar.",
     "upgradeCta": "Mejorar plan",
+    "upgradeTitle": "Mejora tu plan",
     "usageTitle": "Uso del plan",
+    "currentUsage": "Uso actual",
+    "contactSales": "Contactar ventas",
+    "salesSubject": "Consulta sobre plan Enterprise",
+    "salesBody": "Hola, me gustaría conocer más sobre el plan Enterprise.",
+    "yourWorkspace": "Tu espacio de trabajo",
+    "alreadyEnterprise": "Estás en nuestro plan más alto. Contacta a ventas para necesidades personalizadas.",
+    "upgradeRecommendation": "Mejora a {{plan}} para {{benefit}}.",
+    "featureLockedTitle": "{{feature}} no está disponible en {{plan}}",
+    "thisFeature": "Esta función",
+    "recommendedTitle": "Recomendado: {{plan}}",
+    "tierSummary": "{{users}} usuarios · {{products}} productos · {{locations}} ubicaciones",
+    "remaining": "{{count}} disponibles",
+    "remaining_one": "{{count}} disponible",
+    "remaining_other": "{{count}} disponibles",
+    "noneRemaining": "No quedan disponibles — mejora tu plan para añadir más",
+    "unlimited": "Ilimitado en tu plan",
+    "trialDaysLeft": "{{count}} días restantes de prueba",
+    "trialDaysLeft_one": "{{count}} día restante de prueba",
+    "trialDaysLeft_other": "{{count}} días restantes de prueba",
+    "trialExpired": "Prueba expirada",
+    "tiers": {
+      "free": "Gratis",
+      "starter": "Starter",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "benefits": {
+      "users": "más miembros del equipo",
+      "products": "más productos",
+      "locations": "más ubicaciones",
+      "generic": "límites más altos y más funciones"
+    },
     "kinds": {
-      "users": "Usuarios",
-      "products": "Productos",
-      "locations": "Ubicaciones"
+      "users": "usuarios",
+      "products": "productos",
+      "locations": "ubicaciones"
     }
   },
   "admin": {
