@@ -589,6 +589,10 @@ function OrgsTable({
             <SelectItem value="trial_soon">Trial ending soon</SelectItem>
           </SelectContent>
         </Select>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground ml-2 cursor-pointer select-none">
+          <Switch checked={includeArchived} onCheckedChange={setIncludeArchived} />
+          Show archived/deleted
+        </label>
       </div>
 
       {loading ? (
