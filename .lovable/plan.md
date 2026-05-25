@@ -1,57 +1,98 @@
-# Granular RBAC Permissions
+# Hybrid Onboarding System for InventoryFlow
 
-## Overview
+A modern, bilingual (EN/ES) onboarding flow that gets new companies productive in under 10 minutes. Self-service first, with visible human-support escape hatches (WhatsApp + Book Demo) for LATAM and complex setups.
 
-Add a permission system layered on top of existing roles (`owner`, `manager`, `employee`, `super_admin`). Permissions are resolved as: **role defaults → org role overrides → per-user overrides**. Owners manage their org; super admins manage all orgs. Enforcement is both UI (hide) and server-side (block + RLS where applicable).
+## Scope
 
-## Database
+In scope:
+- First-login Welcome Wizard (4 steps max)
+- Optional demo data seeding
+- Product import (reuse existing flow) + team invites (reuse existing flow)
+- Success screen
+- Dashboard "Getting Started" checklist card
+- Lightweight first-time tooltips on key pages
+- Onboarding tracking columns + audit log
+- Super-admin visibility (onboarding column on companies)
+- Full EN/ES translations
+- WhatsApp + Book Demo CTAs reused from existing landing config
 
-New migration:
+Out of scope (explicitly preserved):
+- Landing page, auth flow, dashboard layout, branding, colors
+- RLS / RBAC / org isolation model
+- Pricing / plans logic
 
-1. **`app_permission` enum** with the 23 keys listed in the request.
-2. **`role_permissions`** table — per-org role defaults.
-   - `organization_id uuid`, `role app_role`, `permission app_permission`, `granted boolean`
-   - Unique `(organization_id, role, permission)`. NULL `organization_id` = global defaults seed.
-3. **`user_permissions`** table — per-user overrides.
-   - `user_id uuid`, `organization_id uuid`, `permission app_permission`, `granted boolean`
-   - Unique `(user_id, permission)`.
-4. **`has_permission(_user_id uuid, _perm app_permission) returns boolean`** — security definer function. Resolves: super_admin → true; owner → true for own org; else user override → role override → hardcoded defaults from the spec.
-5. **Seed defaults** for each existing organization based on the spec (Owner=all, Manager=specified subset, Employee=specified subset).
-6. **RLS** on both tables: owners/managers can read/write their org's rows (and never `super_admin` role rows for owners); super_admin all access. Users can read their own `user_permissions`.
-7. **Audit trigger** on both tables → insert into `admin_audit_log` with `action_type='permission_change'`.
+## Database changes (one migration)
 
-## Server functions (`src/lib/permissions.functions.ts`)
+Add to `public.organizations`:
+- `onboarding_completed boolean default false`
+- `onboarding_step int default 0`
+- `onboarding_completed_at timestamptz`
+- `demo_data_installed boolean default false`
+- `onboarding_dismissed boolean default false` (for checklist dismiss)
+- `onboarding_business_size text` (employees bucket)
+- `onboarding_product_volume text` (products bucket)
+- `onboarding_location_count text` (locations bucket)
 
-- `getMyPermissions()` → returns `Record<AppPermission, boolean>` for current user (calls `has_permission` for each).
-- `getOrgRolePermissions(orgId)` → matrix for the org.
-- `getUserOverrides(orgId)` → all per-user overrides for the org.
-- `setRolePermission({ orgId, role, permission, granted })` — owner-only, blocks `super_admin` role edits, blocks cross-org for non-super-admin.
-- `setUserPermission({ userId, permission, granted | null })` — owner-only, same org check, blocks super_admin targets.
-- All mutations validate caller via `requireSupabaseAuth` + role/org checks and write `admin_audit_log` entries.
+Audit: insert into `admin_audit_log` on completion (`action_type = 'onboarding_completed'`).
 
-## Client
+RLS: no new policies needed — existing org policies on `organizations` already cover read/update; owner/manager can update their own org. Super admin sees all via existing `super_admin all orgs`.
 
-- **`src/lib/use-permissions.ts`** — `usePermissions()` hook backed by React Query; exposes `can(perm)` helper.
-- **`src/lib/permissions.ts`** — constants: `ALL_PERMISSIONS`, `DEFAULT_PERMISSIONS` per role, permission groups for UI.
-- **Sidebar/nav (`src/components/AppLayout.tsx`)** — gate menu items by permission (in addition to existing module gates).
-- **Route guard** — extend `_authenticated.tsx` with a `permissionForPath` map; block access with a "No permission" view when missing.
-- **Action gating** — hide/disable create/edit/delete buttons and cost/price columns based on `can()` in: products, movements, orders, transfers, internal use, reports, exports, settings, alerts, locations, scanner.
-- **Admin UI (`src/routes/_authenticated/admin.tsx`)** — new "Roles & Permissions" tab:
-  - Role matrix: rows = permissions grouped by category, columns = roles, toggles per cell.
-  - User overrides: pick a user → matrix of overrides (granted / denied / inherit).
-  - Owners only see their org; super admin sees an org selector.
+## Server functions (`src/lib/onboarding.functions.ts`)
+
+All `requireSupabaseAuth` + scoped to caller's org via `current_user_org()`-equivalent profile lookup.
+
+- `getOnboardingState()` — returns wizard state for current org
+- `updateOnboardingStep({ step, payload })` — partial updates (business info, step pointer)
+- `completeOnboarding()` — sets completed flag + timestamp, inserts audit row
+- `dismissOnboardingChecklist()`
+- `installDemoData()` — uses `supabaseAdmin` to seed: 1 location, 1 supplier, 1 customer, ~6 products with stock, a few inventory movements. Idempotent (no-op if `demo_data_installed`).
+- `inviteTeamMembers({ invites: [{email, role}] })` — reuses existing org-users invite path
+- `getChecklistProgress()` — counts: has product, has imported (>=5 products), has used scanner (any movement w/ source=barcode_scan), has location, has invited user. Returns booleans + percent.
+- Admin: `adminListOnboardingStatus()` — super-admin only; lists orgs with progress + flags.
+
+## UI components
+
+`src/components/onboarding/`
+- `WelcomeWizard.tsx` — full-screen modal/sheet shown when `!onboarding_completed && !onboarding_dismissed` and user is owner. Animated step indicator, Skip / Back / Next.
+- `StepBusiness.tsx` — business type, product volume bucket, employee bucket, location bucket, preferred language (writes to profile + org).
+- `StepDemoData.tsx` — yes/no card; on yes triggers `installDemoData`.
+- `StepImport.tsx` — reuses `ImportDialog` for products + template download link; skip allowed.
+- `StepInvite.tsx` — multi-row email + role select; skip allowed.
+- `SuccessScreen.tsx` — confetti-lite, three CTAs: Go to Dashboard / Watch Quick Demo (opens YouTube link or modal) / Chat on WhatsApp (reuses landing number).
+- `GettingStartedCard.tsx` — dashboard checklist card with progress bar, 5 items, dismiss button, and Need Help footer (WhatsApp + Book Demo).
+- `FirstTimeTooltip.tsx` — small dismissible tooltip; remembers dismissed keys in `localStorage` per user. Drop into Products, Scanner, Reports, Users pages.
+- `NeedHelpCTA.tsx` — shared WhatsApp + Book Demo block, used in wizard + checklist.
+
+## Wiring
+
+- `src/routes/_authenticated.tsx` — after auth + profile load, if user is `owner` and org `!onboarding_completed && !onboarding_dismissed`, render `<WelcomeWizard />` overlay over outlet.
+- `src/routes/_authenticated/dashboard.tsx` — render `<GettingStartedCard />` at top when not dismissed and not 100%.
+- Tooltips added on `products.tsx`, `scanner.tsx`, `reports.tsx`, `users.tsx`.
+- Super-admin: extend `_authenticated/admin.tsx` (companies tab) with onboarding column + filter "needs help" (started but not completed in >3 days).
 
 ## i18n
 
-Add `permissions.*` namespace to `en.json` and `es.json`: section titles, permission labels/descriptions, role names, "No permission" page copy, toast messages.
+Add `onboarding.*` namespace to `src/i18n/en.json` and `src/i18n/es.json`:
+- wizard titles/subtitles/buttons
+- step labels + helper text
+- demo data success/failure toasts
+- success screen
+- checklist items
+- tooltip copy
+- Need-help block
 
-## Security guarantees
+## Tech notes
 
-- Owners cannot grant `super_admin` role or edit users outside their org (enforced server-side + RLS).
-- All writes go through server functions with role checks; UI gating is defense-in-depth, not the primary gate.
-- Cost/price visibility is gated by `view_costs` / `view_prices` on the **read path** in product list/detail components — costs/prices are simply not rendered when the permission is missing. (Full column-level RLS for prices would require breaking the products table; out of scope.)
-- Every permission change is logged in `admin_audit_log` with `target_type='role_permission' | 'user_permission'`, performer, before/after.
+- Reuses existing landing `WHATSAPP_NUMBER` (export it from a shared `src/lib/contact.ts`).
+- Book Demo: opens a Calendly-style URL placeholder — leave a constant `BOOK_DEMO_URL` in `src/lib/contact.ts` for the user to fill (Calendly link).
+- Demo data uses `supabaseAdmin` server-side to bypass RLS cleanly; tagged with a `demo_*` SKU prefix so it's easy to identify.
+- All server fns scoped strictly by `organization_id` — no cross-org reads.
 
-## Out of scope (kept working as-is)
+## Acceptance
 
-Auth, signup, onboarding, plan limits, module gating, RLS on existing tables, trial logic, password reset flow.
+- New owner login → wizard appears, can complete in <10 min or skip
+- Demo data toggle works and is idempotent
+- Checklist updates as user takes actions; dismiss persists
+- Full EN/ES toggle works on every onboarding string
+- Super-admin sees onboarding column for all orgs
+- No regressions to RLS, RBAC, landing, auth, or dashboard layout

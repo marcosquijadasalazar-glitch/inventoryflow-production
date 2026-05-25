@@ -251,11 +251,20 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           deletion_reason: string | null
+          demo_data_installed: boolean
           enabled_modules: Json
           id: string
           is_active: boolean
           logo_url: string | null
           module_overrides_enabled: boolean
+          onboarding_business_size: string | null
+          onboarding_completed: boolean
+          onboarding_completed_at: string | null
+          onboarding_dismissed: boolean
+          onboarding_location_count: string | null
+          onboarding_product_volume: string | null
+          onboarding_started_at: string | null
+          onboarding_step: number
           plan_type: Database["public"]["Enums"]["org_plan"]
           subscription_status: string
           suspended_at: string | null
@@ -270,11 +279,20 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deletion_reason?: string | null
+          demo_data_installed?: boolean
           enabled_modules?: Json
           id?: string
           is_active?: boolean
           logo_url?: string | null
           module_overrides_enabled?: boolean
+          onboarding_business_size?: string | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_dismissed?: boolean
+          onboarding_location_count?: string | null
+          onboarding_product_volume?: string | null
+          onboarding_started_at?: string | null
+          onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
           subscription_status?: string
           suspended_at?: string | null
@@ -289,11 +307,20 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deletion_reason?: string | null
+          demo_data_installed?: boolean
           enabled_modules?: Json
           id?: string
           is_active?: boolean
           logo_url?: string | null
           module_overrides_enabled?: boolean
+          onboarding_business_size?: string | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_dismissed?: boolean
+          onboarding_location_count?: string | null
+          onboarding_product_volume?: string | null
+          onboarding_started_at?: string | null
+          onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
           subscription_status?: string
           suspended_at?: string | null
