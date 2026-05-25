@@ -866,13 +866,47 @@
   },
   "plan": {
     "limitReached": "You reached your current plan limit.",
+    "limitHeadline": "You reached the maximum {{kind}} for {{plan}} ({{used}}/{{max}} used).",
     "upgradePrompt": "Upgrade your plan to continue.",
-    "upgradeCta": "Upgrade",
+    "upgradeCta": "Upgrade plan",
+    "upgradeTitle": "Upgrade your plan",
     "usageTitle": "Plan usage",
+    "currentUsage": "Current usage",
+    "contactSales": "Contact sales",
+    "salesSubject": "Enterprise plan inquiry",
+    "salesBody": "Hi, I'd like to learn more about your Enterprise plan.",
+    "yourWorkspace": "Your workspace",
+    "alreadyEnterprise": "You're on our top plan. Contact sales for custom needs.",
+    "upgradeRecommendation": "Upgrade to {{plan}} for {{benefit}}.",
+    "featureLockedTitle": "{{feature}} is not available on {{plan}}",
+    "thisFeature": "This feature",
+    "recommendedTitle": "Recommended: {{plan}}",
+    "tierSummary": "{{users}} users · {{products}} products · {{locations}} locations",
+    "remaining": "{{count}} remaining",
+    "remaining_one": "{{count}} remaining",
+    "remaining_other": "{{count}} remaining",
+    "noneRemaining": "No more available — upgrade to add more",
+    "unlimited": "Unlimited on your plan",
+    "trialDaysLeft": "{{count}} days left in trial",
+    "trialDaysLeft_one": "{{count}} day left in trial",
+    "trialDaysLeft_other": "{{count}} days left in trial",
+    "trialExpired": "Trial expired",
+    "tiers": {
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "enterprise": "Enterprise"
+    },
+    "benefits": {
+      "users": "more team members",
+      "products": "more products",
+      "locations": "more locations",
+      "generic": "higher limits and more features"
+    },
     "kinds": {
-      "users": "Users",
-      "products": "Products",
-      "locations": "Locations"
+      "users": "users",
+      "products": "products",
+      "locations": "locations"
     }
   },
   "admin": {
