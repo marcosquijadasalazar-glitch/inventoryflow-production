@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -428,6 +429,7 @@ function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      <FirstTimeTooltip storageKey="reports" i18nKey="onboarding.tips.reports" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">

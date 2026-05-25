@@ -86,6 +86,7 @@ import {
   adminResetUserPassword,
 } from "@/lib/admin.functions";
 import { adminUpdateOrgModules, adminSetModuleOverrides } from "@/lib/modules.functions";
+import { adminListOnboarding } from "@/lib/onboarding.functions";
 import {
   MODULE_KEYS,
   MODULE_LABELS,
@@ -128,6 +129,19 @@ function StatusBadge({ status }: { status: Status }) {
       {s.label}
     </Badge>
   );
+}
+
+type OnboardingStatus = "not_started" | "in_progress" | "completed" | "needs_help";
+function OnboardingBadge({ info }: { info?: { status: OnboardingStatus; needs_help: boolean } }) {
+  const status = info?.status ?? "not_started";
+  const map: Record<OnboardingStatus, { label: string; cls: string }> = {
+    not_started: { label: "Not started", cls: "bg-muted text-muted-foreground" },
+    in_progress: { label: "In progress", cls: "bg-primary/15 text-primary border-primary/30" },
+    completed: { label: "Completed", cls: "bg-success/15 text-success border-success/30" },
+    needs_help: { label: "Needs help", cls: "bg-warning/15 text-warning border-warning/30" },
+  };
+  const s = map[status];
+  return <Badge variant="outline" className={`text-[10px] ${s.cls}`}>{s.label}</Badge>;
 }
 
 function AdminPage() {
@@ -428,8 +442,27 @@ function OrgsTable({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [trialFilter, setTrialFilter] = useState<TrialFilter>("any");
   const [dateFilter, setDateFilter] = useState<string>("any"); // any | 7d | 30d | 90d
+  const [onboardingFilter, setOnboardingFilter] = useState<string>("all"); // all | not_started | in_progress | completed | needs_help
   const [sort, setSort] = useState<SortKey>("newest");
   const [includeArchived, setIncludeArchived] = useState(false);
+
+  const listOnboarding = useServerFn(adminListOnboarding);
+  const onboardingQ = useQuery({
+    queryKey: ["admin", "onboarding"],
+    queryFn: () => listOnboarding({}),
+  });
+  const onboardingMap = useMemo(() => {
+    const m = new Map<string, { status: "not_started" | "in_progress" | "completed" | "needs_help"; needs_help: boolean }>();
+    for (const row of (onboardingQ.data ?? []) as any[]) {
+      let status: "not_started" | "in_progress" | "completed" | "needs_help";
+      if (row.onboarding_completed) status = "completed";
+      else if (row.needs_help) status = "needs_help";
+      else if ((row.onboarding_step ?? 0) > 0 || row.demo_data_installed) status = "in_progress";
+      else status = "not_started";
+      m.set(row.id, { status, needs_help: !!row.needs_help });
+    }
+    return m;
+  }, [onboardingQ.data]);
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
@@ -476,6 +509,12 @@ function OrgsTable({
 
     let list = orgs.filter((o) => {
       if (!includeArchived && (o.status === "archived" || (o as any).deleted_at)) return false;
+      if (onboardingFilter !== "all") {
+        const ob = onboardingMap.get(o.id);
+        const s = ob?.status ?? "not_started";
+        if (onboardingFilter === "needs_help" && !ob?.needs_help) return false;
+        else if (onboardingFilter !== "needs_help" && s !== onboardingFilter) return false;
+      }
       if (planFilter !== "all" && o.plan_type !== planFilter) return false;
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (trialFilter !== "any") {
@@ -523,7 +562,7 @@ function OrgsTable({
       }
     });
     return list;
-  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, sort, includeArchived]);
+  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, onboardingFilter, onboardingMap, sort, includeArchived]);
 
   return (
     <div>
@@ -580,6 +619,16 @@ function OrgsTable({
             <SelectItem value="90d">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={onboardingFilter} onValueChange={setOnboardingFilter}>
+          <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Onboarding" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All onboarding</SelectItem>
+            <SelectItem value="not_started">Not started</SelectItem>
+            <SelectItem value="in_progress">In progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="needs_help">Needs help</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
           <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Sort" /></SelectTrigger>
           <SelectContent>
@@ -609,6 +658,7 @@ function OrgsTable({
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Account</TableHead>
+                <TableHead>Onboarding</TableHead>
                 <TableHead className="text-right">Users</TableHead>
                 <TableHead className="text-right">Products</TableHead>
                 <TableHead className="w-16"></TableHead>
@@ -653,6 +703,7 @@ function OrgsTable({
                       )}
                     </div>
                   </TableCell>
+                  <TableCell><OnboardingBadge info={onboardingMap.get(o.id)} /></TableCell>
                   <TableCell className="text-right font-mono">{o.user_count}</TableCell>
                   <TableCell className="text-right font-mono">{o.product_count}</TableCell>
                   <TableCell className="text-right">
