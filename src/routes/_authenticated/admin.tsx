@@ -901,18 +901,32 @@ function ModulesDialog({
   onSaved: () => void;
 }) {
   const updateModules = useServerFn(adminUpdateOrgModules);
+  const setOverrides = useServerFn(adminSetModuleOverrides);
   const [modules, setModules] = useState<ModuleMap>(() => normalizeModules(org?.enabled_modules));
-  const [preset, setPreset] = useState<PresetName>("custom");
+  const [overridesEnabled, setOverridesEnabled] = useState(false);
+
+  const plan = (org?.plan_type ?? "free") as PlanPresetName;
 
   useEffect(() => {
     if (org) {
-      const m = normalizeModules(org.enabled_modules);
-      setModules(m);
-      setPreset(detectPreset(m));
+      setModules(normalizeModules(org.enabled_modules));
+      setOverridesEnabled(Boolean((org as any).module_overrides_enabled));
     }
   }, [org]);
 
-  const mut = useMutation({
+  const overrideMut = useMutation({
+    mutationFn: (enabled: boolean) =>
+      setOverrides({ data: { organization_id: org!.id, enabled } }),
+    onSuccess: (_d, enabled) => {
+      toast.success(enabled ? "Custom overrides enabled" : "Reverted to plan defaults");
+      setOverridesEnabled(enabled);
+      if (!enabled) setModules(MODULE_PRESETS[plan]);
+      onSaved();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const saveMut = useMutation({
     mutationFn: (m: ModuleMap) =>
       updateModules({ data: { organization_id: org!.id, modules: m } }),
     onSuccess: () => {
@@ -923,15 +937,11 @@ function ModulesDialog({
     onError: (e: any) => toast.error(e.message),
   });
 
-  const applyPreset = (name: PresetName) => {
-    setPreset(name);
-    if (name !== "custom") setModules(MODULE_PRESETS[name]);
-  };
+  const detected = detectPreset(modules);
+  const diff = diffModulesFromPlan(modules, plan);
 
   const toggle = (key: ModuleKey, value: boolean) => {
-    const next = { ...modules, [key]: value };
-    setModules(next);
-    setPreset(detectPreset(next));
+    setModules((m) => ({ ...m, [key]: value }));
   };
 
   return (
@@ -940,37 +950,79 @@ function ModulesDialog({
         <DialogHeader>
           <DialogTitle>Modules — {org?.company_name}</DialogTitle>
           <DialogDescription>
-            Toggle which features this company can access. Disabled modules are hidden from the sidebar and blocked at the route.
+            Modules are controlled by the company's plan. Enable custom overrides to deviate.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Preset plan</Label>
-            <Select value={preset} onValueChange={(v) => applyPreset(v as PresetName)}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRESET_NAMES.map((p) => (
-                  <SelectItem key={p} value={p} className="capitalize">
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs flex items-center justify-between gap-2">
+            <div>
+              <div className="font-medium text-primary">Plan preset applied: <span className="capitalize">{plan}</span></div>
+              <div className="text-muted-foreground mt-0.5">
+                Current configuration: <span className="capitalize">{detected}</span>
+              </div>
+            </div>
           </div>
 
+          <label className="flex items-start justify-between gap-3 rounded-md border border-border bg-card px-3 py-2.5 cursor-pointer">
+            <div className="space-y-0.5">
+              <div className="text-sm font-medium">Enable custom module overrides</div>
+              <div className="text-xs text-muted-foreground">
+                When off, modules sync automatically from the plan. When on, you can manually
+                enable/disable modules that the plan supports.
+              </div>
+            </div>
+            <Switch
+              checked={overridesEnabled}
+              disabled={overrideMut.isPending}
+              onCheckedChange={(v) => overrideMut.mutate(v)}
+            />
+          </label>
+
+          {overridesEnabled && diff.length > 0 && (
+            <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5" />
+              <div>
+                Current modules differ from the <span className="capitalize">{plan}</span> plan preset
+                ({diff.length} {diff.length === 1 ? "module" : "modules"}).
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1 border-t pt-3">
-            {MODULE_KEYS.map((k) => (
-              <label
-                key={k}
-                className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 cursor-pointer"
-              >
-                <span className="text-sm">{MODULE_LABELS[k]}</span>
-                <Switch checked={modules[k]} onCheckedChange={(v) => toggle(k, v)} />
-              </label>
-            ))}
+            {MODULE_KEYS.map((k) => {
+              const abovePlan = isModuleLockedByPlan(k, plan);
+              const planControlled = !overridesEnabled;
+              const disabled = planControlled || abovePlan;
+              return (
+                <label
+                  key={k}
+                  className={`flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 ${disabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}`}
+                  title={
+                    abovePlan
+                      ? `Requires ${MODULE_MIN_PLAN[k]} plan or higher`
+                      : planControlled
+                      ? "Enable custom overrides to change"
+                      : ""
+                  }
+                >
+                  <span className="text-sm flex items-center gap-1.5">
+                    {(abovePlan || planControlled) && <Lock className="h-3 w-3 text-muted-foreground" />}
+                    {MODULE_LABELS[k]}
+                    {abovePlan && (
+                      <Badge variant="outline" className="text-[9px] capitalize ml-1">
+                        {MODULE_MIN_PLAN[k]}+
+                      </Badge>
+                    )}
+                  </span>
+                  <Switch
+                    checked={modules[k]}
+                    disabled={disabled}
+                    onCheckedChange={(v) => toggle(k, v)}
+                  />
+                </label>
+              );
+            })}
           </div>
         </div>
 
@@ -979,16 +1031,18 @@ function ModulesDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => mut.mutate(modules)}
-            disabled={mut.isPending || !org}
+            onClick={() => saveMut.mutate(modules)}
+            disabled={saveMut.isPending || !org || !overridesEnabled}
+            title={!overridesEnabled ? "Enable custom overrides to save manual changes" : ""}
           >
-            {mut.isPending ? "Saving…" : "Save modules"}
+            {saveMut.isPending ? "Saving…" : "Save modules"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 type UserRow = {
   id: string;
