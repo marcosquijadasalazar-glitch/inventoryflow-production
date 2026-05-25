@@ -139,9 +139,11 @@
       "titleA": "Deja de perder inventario.",
       "titleB": "Controla tu negocio desde donde estés.",
       "subtitle": "InventoryFlow ayuda a las empresas a gestionar inventario, productos, movimientos, ubicaciones y operaciones desde una plataforma bilingüe moderna, diseñada para operaciones del mundo real.",
+      "badge": "Disponible ahora — prueba gratis de 7 días",
       "ctaPrimary": "Empezar prueba gratis",
       "ctaDemo": "Solicitar demo",
       "ctaWhatsapp": "Chatear por WhatsApp",
+      "fineprint": "No se requiere tarjeta · Cancela cuando quieras",
       "badges": {
         "mobile": "Apto móvil",
         "multilocation": "Multi-ubicación",
