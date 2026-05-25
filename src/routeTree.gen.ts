@@ -42,6 +42,7 @@ import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAdminRecoveryRouteImport } from './routes/_authenticated/admin-recovery'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdjustmentsRouteImport } from './routes/_authenticated/adjustments'
+import { Route as ApiPublicHooksRunBackupRouteImport } from './routes/api/public/hooks/run-backup'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -215,6 +216,11 @@ const AuthenticatedAdjustmentsRoute =
     path: '/adjustments',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicHooksRunBackupRoute = ApiPublicHooksRunBackupRouteImport.update({
+  id: '/api/public/hooks/run-backup',
+  path: '/api/public/hooks/run-backup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/transfer-orders'
     | '/users'
+    | '/api/public/hooks/run-backup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -389,6 +399,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/transfer-orders'
     | '/users'
+    | '/api/public/hooks/run-backup'
   id:
     | '__root__'
     | '/'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/transfer-orders'
     | '/_authenticated/users'
+    | '/api/public/hooks/run-backup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -438,6 +450,7 @@ export interface RootRouteChildren {
   ServiceAgreementRoute: typeof ServiceAgreementRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  ApiPublicHooksRunBackupRoute: typeof ApiPublicHooksRunBackupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -673,6 +686,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdjustmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/run-backup': {
+      id: '/api/public/hooks/run-backup'
+      path: '/api/public/hooks/run-backup'
+      fullPath: '/api/public/hooks/run-backup'
+      preLoaderRoute: typeof ApiPublicHooksRunBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -742,6 +762,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServiceAgreementRoute: ServiceAgreementRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  ApiPublicHooksRunBackupRoute: ApiPublicHooksRunBackupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
