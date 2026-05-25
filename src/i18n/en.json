@@ -481,7 +481,16 @@
     "uploadLogo": "Upload logo",
     "removeLogo": "Remove logo",
     "language": "Language",
-    "saved": "Settings saved"
+    "saved": "Settings saved",
+    "companyProfile": "Company Profile",
+    "businessType": "Business type",
+    "website": "Website",
+    "taxId": "Tax ID",
+    "city": "City",
+    "country": "Country",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "readOnly": "Read only"
   },
   "pdf": {
     "inventoryList": "Inventory List",
@@ -737,7 +746,6 @@
     "addProduct": "Add Product",
     "importTitle": "Import products",
     "importAutoCreateSuppliers": "Auto-create missing suppliers",
-
     "quickViews": "Quick views:",
     "view": {
       "lowStock": "Low stock",
