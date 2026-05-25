@@ -1239,8 +1239,10 @@ function UsersTable({
   const setStatus = useServerFn(adminSetUserStatus);
   const setAccountStatus = useServerFn(adminSetAccountStatus);
   const deleteUser = useServerFn(deleteUserSecure);
+  const purgeUser = useServerFn(purgeUserSecure);
   const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
+  const [purgeUserRow, setPurgeUserRow] = useState<UserRow | null>(null);
   const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
   const [pending, setPending] = useState<PendingChange | null>(null);
   const [confirmText, setConfirmText] = useState("");
@@ -1255,6 +1257,7 @@ function UsersTable({
   const [filterPlan, setFilterPlan] = useState<string>("all");
   const [filterTrial, setFilterTrial] = useState<"any" | "trial" | "no_trial" | "expiring">("any");
   const [sortBy, setSortBy] = useState<UserSortKey>("newest");
+  const [includeArchivedUsers, setIncludeArchivedUsers] = useState(false);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
