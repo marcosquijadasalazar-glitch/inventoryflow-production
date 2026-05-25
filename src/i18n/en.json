@@ -1025,6 +1025,11 @@
     "pendingHint": "Users who have not signed in yet.",
     "suspended": "Suspended users",
     "archived": "Archived users",
+    "showArchived": "Show archived/deleted users",
+    "purge": "Purge permanently",
+    "purged": "User purged",
+    "purgeTitle": "Purge user permanently",
+    "purgeDesc": "This permanently deletes the user record and revokes login. Audit logs are preserved. This action cannot be undone.",
     "empty": "No users in this section.",
     "invalidForm": "Name and email are required",
     "planLimit": "Seat limit reached for your plan",
@@ -1132,5 +1137,17 @@
     "help1": "add — increases stock by quantity",
     "help2": "remove — decreases stock by quantity",
     "help3": "adjustment — sets absolute stock to quantity"
+  },
+  "purge": {
+    "failed": "Purge failed",
+    "irreversibleWarning": "This permanently removes the record and related data. This action cannot be undone.",
+    "password": "Current account password",
+    "typeToConfirm": "Type",
+    "toConfirm": "to confirm",
+    "forceAck": "This company has inventory or orders. Type",
+    "toForce": "to force purge",
+    "reason": "Reason (optional)",
+    "purging": "Purging…",
+    "purgePermanently": "Purge permanently"
   }
 }

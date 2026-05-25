@@ -102,6 +102,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Settings2, Trash2, Search, Pencil, AlertTriangle, Lock } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { PurgeConfirmDialog } from "@/components/PurgeConfirmDialog";
 import { deleteUserSecure, deleteOrganizationSecure, purgeUserSecure, purgeOrganizationSecure } from "@/lib/delete.functions";
 import { updateCompanyProfile } from "@/lib/company-profile.functions";
 
@@ -416,6 +417,7 @@ function OrgsTable({
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
   const deleteOrg = useServerFn(deleteOrganizationSecure);
+  const purgeOrg = useServerFn(purgeOrganizationSecure);
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
   const [editOrg, setEditOrg] = useState<OrgRow | null>(null);
   const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
@@ -587,6 +589,10 @@ function OrgsTable({
             <SelectItem value="trial_soon">Trial ending soon</SelectItem>
           </SelectContent>
         </Select>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground ml-2 cursor-pointer select-none">
+          <Switch checked={includeArchived} onCheckedChange={setIncludeArchived} />
+          Show archived/deleted
+        </label>
       </div>
 
       {loading ? (
@@ -681,6 +687,14 @@ function OrgsTable({
                           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOrgRow(o)}>
                             <Trash2 className="h-3.5 w-3.5" /> Delete company…
                           </DropdownMenuItem>
+                          {(o.status === "archived" || (o as any).deleted_at) && (
+                            <DropdownMenuItem
+                              className="text-destructive font-medium"
+                              onClick={() => setPurgeOrgRow(o)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Purge permanently…
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -713,6 +727,32 @@ function OrgsTable({
             },
           });
           toast.success("Company deleted");
+          onChanged();
+        }}
+      />
+      <PurgeConfirmDialog
+        open={!!purgeOrgRow}
+        onOpenChange={(o) => !o && setPurgeOrgRow(null)}
+        requireForceConfirmation={
+          !!purgeOrgRow && ((purgeOrgRow.user_count ?? 0) > 0 || (purgeOrgRow.product_count ?? 0) > 0)
+        }
+        texts={{
+          title: "Purge company permanently",
+          description:
+            "This permanently deletes the company record and related data. Audit logs are preserved. This action cannot be undone.",
+          targetLabel: purgeOrgRow?.company_name ?? null,
+        }}
+        onConfirm={async ({ password, reason, forceConfirmation }) => {
+          await purgeOrg({
+            data: {
+              organization_id: purgeOrgRow!.id,
+              password,
+              confirmation: "PURGE",
+              force_confirmation: forceConfirmation ?? undefined,
+              reason,
+            },
+          });
+          toast.success("Company purged");
           onChanged();
         }}
       />
@@ -1199,8 +1239,10 @@ function UsersTable({
   const setStatus = useServerFn(adminSetUserStatus);
   const setAccountStatus = useServerFn(adminSetAccountStatus);
   const deleteUser = useServerFn(deleteUserSecure);
+  const purgeUser = useServerFn(purgeUserSecure);
   const resetPassword = useServerFn(adminResetUserPassword);
   const [deleteUserRow, setDeleteUserRow] = useState<UserRow | null>(null);
+  const [purgeUserRow, setPurgeUserRow] = useState<UserRow | null>(null);
   const [resetUserRow, setResetUserRow] = useState<UserRow | null>(null);
   const [pending, setPending] = useState<PendingChange | null>(null);
   const [confirmText, setConfirmText] = useState("");
@@ -1215,6 +1257,7 @@ function UsersTable({
   const [filterPlan, setFilterPlan] = useState<string>("all");
   const [filterTrial, setFilterTrial] = useState<"any" | "trial" | "no_trial" | "expiring">("any");
   const [sortBy, setSortBy] = useState<UserSortKey>("newest");
+  const [includeArchivedUsers, setIncludeArchivedUsers] = useState(false);
 
   const assignMut = useMutation({
     mutationFn: (vars: {
@@ -1273,6 +1316,7 @@ function UsersTable({
     const filteredRows = users.filter((u) => {
       const org = u.organization_id ? orgMap.get(u.organization_id) : null;
       const company = org?.company_name ?? u.company_name ?? "";
+      if (!includeArchivedUsers && (u.archived_at || (u as any).deleted_at)) return false;
       if (q) {
         const hay = [
           u.full_name ?? "",
@@ -1325,7 +1369,7 @@ function UsersTable({
       }
     });
     return sorted;
-  }, [users, orgMap, search, filterCompany, filterRole, filterStatus, filterAccount, filterPlan, filterTrial, sortBy]);
+  }, [users, orgMap, search, filterCompany, filterRole, filterStatus, filterAccount, filterPlan, filterTrial, sortBy, includeArchivedUsers]);
 
   function requestRoleChange(u: UserRow, nextRole: (typeof ROLES)[number]) {
     if (nextRole === u.role) return;
@@ -1452,7 +1496,11 @@ function UsersTable({
               <SelectItem value="no_trial">Not on trial</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground ml-auto">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground ml-auto cursor-pointer select-none">
+            <Switch checked={includeArchivedUsers} onCheckedChange={setIncludeArchivedUsers} />
+            Show archived/deleted users
+          </label>
+          <span className="text-xs text-muted-foreground">
             {filtered.length} of {users.length}
           </span>
         </div>
@@ -1562,6 +1610,14 @@ function UsersTable({
                         <DropdownMenuItem className="text-destructive" onClick={() => setDeleteUserRow(u)}>
                           <Trash2 className="h-3.5 w-3.5" /> Delete user…
                         </DropdownMenuItem>
+                        {(u.archived_at || (u as any).deleted_at) && u.role !== "super_admin" && (
+                          <DropdownMenuItem
+                            className="text-destructive font-medium"
+                            onClick={() => setPurgeUserRow(u)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Purge permanently…
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -1668,6 +1724,28 @@ function UsersTable({
             },
           });
           toast.success("User deleted");
+          onChanged();
+        }}
+      />
+      <PurgeConfirmDialog
+        open={!!purgeUserRow}
+        onOpenChange={(o) => !o && setPurgeUserRow(null)}
+        texts={{
+          title: "Purge user permanently",
+          description:
+            "This permanently deletes the user record and revokes login. Audit logs are preserved. This action cannot be undone.",
+          targetLabel: purgeUserRow?.email ?? purgeUserRow?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          await purgeUser({
+            data: {
+              user_id: purgeUserRow!.user_id,
+              password,
+              confirmation: "PURGE",
+              reason,
+            },
+          });
+          toast.success("User purged");
           onChanged();
         }}
       />

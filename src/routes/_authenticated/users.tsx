@@ -28,6 +28,8 @@ import {
   orgListUsers, orgInviteUser, orgUpdateUser, orgSetUserStatus,
   orgDeleteUser, orgResetUserPassword, orgImportUsers, orgListAudit,
 } from "@/lib/org-users.functions";
+import { purgeUserSecure } from "@/lib/delete.functions";
+import { PurgeConfirmDialog } from "@/components/PurgeConfirmDialog";
 import { ImportDialog } from "@/components/ImportDialog";
 import type { ImportSchema } from "@/lib/import-utils";
 import { PermissionsMatrix } from "@/components/PermissionsMatrix";
@@ -94,7 +96,10 @@ function UsersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState<UserRow | null>(null);
+  const [purging, setPurging] = useState<UserRow | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const runImport = useServerFn(orgImportUsers);
+  const purgeUserFn = useServerFn(purgeUserSecure);
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
 
@@ -151,11 +156,23 @@ function UsersPage() {
             <div className="text-sm text-destructive">{(list.error as Error).message}</div>
           ) : (
             <>
+              <div className="flex items-center justify-end gap-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5"
+                    checked={showArchived}
+                    onChange={(e) => setShowArchived(e.target.checked)}
+                  />
+                  {t("orgUsers.showArchived", "Show archived/deleted users")}
+                </label>
+              </div>
               <SectionTable
                 title={t("orgUsers.active", "Active users")}
                 users={active}
                 onEdit={setEditing}
                 onDelete={setDeleting}
+                onPurge={role === "super_admin" ? setPurging : undefined}
                 onChanged={invalidate}
               />
               {suspended.length > 0 && (
@@ -164,21 +181,24 @@ function UsersPage() {
                   users={suspended}
                   onEdit={setEditing}
                   onDelete={setDeleting}
+                  onPurge={role === "super_admin" ? setPurging : undefined}
                   onChanged={invalidate}
                 />
               )}
-              {archived.length > 0 && (
+              {showArchived && archived.length > 0 && (
                 <SectionTable
                   title={t("orgUsers.archived", "Archived users")}
                   users={archived}
                   onEdit={setEditing}
                   onDelete={setDeleting}
+                  onPurge={role === "super_admin" ? setPurging : undefined}
                   onChanged={invalidate}
                 />
               )}
             </>
           )}
         </TabsContent>
+
 
         {/* ROLES */}
         <TabsContent value="roles" className="mt-4">
@@ -218,6 +238,7 @@ function UsersPage() {
             users={pending}
             onEdit={setEditing}
             onDelete={setDeleting}
+            onPurge={role === "super_admin" ? setPurging : undefined}
             onChanged={invalidate}
             hint={t("orgUsers.pendingHint", "Users who have not signed in yet.")}
           />
@@ -275,6 +296,31 @@ function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PurgeConfirmDialog
+        open={!!purging}
+        onOpenChange={(o) => !o && setPurging(null)}
+        texts={{
+          title: t("orgUsers.purgeTitle", "Purge user permanently"),
+          description: t(
+            "orgUsers.purgeDesc",
+            "This permanently deletes the user record and revokes login. Audit logs are preserved. This action cannot be undone.",
+          ),
+          targetLabel: purging?.email ?? purging?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          if (!purging) return;
+          await purgeUserFn({
+            data: {
+              user_id: purging.user_id,
+              password,
+              confirmation: "PURGE",
+              reason,
+            },
+          });
+          toast.success(t("orgUsers.purged", "User purged"));
+          invalidate();
+        }}
+      />
     </div>
   );
 }
@@ -388,12 +434,13 @@ function AuditTab() {
 }
 
 function SectionTable({
-  title, users, onEdit, onDelete, onChanged, hint,
+  title, users, onEdit, onDelete, onPurge, onChanged, hint,
 }: {
   title: string;
   users: UserRow[];
   onEdit: (u: UserRow) => void;
   onDelete: (u: UserRow) => void;
+  onPurge?: (u: UserRow) => void;
   onChanged: () => void;
   hint?: string;
 }) {
@@ -498,6 +545,15 @@ function SectionTable({
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t("orgUsers.delete", "Delete")}
                         </DropdownMenuItem>
+                        {onPurge && (u.archived_at || u.deleted_at) && !isOwner && !isSelf && u.role !== "super_admin" && (
+                          <DropdownMenuItem
+                            onClick={() => onPurge(u)}
+                            className="text-destructive focus:text-destructive font-medium"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t("orgUsers.purge", "Purge permanently")}
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
