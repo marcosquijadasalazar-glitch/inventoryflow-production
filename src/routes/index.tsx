@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 
 // Contact / WhatsApp configuration — replace with real values when ready
-const WHATSAPP_NUMBER = "15555550123"; // international format, digits only
+const WHATSAPP_NUMBER = "16159180793"; // international format, digits only
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
   "Hi InventoryFlow team, I'd like a quick demo."
 )}`;
