@@ -57,12 +57,15 @@ export const MODULE_ROUTES: Record<ModuleKey, string[]> = {
   users: [],
 };
 
-export const PRESET_NAMES = ["basic", "operations", "pro", "enterprise", "custom"] as const;
+// Plan presets. Names mirror public.org_plan + "custom" for overrides.
+// MUST mirror public.plan_modules() in SQL.
+export const PRESET_NAMES = ["free", "starter", "pro", "enterprise", "custom"] as const;
 export type PresetName = (typeof PRESET_NAMES)[number];
+export type PlanPresetName = Exclude<PresetName, "custom">;
 
-const BASIC: ModuleKey[] = ["dashboard", "products", "movements", "scanner", "alerts", "settings", "users"];
-const OPERATIONS: ModuleKey[] = [...BASIC, "purchase_orders", "sales_orders", "history"];
-const PRO: ModuleKey[] = [...OPERATIONS, "transfer_orders", "internal_use", "reports", "exports"];
+const FREE: ModuleKey[] = ["dashboard", "products", "movements", "scanner", "alerts", "settings", "users"];
+const STARTER: ModuleKey[] = [...FREE, "history", "purchase_orders", "sales_orders", "exports"];
+const PRO_PRESET: ModuleKey[] = [...STARTER, "transfer_orders", "internal_use", "location_stock", "reports"];
 
 function toMap(enabled: ModuleKey[]): ModuleMap {
   const map = {} as ModuleMap;
@@ -70,10 +73,10 @@ function toMap(enabled: ModuleKey[]): ModuleMap {
   return map;
 }
 
-export const MODULE_PRESETS: Record<Exclude<PresetName, "custom">, ModuleMap> = {
-  basic: toMap(BASIC),
-  operations: toMap(OPERATIONS),
-  pro: toMap(PRO),
+export const MODULE_PRESETS: Record<PlanPresetName, ModuleMap> = {
+  free: toMap(FREE),
+  starter: toMap(STARTER),
+  pro: toMap(PRO_PRESET),
   enterprise: toMap([...MODULE_KEYS]),
 };
 
@@ -92,10 +95,16 @@ export function normalizeModules(input: unknown): ModuleMap {
 export function detectPreset(modules: ModuleMap): PresetName {
   const sig = (m: ModuleMap) => MODULE_KEYS.map((k) => (m[k] ? "1" : "0")).join("");
   const cur = sig(modules);
-  for (const name of ["basic", "operations", "pro", "enterprise"] as const) {
+  for (const name of ["free", "starter", "pro", "enterprise"] as const) {
     if (sig(MODULE_PRESETS[name]) === cur) return name;
   }
   return "custom";
+}
+
+// Module keys where current map differs from the plan preset.
+export function diffModulesFromPlan(modules: ModuleMap, plan: PlanPresetName): ModuleKey[] {
+  const preset = MODULE_PRESETS[plan];
+  return MODULE_KEYS.filter((k) => modules[k] !== preset[k]);
 }
 
 // Returns the module key associated with a given pathname, or null if none.
