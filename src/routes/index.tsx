@@ -786,7 +786,7 @@ function Pricing() {
               billing === "monthly" ? "bg-black text-white" : "text-black/60 hover:text-black"
             }`}
           >
-            Monthly
+            {t("landing.pricingExtra.billingMonthly")}
           </button>
           <button
             type="button"
@@ -795,15 +795,15 @@ function Pricing() {
               billing === "yearly" ? "bg-black text-white" : "text-black/60 hover:text-black"
             }`}
           >
-            Yearly
+            {t("landing.pricingExtra.billingYearly")}
             <span className="text-[10px] font-semibold text-[#0066FF] bg-[#0066FF]/10 px-1.5 py-0.5 rounded-full">
-              Save 2 months
+              {t("landing.pricingExtra.billingSave")}
             </span>
           </button>
         </div>
         {billing === "yearly" && (
           <p className="mt-2 text-xs text-black/50">
-            Yearly billing launches with Stripe. Contact sales for early-access pricing.
+            {t("landing.pricingExtra.yearlyNote")}
           </p>
         )}
 
