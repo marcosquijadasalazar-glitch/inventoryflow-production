@@ -195,6 +195,16 @@ export const importProducts = createServerFn({ method: "POST" })
       await supabaseAdmin.from("product_categories").insert(catRows as any);
     }
 
+    // Create new suppliers (org-scoped, dedup by name)
+    if (newSuppliers.size > 0) {
+      const supRows = Array.from(newSuppliers.values()).map((name) => ({
+        organization_id: orgId,
+        name,
+      }));
+      await supabaseAdmin.from("suppliers").insert(supRows as any);
+    }
+
+
     let inserted = 0;
     if (toInsert.length > 0) {
       const { data: ins, error } = await supabaseAdmin.from("products").insert(toInsert).select("id");
