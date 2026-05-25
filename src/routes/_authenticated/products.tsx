@@ -92,6 +92,30 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { Upload } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ImportDialog } from "@/components/ImportDialog";
+import type { ImportSchema } from "@/lib/import-utils";
+import { importProducts } from "@/lib/products-import.functions";
+
+const PRODUCTS_IMPORT_SCHEMA: ImportSchema = {
+  entity: "products",
+  sheetName: "Products",
+  fields: [
+    { key: "product_name", required: true, aliases: ["name"], example: "Wireless Mouse" },
+    { key: "sku", required: true, example: "SKU-001" },
+    { key: "barcode", example: "0123456789012" },
+    { key: "category", example: "Electronics" },
+    { key: "description", example: "Optical wireless mouse" },
+    { key: "cost_price", aliases: ["cost"], example: "5.50" },
+    { key: "sale_price", aliases: ["price"], example: "12.99" },
+    { key: "stock_quantity", aliases: ["stock", "quantity"], example: "100" },
+    { key: "minimum_stock", aliases: ["min_stock", "min"], example: "10" },
+    { key: "location", example: "Main Warehouse" },
+    { key: "supplier", example: "ACME Distributors" },
+    { key: "status", example: "active" },
+  ],
+};
 
 export const Route = createFileRoute("/_authenticated/products")({
   component: ProductsPage,
