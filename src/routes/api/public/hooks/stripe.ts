@@ -47,7 +47,7 @@ async function updateOrgFromSubscription(sub: Stripe.Subscription) {
 
   const { error } = await supabaseAdmin
     .from("organizations")
-    .update(patch)
+    .update(patch as any)
     .eq("id", orgId);
   if (error) console.error("[stripe webhook] update failed", error);
 }
