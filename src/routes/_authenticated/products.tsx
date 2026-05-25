@@ -1008,6 +1008,15 @@ function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        schema={PRODUCTS_IMPORT_SCHEMA}
+        title={t("products.importTitle", "Import products")}
+        onImport={async (rows) => runImport({ data: { rows, auto_create_categories: true } })}
+        onDone={refresh}
+      />
     </div>
   );
 }
