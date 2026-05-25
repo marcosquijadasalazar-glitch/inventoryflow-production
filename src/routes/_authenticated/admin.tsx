@@ -646,6 +646,12 @@ function OrgsTable({
                   <TableCell className="text-right font-mono">{o.product_count}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {onView && (
+                        <Button variant="ghost" size="sm" className="h-8" onClick={() => onView(o)} title="View details">
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline ml-1">View</span>
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" className="h-8" onClick={() => setEditOrg(o)} title="Edit">
                         <Pencil className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline ml-1">Edit</span>
