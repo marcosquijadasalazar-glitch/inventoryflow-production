@@ -549,7 +549,7 @@ function OrgsTable({
       }
     });
     return list;
-  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, sort, includeArchived]);
+  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, onboardingFilter, onboardingMap, sort, includeArchived]);
 
   return (
     <div>
