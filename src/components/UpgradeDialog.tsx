@@ -158,7 +158,7 @@ export function UpgradeDialog({
         plan: t(`plan.tiers.${plan}`, plan),
       });
     }
-    if (reason && reason !== "feature") {
+    if (reason) {
       const lim = limitFor(usage, reason);
       const used = usage.used[reason];
       return t("plan.limitHeadline", {
