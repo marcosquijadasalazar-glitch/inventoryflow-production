@@ -87,9 +87,10 @@ import {
   type PresetName,
 } from "@/lib/modules";
 import { Switch } from "@/components/ui/switch";
-import { Settings2, Trash2 } from "lucide-react";
+import { Settings2, Trash2, Search, Pencil } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { deleteUserSecure, deleteOrganizationSecure } from "@/lib/delete.functions";
+import { updateCompanyProfile } from "@/lib/company-profile.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
