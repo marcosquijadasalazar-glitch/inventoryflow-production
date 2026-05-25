@@ -86,7 +86,7 @@ export const importLocations = createServerFn({ method: "POST" })
       const type = v.type && VALID_TYPES.has(v.type.toLowerCase()) ? v.type.toLowerCase() : "warehouse";
       valid.push({
         organization_id: orgId,
-        name: v.name,
+        name: v.location_name,
         type,
         address: addrParts || null,
         notes,
