@@ -338,6 +338,15 @@
       ],
       "primary": "Iniciar prueba gratis de 7 días",
       "secondary": "Hablar con ventas"
+    },
+    "whatsappCta": {
+      "title": "¿Necesitas una demo rápida?",
+      "subtitle": "Chatea directamente con nosotros por WhatsApp y descubre cómo InventoryFlow puede ayudar a tu negocio.",
+      "mobile": "Compatible con móvil",
+      "bilingual": "EN / ES",
+      "instant": "Respuesta inmediata",
+      "chat": "Chatear por WhatsApp",
+      "book": "Solicitar Demo"
     }
   },
   "auth": {
