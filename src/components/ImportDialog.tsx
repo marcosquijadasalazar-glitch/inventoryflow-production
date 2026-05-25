@@ -34,9 +34,11 @@ export type ImportDialogProps = {
   title: string;
   onImport: (rows: Record<string, string>[]) => Promise<ImportResult>;
   onDone?: () => void;
+  extraControls?: React.ReactNode;
 };
 
-export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDone }: ImportDialogProps) {
+export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDone, extraControls }: ImportDialogProps) {
+
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
