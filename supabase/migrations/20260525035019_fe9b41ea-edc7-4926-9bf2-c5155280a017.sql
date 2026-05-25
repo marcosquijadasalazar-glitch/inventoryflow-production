@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_org_modules_from_plan() FROM PUBLIC, anon, authenticated;
