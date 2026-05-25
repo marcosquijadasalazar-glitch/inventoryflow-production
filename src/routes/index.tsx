@@ -1339,16 +1339,28 @@ function SiteFooter() {
 /* ---------- Floating WhatsApp ---------- */
 
 function FloatingWhatsApp() {
+  const [hovered, setHovered] = useState(false);
   return (
-    <a
-      href={WHATSAPP_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Chat on WhatsApp"
-      className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white px-4 py-3 shadow-[0_12px_30px_-8px_rgba(37,211,102,0.55)] transition-colors"
+    <div
+      className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <MessageCircle className="h-5 w-5" />
-      <span className="hidden sm:inline text-sm font-medium">Chat with us</span>
-    </a>
+      {hovered && (
+        <div className="mb-1 rounded-2xl bg-white border border-black/[0.08] px-4 py-2.5 text-sm text-black shadow-[0_8px_24px_-6px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-200">
+          Chat with us on WhatsApp
+        </div>
+      )}
+      <a
+        href={WHATSAPP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat on WhatsApp"
+        className="group relative inline-flex items-center justify-center rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white w-14 h-14 shadow-[0_12px_30px_-8px_rgba(37,211,102,0.55)] transition-all hover:scale-105 active:scale-95"
+      >
+        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
+        <MessageCircle className="h-6 w-6 relative z-10" />
+      </a>
+    </div>
   );
 }
