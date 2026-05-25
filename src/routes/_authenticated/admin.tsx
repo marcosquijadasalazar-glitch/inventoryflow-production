@@ -1316,6 +1316,7 @@ function UsersTable({
     const filteredRows = users.filter((u) => {
       const org = u.organization_id ? orgMap.get(u.organization_id) : null;
       const company = org?.company_name ?? u.company_name ?? "";
+      if (!includeArchivedUsers && (u.archived_at || (u as any).deleted_at)) return false;
       if (q) {
         const hay = [
           u.full_name ?? "",
