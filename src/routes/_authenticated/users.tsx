@@ -295,6 +295,31 @@ function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PurgeConfirmDialog
+        open={!!purging}
+        onOpenChange={(o) => !o && setPurging(null)}
+        texts={{
+          title: t("orgUsers.purgeTitle", "Purge user permanently"),
+          description: t(
+            "orgUsers.purgeDesc",
+            "This permanently deletes the user record and revokes login. Audit logs are preserved. This action cannot be undone.",
+          ),
+          targetLabel: purging?.email ?? purging?.full_name ?? null,
+        }}
+        onConfirm={async ({ password, reason }) => {
+          if (!purging) return;
+          await purgeUserSecure({
+            data: {
+              user_id: purging.user_id,
+              password,
+              confirmation: "PURGE",
+              reason,
+            },
+          });
+          toast.success(t("orgUsers.purged", "User purged"));
+          invalidate();
+        }}
+      />
     </div>
   );
 }
