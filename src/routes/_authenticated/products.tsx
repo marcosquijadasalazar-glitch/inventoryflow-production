@@ -172,6 +172,16 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: listProducts,
   });
+  const perms = usePermissions();
+  const canCost = perms.can("view_costs");
+  const canPrice = perms.can("view_prices");
+  const exportColumns = useMemo<ExportColumn<Product>[]>(() => {
+    const cols = [...PRODUCT_EXPORT_BASE_COLUMNS];
+    if (canCost) cols.push(PRODUCT_EXPORT_COST_COLUMN);
+    if (canPrice) cols.push(PRODUCT_EXPORT_PRICE_COLUMN);
+    if (canCost) cols.push(PRODUCT_EXPORT_VALUE_COLUMN);
+    return cols;
+  }, [canCost, canPrice]);
   const usageQ = useOrgUsage();
   const productsAtLimit = isAtLimit(usageQ.data ?? undefined, "products");
 
