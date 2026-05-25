@@ -198,15 +198,53 @@ export async function exportRowsPdf<T>(opts: {
   }
 }
 
-/** Open a print-friendly HTML window with the same tabular data. */
+/**
+ * Print tabular data using a hidden iframe.
+ *
+ * Renders into an off-screen iframe (no popup), waits for the logo and any
+ * embedded images to finish loading, then calls print() and cleans up the
+ * iframe after the print dialog closes. This avoids the blank-popup issue
+ * caused by popup blockers and racing window.onload + window.print().
+ */
 export function printRows<T>(opts: {
   title: string;
   columns: ExportColumn<T>[];
   rows: T[];
   settings: CompanySettings | null;
   userEmail?: string | null;
-}) {
-  const { title, columns, rows, settings, userEmail } = opts;
+  /** Filters / date range / etc. printed under the title. */
+  meta?: { label: string; value: string }[];
+  /** Optional summary rows printed after the table (label / value pairs). */
+  summary?: { label: string; value: string }[];
+  orientation?: "portrait" | "landscape";
+}): Promise<void> {
+  const {
+    title,
+    columns,
+    rows,
+    settings,
+    userEmail,
+    meta,
+    summary,
+    orientation = "landscape",
+  } = opts;
+
+  // Fallback when nothing to print — never open a blank window.
+  if (!rows || rows.length === 0) {
+    if (typeof window !== "undefined") {
+      // Best-effort UI feedback; importers of this util always have sonner toast.
+      try {
+        // Lazy import to avoid hard dep at module top.
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { toast } = require("sonner");
+        toast.error("Nothing to print");
+      } catch {
+        // ignore
+      }
+    }
+    return Promise.resolve();
+  }
+
   const head = columns.map((c) => `<th>${escapeHtml(c.header)}</th>`).join("");
   const body = rows
     .map(
@@ -221,25 +259,49 @@ export function printRows<T>(opts: {
           .join("")}</tr>`,
     )
     .join("");
-  const win = window.open("", "_blank", "noopener,noreferrer,width=1024,height=720");
-  if (!win) return;
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"/>
+
+  const metaRows = (meta ?? [])
+    .filter((m) => m.value != null && m.value !== "")
+    .map(
+      (m) =>
+        `<div class="meta-row"><span class="meta-label">${escapeHtml(m.label)}:</span> <span>${escapeHtml(m.value)}</span></div>`,
+    )
+    .join("");
+
+  const summaryHtml = summary && summary.length
+    ? `<table class="summary"><tbody>${summary
+        .map(
+          (s) =>
+            `<tr><th>${escapeHtml(s.label)}</th><td>${escapeHtml(s.value)}</td></tr>`,
+        )
+        .join("")}</tbody></table>`
+    : "";
+
+  const html = `<!doctype html><html><head><meta charset="utf-8"/>
 <title>${escapeHtml(title)}</title>
 <style>
-  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:#111; padding:24px; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:#111; padding:24px; margin:0; }
   h1 { font-size:18px; margin:0 0 4px; }
-  .meta { color:#666; font-size:12px; margin-bottom:16px; }
+  .meta { color:#444; font-size:11px; margin:8px 0 16px; line-height:1.5; }
+  .meta-row { margin-right:12px; display:inline-block; }
+  .meta-label { color:#888; }
   .brand { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-  .brand img { height:42px; }
-  table { width:100%; border-collapse:collapse; font-size:11px; }
-  th, td { border:1px solid #ddd; padding:6px 8px; text-align:left; }
-  thead { background:#28283c; color:#fff; }
+  .brand img { height:42px; max-width:160px; object-fit:contain; }
+  table { width:100%; border-collapse:collapse; font-size:11px; page-break-inside:auto; }
+  tr { page-break-inside:avoid; page-break-after:auto; }
+  thead { display:table-header-group; }
+  tfoot { display:table-footer-group; }
+  th, td { border:1px solid #ddd; padding:6px 8px; text-align:left; vertical-align:top; }
+  thead th { background:#28283c; color:#fff; }
   tbody tr:nth-child(even){ background:#f5f6fa; }
-  .footer { margin-top:16px; color:#888; font-size:10px; }
-  @media print { @page { size: A4 landscape; margin: 12mm; } body { padding:0; } }
+  .summary { width:auto; margin-top:14px; min-width:280px; }
+  .summary th { background:#f0f1f5; color:#111; text-align:left; }
+  .footer { margin-top:16px; color:#666; font-size:10px; border-top:1px solid #eee; padding-top:8px; }
+  @media print { @page { size: A4 ${orientation}; margin: 12mm; } body { padding:0; } .no-print { display:none !important; } }
 </style></head><body>
 <div class="brand">
-  ${settings?.logo_url ? `<img src="${escapeHtml(settings.logo_url)}" alt=""/>` : ""}
+  ${settings?.logo_url ? `<img src="${escapeHtml(settings.logo_url)}" alt="" crossorigin="anonymous"/>` : ""}
   <div>
     <div style="font-weight:600">${escapeHtml(settings?.company_name ?? "InventoryFlow")}</div>
     <div style="color:#666;font-size:11px">${escapeHtml(
@@ -248,12 +310,101 @@ export function printRows<T>(opts: {
   </div>
 </div>
 <h1>${escapeHtml(title)}</h1>
-<div class="meta">Generated ${new Date().toLocaleString()}${userEmail ? ` · by ${escapeHtml(userEmail)}` : ""} · ${rows.length} row${rows.length === 1 ? "" : "s"}</div>
+<div class="meta">
+  <div class="meta-row"><span class="meta-label">Generated:</span> <span>${escapeHtml(new Date().toLocaleString())}</span></div>
+  ${userEmail ? `<div class="meta-row"><span class="meta-label">By:</span> <span>${escapeHtml(userEmail)}</span></div>` : ""}
+  <div class="meta-row"><span class="meta-label">Rows:</span> <span>${rows.length}</span></div>
+  ${metaRows ? `<div style="margin-top:6px">${metaRows}</div>` : ""}
+</div>
 <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+${summaryHtml}
 ${settings?.footer_notes ? `<div class="footer">${escapeHtml(settings.footer_notes)}</div>` : ""}
-<script>window.onload=()=>setTimeout(()=>window.print(),250);</script>
-</body></html>`);
-  win.document.close();
+</body></html>`;
+
+  return new Promise<void>((resolve) => {
+    if (typeof document === "undefined") {
+      resolve();
+      return;
+    }
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.opacity = "0";
+    iframe.style.pointerEvents = "none";
+    document.body.appendChild(iframe);
+
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      // Defer so the print dialog can fully release the iframe document.
+      setTimeout(() => {
+        try {
+          iframe.parentNode?.removeChild(iframe);
+        } catch {
+          // ignore
+        }
+        resolve();
+      }, 200);
+    };
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      cleanup();
+      return;
+    }
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const triggerPrint = async () => {
+      try {
+        const win = iframe.contentWindow;
+        if (!win) {
+          cleanup();
+          return;
+        }
+        // Wait for any <img> tags inside the iframe to finish loading.
+        const imgs = Array.from(doc.images || []);
+        await Promise.all(
+          imgs.map(
+            (img) =>
+              new Promise<void>((res) => {
+                if (img.complete) return res();
+                const done = () => res();
+                img.addEventListener("load", done, { once: true });
+                img.addEventListener("error", done, { once: true });
+                // Safety timeout — never block printing on a broken image.
+                setTimeout(done, 3000);
+              }),
+          ),
+        );
+        // Give the layout one paint to settle.
+        await new Promise((res) => setTimeout(res, 50));
+        win.addEventListener("afterprint", cleanup, { once: true });
+        win.focus();
+        win.print();
+        // Browsers that don't fire afterprint reliably (older Safari): cleanup fallback.
+        setTimeout(cleanup, 60_000);
+      } catch {
+        cleanup();
+      }
+    };
+
+    // Use the iframe's own load event so we know the document is parsed.
+    if (doc.readyState === "complete") {
+      triggerPrint();
+    } else {
+      iframe.addEventListener("load", triggerPrint, { once: true });
+      // Fallback in case load doesn't fire for an inline-written doc.
+      setTimeout(triggerPrint, 200);
+    }
+  });
 }
 
 function escapeHtml(s: string | null | undefined) {
