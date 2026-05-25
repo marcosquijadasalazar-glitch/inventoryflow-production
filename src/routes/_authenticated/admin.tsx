@@ -57,7 +57,18 @@ import {
   Inbox,
   Mail as MailIcon,
   KeyRound,
+  Eye,
+  ShieldCheck,
+  CreditCard,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { useProfile } from "@/lib/profile";
 import {
@@ -149,6 +160,7 @@ function AdminPage() {
 
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
   const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [detailOrg, setDetailOrg] = useState<OrgRow | null>(null);
 
   const refetchAll = () => {
     orgs.refetch();
@@ -167,8 +179,12 @@ function AdminPage() {
   }
   if (profile.data?.role !== "super_admin") return null;
 
+  const pendingCount = (users.data ?? []).filter(
+    (u: any) => u.account_status === "pending_approval",
+  ).length;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
@@ -179,7 +195,7 @@ function AdminPage() {
             Super Admin
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage companies, users, statuses, and audit history.
+            Companies dashboard. Drill into any company for full details.
           </p>
         </div>
         <div className="flex gap-2">
@@ -204,63 +220,99 @@ function AdminPage() {
         <StatCard icon={Package} label="Movements" value={stats.data?.movements} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-primary" /> New Access Requests
-            {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length > 0 && (
-              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">
-                {(users.data ?? []).filter((u: any) => u.account_status === "pending_approval").length}
+      <Tabs defaultValue="companies" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="companies" className="gap-2">
+            <Building2 className="h-3.5 w-3.5" /> Companies
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="gap-2">
+            <Inbox className="h-3.5 w-3.5" /> Access Requests
+            {pendingCount > 0 && (
+              <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30 ml-1">
+                {pendingCount}
               </Badge>
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <AccessRequestsTable
-            users={(users.data ?? []).filter((u: any) => u.account_status === "pending_approval")}
-            loading={users.isLoading}
-            onChanged={refetchAll}
-          />
-        </CardContent>
-      </Card>
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-3.5 w-3.5" /> Global User Search
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-2">
+            <History className="h-3.5 w-3.5" /> Audit Log
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-primary" /> Companies
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <OrgsTable orgs={orgs.data ?? []} loading={orgs.isLoading} onChanged={refetchAll} />
-        </CardContent>
-      </Card>
+        <TabsContent value="companies">
+          <Card>
+            <CardContent className="p-0">
+              <OrgsTable
+                orgs={orgs.data ?? []}
+                loading={orgs.isLoading}
+                onChanged={refetchAll}
+                onView={setDetailOrg}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" /> Users
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <UsersTable
-            users={users.data ?? []}
-            orgs={orgs.data ?? []}
-            loading={users.isLoading}
-            onChanged={refetchAll}
-          />
-        </CardContent>
-      </Card>
+        <TabsContent value="requests">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Inbox className="h-4 w-4 text-primary" /> New Access Requests
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AccessRequestsTable
+                users={(users.data ?? []).filter(
+                  (u: any) => u.account_status === "pending_approval",
+                )}
+                loading={users.isLoading}
+                onChanged={refetchAll}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" /> Admin audit log
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <AuditTable rows={audit.data ?? []} loading={audit.isLoading} />
-        </CardContent>
-      </Card>
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" /> Global User Search
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <UsersTable
+                users={users.data ?? []}
+                orgs={orgs.data ?? []}
+                loading={users.isLoading}
+                onChanged={refetchAll}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" /> Admin audit log
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AuditTable rows={audit.data ?? []} loading={audit.isLoading} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <CompanyDetailSheet
+        org={detailOrg}
+        orgs={orgs.data ?? []}
+        users={users.data ?? []}
+        audit={audit.data ?? []}
+        onOpenChange={(o) => !o && setDetailOrg(null)}
+        onChanged={refetchAll}
+      />
 
       <CreateOrgDialog
         open={createOrgOpen}
@@ -352,10 +404,12 @@ function OrgsTable({
   orgs,
   loading,
   onChanged,
+  onView,
 }: {
   orgs: OrgRow[];
   loading: boolean;
   onChanged: () => void;
+  onView?: (org: OrgRow) => void;
 }) {
   const setStatus = useServerFn(adminSetOrganizationStatus);
   const updatePlan = useServerFn(adminUpdateOrgPlan);
@@ -592,6 +646,12 @@ function OrgsTable({
                   <TableCell className="text-right font-mono">{o.product_count}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {onView && (
+                        <Button variant="ghost" size="sm" className="h-8" onClick={() => onView(o)} title="View details">
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline ml-1">View</span>
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" className="h-8" onClick={() => setEditOrg(o)} title="Edit">
                         <Pencil className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline ml-1">Edit</span>
@@ -1646,5 +1706,304 @@ function CreateUserDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ===========================================================================
+// Super Admin: per-company detail drawer
+// ===========================================================================
+function CompanyDetailSheet({
+  org,
+  orgs,
+  users,
+  audit,
+  onOpenChange,
+  onChanged,
+}: {
+  org: OrgRow | null;
+  orgs: OrgRow[];
+  users: UserRow[];
+  audit: Array<{
+    id: string;
+    action_type: string;
+    target_type: string;
+    target_id?: string | null;
+    target_label: string | null;
+    performed_by_email: string | null;
+    previous_status: string | null;
+    new_status: string | null;
+    reason: string | null;
+    created_at: string;
+  }>;
+  onOpenChange: (open: boolean) => void;
+  onChanged: () => void;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [modulesOpen, setModulesOpen] = useState(false);
+
+  const orgUsers = useMemo(
+    () => (org ? users.filter((u) => u.organization_id === org.id) : []),
+    [org, users],
+  );
+  const orgAudit = useMemo(() => {
+    if (!org) return [];
+    const userIds = new Set(orgUsers.map((u) => u.user_id));
+    return audit.filter(
+      (a) =>
+        a.target_id === org.id ||
+        (a.target_type === "user" && a.target_id && userIds.has(a.target_id)),
+    );
+  }, [org, orgUsers, audit]);
+
+  const modules = useMemo(() => normalizeModules(org?.enabled_modules), [org]);
+  const enabledModuleKeys = MODULE_KEYS.filter((k) => modules[k]);
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const u of orgUsers) counts[u.role] = (counts[u.role] ?? 0) + 1;
+    return counts;
+  }, [orgUsers]);
+
+  return (
+    <>
+      <Sheet open={!!org} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-3xl overflow-y-auto p-0"
+        >
+          {org && (
+            <>
+              <SheetHeader className="p-6 border-b border-border">
+                <SheetTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  {org.company_name}
+                </SheetTitle>
+                <SheetDescription className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={org.status} />
+                  <Badge variant="outline" className="capitalize">
+                    {org.plan_type}
+                  </Badge>
+                  {org.business_type && (
+                    <span className="text-xs text-muted-foreground">
+                      {org.business_type}
+                    </span>
+                  )}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="p-6">
+                <Tabs defaultValue="overview" className="space-y-4">
+                  <TabsList className="flex-wrap h-auto">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="users" className="gap-1.5">
+                      Users
+                      <Badge variant="outline" className="ml-1">
+                        {orgUsers.length}
+                      </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
+                    <TabsTrigger value="modules">Modules</TabsTrigger>
+                    <TabsTrigger value="plan">Plan & Billing</TabsTrigger>
+                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="overview" className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Counter label="Users" value={org.user_count} tone="primary" />
+                      <Counter label="Products" value={org.product_count} />
+                      <Counter
+                        label="Modules on"
+                        value={enabledModuleKeys.length}
+                        tone="success"
+                      />
+                      <Counter
+                        label="Audit entries"
+                        value={orgAudit.length}
+                      />
+                    </div>
+                    <Card>
+                      <CardContent className="p-4 text-sm space-y-2">
+                        <Row label="Owner">
+                          {org.owner?.full_name ?? "—"}{" "}
+                          <span className="text-muted-foreground">
+                            {org.owner?.email ?? ""}
+                          </span>
+                        </Row>
+                        <Row label="Owner phone">
+                          {org.owner?.phone ?? org.settings?.phone ?? "—"}
+                        </Row>
+                        <Row label="Company email">
+                          {org.settings?.email ?? "—"}
+                        </Row>
+                        <Row label="Address">
+                          {[
+                            org.settings?.address,
+                            org.settings?.city,
+                            org.settings?.country,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "—"}
+                        </Row>
+                        <Row label="Website">
+                          {org.settings?.website ?? "—"}
+                        </Row>
+                        <Row label="Currency / TZ">
+                          {(org.settings?.currency ?? "—") +
+                            " · " +
+                            (org.settings?.timezone ?? "—")}
+                        </Row>
+                        <Row label="Tax ID">{org.settings?.tax_id ?? "—"}</Row>
+                        <Row label="Created">
+                          {new Date(org.created_at).toLocaleString()}
+                        </Row>
+                      </CardContent>
+                    </Card>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setEditOpen(true)}>
+                        <Pencil className="h-4 w-4" /> Edit company
+                      </Button>
+                      <Button variant="outline" onClick={() => setModulesOpen(true)}>
+                        <Settings2 className="h-4 w-4" /> Configure modules
+                      </Button>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="users">
+                    <Card>
+                      <CardContent className="p-0">
+                        <UsersTable
+                          users={orgUsers}
+                          orgs={orgs}
+                          loading={false}
+                          onChanged={onChanged}
+                        />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="roles" className="space-y-3">
+                    <Card>
+                      <CardContent className="p-4 space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <ShieldCheck className="h-4 w-4" />
+                          Role distribution
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {ROLES.map((r) => (
+                            <Counter
+                              key={r}
+                              label={r}
+                              value={roleCounts[r] ?? 0}
+                              tone={r === "owner" ? "primary" : undefined}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground pt-2">
+                          Fine-grained permissions are managed by the company's
+                          owner under their Roles & Permissions settings. Use
+                          the Users tab to reassign roles.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="modules" className="space-y-3">
+                    <Card>
+                      <CardContent className="p-4 space-y-3 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            {enabledModuleKeys.length} of {MODULE_KEYS.length} modules enabled
+                          </span>
+                          <Button size="sm" onClick={() => setModulesOpen(true)}>
+                            <Settings2 className="h-3.5 w-3.5" /> Configure
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {MODULE_KEYS.map((k) => (
+                            <div
+                              key={k}
+                              className={`text-xs px-2 py-1.5 rounded border ${
+                                modules[k]
+                                  ? "border-success/30 bg-success/10 text-success"
+                                  : "border-border bg-muted/30 text-muted-foreground line-through"
+                              }`}
+                            >
+                              {MODULE_LABELS[k]}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="plan" className="space-y-3">
+                    <Card>
+                      <CardContent className="p-4 space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <CreditCard className="h-4 w-4" /> Plan & billing
+                        </div>
+                        <Row label="Current plan">
+                          <Badge variant="outline" className="capitalize">
+                            {org.plan_type}
+                          </Badge>
+                        </Row>
+                        <Row label="Subscription">
+                          {org.subscription_status ?? "—"}
+                        </Row>
+                        <Row label="Account">
+                          <span className="capitalize">
+                            {(org.owner?.account_status ?? "—").replace("_", " ")}
+                          </span>
+                        </Row>
+                        {org.owner?.trial_ends_at && (
+                          <Row label="Trial ends">
+                            {new Date(org.owner.trial_ends_at).toLocaleDateString()}
+                          </Row>
+                        )}
+                        <div className="pt-2">
+                          <Button size="sm" onClick={() => setEditOpen(true)}>
+                            <Pencil className="h-3.5 w-3.5" /> Change plan / status
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="activity">
+                    <Card>
+                      <CardContent className="p-0">
+                        <AuditTable rows={orgAudit} loading={false} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <EditOrgDialog
+        org={editOpen ? org : null}
+        onOpenChange={(o) => !o && setEditOpen(false)}
+        onSaved={onChanged}
+      />
+      <ModulesDialog
+        org={modulesOpen ? org : null}
+        onOpenChange={(o) => !o && setModulesOpen(false)}
+        onSaved={onChanged}
+      />
+    </>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground w-32 shrink-0">
+        {label}
+      </span>
+      <span className="text-sm">{children}</span>
+    </div>
   );
 }
