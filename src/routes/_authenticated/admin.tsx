@@ -1496,7 +1496,11 @@ function UsersTable({
               <SelectItem value="no_trial">Not on trial</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground ml-auto">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground ml-auto cursor-pointer select-none">
+            <Switch checked={includeArchivedUsers} onCheckedChange={setIncludeArchivedUsers} />
+            Show archived/deleted users
+          </label>
+          <span className="text-xs text-muted-foreground">
             {filtered.length} of {users.length}
           </span>
         </div>
