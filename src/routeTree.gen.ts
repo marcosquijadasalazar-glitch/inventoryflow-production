@@ -17,6 +17,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
+import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
@@ -80,6 +81,11 @@ const LoginRoute = LoginRouteImport.update({
 const EmailConfirmedRoute = EmailConfirmedRouteImport.update({
   id: '/email-confirmed',
   path: '/email-confirmed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisclaimerRoute = DisclaimerRouteImport.update({
+  id: '/disclaimer',
+  path: '/disclaimer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -212,6 +218,7 @@ const AuthenticatedAdjustmentsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
   '/pending-approval': typeof PendingApprovalRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/disclaimer'
     | '/email-confirmed'
     | '/login'
     | '/pending-approval'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/disclaimer'
     | '/email-confirmed'
     | '/login'
     | '/pending-approval'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/disclaimer'
     | '/email-confirmed'
     | '/login'
     | '/pending-approval'
@@ -417,6 +429,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  DisclaimerRoute: typeof DisclaimerRoute
   EmailConfirmedRoute: typeof EmailConfirmedRoute
   LoginRoute: typeof LoginRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
@@ -483,6 +496,13 @@ declare module '@tanstack/react-router' {
       path: '/email-confirmed'
       fullPath: '/email-confirmed'
       preLoaderRoute: typeof EmailConfirmedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/disclaimer': {
+      id: '/disclaimer'
+      path: '/disclaimer'
+      fullPath: '/disclaimer'
+      preLoaderRoute: typeof DisclaimerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -713,6 +733,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  DisclaimerRoute: DisclaimerRoute,
   EmailConfirmedRoute: EmailConfirmedRoute,
   LoginRoute: LoginRoute,
   PendingApprovalRoute: PendingApprovalRoute,
