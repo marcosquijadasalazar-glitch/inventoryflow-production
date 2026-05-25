@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getCompanySettings } from "@/lib/settings";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermissions } from "@/lib/use-permissions";
 import {
   exportRowsCsv,
   exportRowsXlsx,
