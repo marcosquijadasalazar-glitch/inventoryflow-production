@@ -502,26 +502,22 @@ function Features() {
 /* ---------- Screenshots gallery ---------- */
 
 function ScreenshotsGallery() {
-  const shots = [
-    { icon: LayoutDashboard, title: "Dashboard", desc: "KPIs, stock health and recent movements at a glance." },
-    { icon: Package, title: "Products page", desc: "Clean catalog with SKUs, categories, suppliers and stock." },
-    { icon: ScanLine, title: "Barcode scanner", desc: "Scan with your phone — no extra hardware required." },
-    { icon: TrendingUp, title: "Reports", desc: "Sales, inventory and movements — exportable to CSV / PDF." },
-    { icon: ArrowLeftRight, title: "Transfers & orders", desc: "Move stock across locations and fulfill orders end-to-end." },
-    { icon: ShieldCheck, title: "Users & roles", desc: "Granular permissions per team member, per module." },
-  ];
+  const { t } = useTranslation();
+  const icons = [LayoutDashboard, Package, ScanLine, TrendingUp, ArrowLeftRight, ShieldCheck];
+  const items = t("landing.screenshots.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const shots = items.map((it, i) => ({ ...it, icon: icons[i] }));
   return (
     <section className="border-t border-black/[0.06] bg-white">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            Product tour
+            {t("landing.screenshots.eyebrow")}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            See InventoryFlow in action.
+            {t("landing.screenshots.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            Real screens from the platform — desktop and mobile, designed for clarity.
+            {t("landing.screenshots.subtitle")}
           </p>
         </div>
 
@@ -536,7 +532,7 @@ function ScreenshotsGallery() {
                   <s.icon className="h-5 w-5 text-[#0066FF]" />
                 </div>
                 <div className="text-[11px] uppercase tracking-wider text-black/40">
-                  Screenshot
+                  {t("landing.screenshots.label")}
                 </div>
                 <div className="mt-1 text-sm font-medium text-black">{s.title}</div>
               </div>
