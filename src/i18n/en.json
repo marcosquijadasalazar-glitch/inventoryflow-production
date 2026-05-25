@@ -891,6 +891,8 @@
     "trialDaysLeft_one": "{{count}} day left in trial",
     "trialDaysLeft_other": "{{count}} days left in trial",
     "trialExpired": "Trial expired",
+    "lockedTooltip": "Available on {{plan}} and above",
+    "lockedTooltipGeneric": "Upgrade to unlock",
     "tiers": {
       "free": "Free",
       "starter": "Starter",
