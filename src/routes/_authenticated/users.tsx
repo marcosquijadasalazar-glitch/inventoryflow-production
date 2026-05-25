@@ -518,6 +518,15 @@ function SectionTable({
                           <Trash2 className="h-4 w-4 mr-2" />
                           {t("orgUsers.delete", "Delete")}
                         </DropdownMenuItem>
+                        {onPurge && (u.archived_at || u.deleted_at) && !isOwner && !isSelf && u.role !== "super_admin" && (
+                          <DropdownMenuItem
+                            onClick={() => onPurge(u)}
+                            className="text-destructive focus:text-destructive font-medium"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t("orgUsers.purge", "Purge permanently")}
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
