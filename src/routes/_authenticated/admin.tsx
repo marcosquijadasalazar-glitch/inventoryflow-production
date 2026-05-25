@@ -102,6 +102,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Settings2, Trash2, Search, Pencil, AlertTriangle, Lock } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { PurgeConfirmDialog } from "@/components/PurgeConfirmDialog";
 import { deleteUserSecure, deleteOrganizationSecure, purgeUserSecure, purgeOrganizationSecure } from "@/lib/delete.functions";
 import { updateCompanyProfile } from "@/lib/company-profile.functions";
 
