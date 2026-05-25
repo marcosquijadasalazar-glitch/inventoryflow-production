@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getCompanySettings } from "@/lib/settings";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermissions } from "@/lib/use-permissions";
 import {
   exportRowsCsv,
   exportRowsXlsx,
@@ -58,11 +59,16 @@ export function ExportMenu<T>(props: ExportMenuProps<T>) {
     meta,
   } = props;
   const { t } = useTranslation();
+  const perms = usePermissions();
   const settings = useQuery({
     queryKey: ["company_settings"],
     queryFn: getCompanySettings,
     staleTime: 5 * 60 * 1000,
   });
+
+  if (!perms.isLoading && !perms.can("export_data")) {
+    return null;
+  }
 
   const hasSel = !!selectedRows && selectedRows.length > 0;
   const disabled = rows.length === 0 && !hasSel;
