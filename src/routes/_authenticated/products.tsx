@@ -145,7 +145,7 @@ const SORT_OPTIONS: { value: SortKey; key: string }[] = [
   { value: "location", key: "products.sort.location" },
 ];
 
-const PRODUCT_EXPORT_COLUMNS: ExportColumn<Product>[] = [
+const PRODUCT_EXPORT_BASE_COLUMNS: ExportColumn<Product>[] = [
   { key: "name", header: "Name" },
   { key: "sku", header: "SKU" },
   { key: "barcode", header: "Barcode" },
@@ -154,10 +154,16 @@ const PRODUCT_EXPORT_COLUMNS: ExportColumn<Product>[] = [
   { key: "location", header: "Location" },
   { key: "stock", header: "Stock", align: "right" },
   { key: "min_stock", header: "Min", align: "right" },
-  { key: "cost", header: "Cost", align: "right", get: (p) => Number(p.cost).toFixed(2) },
-  { key: "price", header: "Price", align: "right", get: (p) => Number(p.price).toFixed(2) },
-  { key: "value", header: "Value", align: "right", get: (p) => (Number(p.cost) * p.stock).toFixed(2) },
 ];
+const PRODUCT_EXPORT_COST_COLUMN: ExportColumn<Product> = {
+  key: "cost", header: "Cost", align: "right", get: (p) => Number(p.cost).toFixed(2),
+};
+const PRODUCT_EXPORT_PRICE_COLUMN: ExportColumn<Product> = {
+  key: "price", header: "Price", align: "right", get: (p) => Number(p.price).toFixed(2),
+};
+const PRODUCT_EXPORT_VALUE_COLUMN: ExportColumn<Product> = {
+  key: "value", header: "Value", align: "right", get: (p) => (Number(p.cost) * p.stock).toFixed(2),
+};
 
 function ProductsPage() {
   const { t } = useTranslation();
