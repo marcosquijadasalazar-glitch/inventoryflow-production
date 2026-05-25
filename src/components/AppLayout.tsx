@@ -22,6 +22,7 @@ import {
   Users,
   Truck,
   SlidersHorizontal,
+  Lock,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -34,17 +35,32 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScanBarcodeButton } from "./ScanBarcodeButton";
 import { useProfile } from "@/lib/profile";
 import { useEnabledModules } from "@/lib/use-modules";
-import type { ModuleKey } from "@/lib/modules";
+import { isModuleLockedByPlan, MODULE_MIN_PLAN, type ModuleKey } from "@/lib/modules";
 import { usePermissions } from "@/lib/use-permissions";
 import type { AppPermission } from "@/lib/permissions";
+import { useOrgUsage } from "@/lib/use-org-usage";
+import { useUpgradeModal } from "@/components/UpgradeDialog";
+import type { PlanType } from "@/lib/plan-limits";
 
-function useNavItems() {
+type NavEntry = {
+  to: string;
+  label: string;
+  icon: typeof Boxes;
+  module: ModuleKey | null;
+  permission: AppPermission | null;
+  locked?: boolean;
+  requiredPlan?: PlanType;
+};
+
+function useNavItems(): NavEntry[] {
   const { t } = useTranslation();
   const profile = useProfile();
   const { modules } = useEnabledModules();
   const perms = usePermissions();
+  const usage = useOrgUsage();
   const isSuper = profile.data?.role === "super_admin";
-  const items: Array<{ to: string; label: string; icon: typeof Boxes; module: ModuleKey | null; permission: AppPermission | null }> = [
+  const plan: PlanType = usage.data?.plan ?? "free";
+  const items: NavEntry[] = [
     { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, module: "dashboard", permission: "view_dashboard" },
     { to: "/products", label: t("nav.products"), icon: Package, module: "products", permission: "view_products" },
     { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight, module: "movements", permission: "view_movements" },
@@ -63,11 +79,25 @@ function useNavItems() {
     { to: "/alerts", label: t("nav.alerts"), icon: AlertTriangle, module: "alerts", permission: "manage_alerts" },
     { to: "/settings", label: t("nav.settings"), icon: SettingsIcon, module: "settings", permission: "manage_company_settings" },
   ];
-  const visible = items.filter(
-    (i) =>
-      isSuper ||
-      ((!i.module || modules[i.module]) && (!i.permission || perms.can(i.permission))),
-  );
+  // Hide items the user lacks permission for. Plan-locked items remain
+  // visible as upsell. Org-level custom module overrides also render as
+  // locked so direct route access stays gated.
+  const visible: NavEntry[] = [];
+  for (const i of items) {
+    if (!isSuper && i.permission && !perms.can(i.permission)) continue;
+    if (isSuper) {
+      visible.push(i);
+      continue;
+    }
+    const lockedByPlan = i.module ? isModuleLockedByPlan(i.module, plan) : false;
+    const disabledByOrg = i.module ? !modules[i.module] : false;
+    const locked = lockedByPlan || disabledByOrg;
+    visible.push({
+      ...i,
+      locked,
+      requiredPlan: i.module ? MODULE_MIN_PLAN[i.module] : undefined,
+    });
+  }
   const role = profile.data?.role;
   if ((role === "owner" || role === "manager") && (role === "owner" || perms.can("manage_users"))) {
     visible.push({ to: "/users", label: t("orgUsers.navLabel", "Users & Roles"), icon: Users, module: null, permission: null });
@@ -80,6 +110,7 @@ function useNavItems() {
   }
   return visible;
 }
+
 
 function NavItem({
   to,
