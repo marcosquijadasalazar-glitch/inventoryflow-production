@@ -62,39 +62,60 @@ export type Database = {
       company_settings: {
         Row: {
           address: string | null
+          business_type: string | null
+          city: string | null
           company_name: string | null
+          country: string | null
           created_at: string
+          currency: string | null
           email: string | null
           footer_notes: string | null
           id: string
           logo_url: string | null
           organization_id: string | null
           phone: string | null
+          tax_id: string | null
+          timezone: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           address?: string | null
+          business_type?: string | null
+          city?: string | null
           company_name?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string | null
           email?: string | null
           footer_notes?: string | null
           id?: string
           logo_url?: string | null
           organization_id?: string | null
           phone?: string | null
+          tax_id?: string | null
+          timezone?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           address?: string | null
+          business_type?: string | null
+          city?: string | null
           company_name?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string | null
           email?: string | null
           footer_notes?: string | null
           id?: string
           logo_url?: string | null
           organization_id?: string | null
           phone?: string | null
+          tax_id?: string | null
+          timezone?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: [
           {
