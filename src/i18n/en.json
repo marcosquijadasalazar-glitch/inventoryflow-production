@@ -1433,5 +1433,127 @@
     "reason": "Reason (optional)",
     "purging": "Purging…",
     "purgePermanently": "Purge permanently"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to InventoryFlow 👋",
+      "subtitle": "Let's set up your workspace.",
+      "intro": "We'll take 4 quick steps to get your inventory ready. You can skip anything and come back later.",
+      "feat1": "Track products, stock and movements in real time",
+      "feat2": "Optional sample data so you can explore right away",
+      "feat3": "Invite your team with the right permissions",
+      "feat4": "Get to your first insights in under 10 minutes"
+    },
+    "wizard": {
+      "title": "Quick Setup",
+      "stepLabel": "Step {{step}} of {{total}}"
+    },
+    "actions": {
+      "start": "Start Setup",
+      "skip": "Skip for now",
+      "finish": "Finish"
+    },
+    "business": {
+      "title": "Tell us about your business",
+      "subtitle": "This helps us tailor the experience for you.",
+      "businessType": "Business type",
+      "productVolume": "Approximate number of products",
+      "employees": "Number of employees",
+      "locations": "Number of locations",
+      "language": "Preferred language",
+      "selectPlaceholder": "Select an option",
+      "types": {
+        "retail": "Retail store",
+        "wholesale": "Wholesale / distribution",
+        "ecommerce": "E-commerce",
+        "warehouse": "Warehouse / 3PL",
+        "manufacturing": "Manufacturing",
+        "food_beverage": "Food & beverage",
+        "services": "Services",
+        "other": "Other"
+      },
+      "vol": {
+        "lt50": "Fewer than 50",
+        "50_500": "50 – 500",
+        "500_5000": "500 – 5,000",
+        "gt5000": "More than 5,000"
+      },
+      "size": {
+        "solo": "Just me",
+        "s2_5": "2 – 5",
+        "s6_25": "6 – 25",
+        "s26_100": "26 – 100",
+        "s100p": "100+"
+      }
+    },
+    "demo": {
+      "title": "Want sample data to explore?",
+      "subtitle": "We'll create demo products, a supplier, a customer, a location and a few movements so you don't start with an empty dashboard.",
+      "yes": "Yes, install demo data",
+      "yesDesc": "Best for first-time exploring. You can delete it anytime.",
+      "no": "No, start empty",
+      "noDesc": "I'll add my own products right away.",
+      "installed": "Demo data installed"
+    },
+    "import": {
+      "title": "Import your products",
+      "subtitle": "Upload an Excel or CSV file — or skip and add products later.",
+      "helperTitle": "Bring your existing inventory",
+      "helperBody": "We support Excel (.xlsx) and CSV. A downloadable template is available inside the importer.",
+      "openImporter": "Open product importer",
+      "skipHint": "You can skip this step and import products from the Products page later."
+    },
+    "invite": {
+      "title": "Invite your team",
+      "subtitle": "Add managers or employees. They'll receive an email to set their password.",
+      "addRow": "Add another teammate",
+      "skipHint": "You can invite your team later from Users & Roles.",
+      "roles": { "manager": "Manager", "employee": "Employee" },
+      "success": "Sent {{count}} invite(s)",
+      "partial": "{{count}} invite(s) failed"
+    },
+    "success": {
+      "title": "Your workspace is ready 🚀",
+      "subtitle": "You're all set. Jump in to start managing your inventory.",
+      "goDashboard": "Go to Dashboard",
+      "watchDemo": "Watch Quick Demo",
+      "whatsapp": "Chat on WhatsApp"
+    },
+    "help": {
+      "title": "Need help setting up?",
+      "subtitle": "Chat with us on WhatsApp or schedule a quick onboarding call.",
+      "whatsapp": "WhatsApp",
+      "bookDemo": "Book Demo",
+      "needHelp": "Need help?"
+    },
+    "checklist": {
+      "title": "Getting Started",
+      "progress": "{{done}}/{{total}} completed",
+      "items": {
+        "created_product": "Create your first product",
+        "imported_products": "Import products (5+)",
+        "used_scanner": "Try the barcode scanner",
+        "created_location": "Create a location",
+        "invited_employee": "Invite a teammate"
+      }
+    },
+    "tips": {
+      "products": {
+        "title": "Products",
+        "body": "Add products manually, scan barcodes, or import from Excel/CSV."
+      },
+      "scanner": {
+        "title": "Barcode Scanner",
+        "body": "Use your phone camera or a USB scanner to add/remove stock fast."
+      },
+      "reports": {
+        "title": "Reports",
+        "body": "Export inventory, sales and movements as PDF, Excel or CSV."
+      },
+      "users": {
+        "title": "Users & Roles",
+        "body": "Invite teammates and control what each role can see and do."
+      }
+    }
   }
 }
