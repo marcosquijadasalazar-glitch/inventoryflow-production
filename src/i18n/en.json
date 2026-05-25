@@ -490,7 +490,8 @@
     "country": "Country",
     "timezone": "Timezone",
     "currency": "Currency",
-    "readOnly": "Read only"
+    "readOnly": "Read only",
+    "ownerLockedHint": "Locked fields (company name, business type, tax ID, timezone, currency) can only be changed by an administrator. Contact support if you need an update."
   },
   "pdf": {
     "inventoryList": "Inventory List",
