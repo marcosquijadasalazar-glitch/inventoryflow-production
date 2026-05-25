@@ -42,6 +42,7 @@ import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAdminRecoveryRouteImport } from './routes/_authenticated/admin-recovery'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdjustmentsRouteImport } from './routes/_authenticated/adjustments'
+import { Route as ApiPublicHooksStripeRouteImport } from './routes/api/public/hooks/stripe'
 import { Route as ApiPublicHooksRunBackupRouteImport } from './routes/api/public/hooks/run-backup'
 
 const TermsRoute = TermsRouteImport.update({
@@ -216,6 +217,11 @@ const AuthenticatedAdjustmentsRoute =
     path: '/adjustments',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicHooksStripeRoute = ApiPublicHooksStripeRouteImport.update({
+  id: '/api/public/hooks/stripe',
+  path: '/api/public/hooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksRunBackupRoute = ApiPublicHooksRunBackupRouteImport.update({
   id: '/api/public/hooks/run-backup',
   path: '/api/public/hooks/run-backup',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
+  '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
+  '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
+  '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/transfer-orders'
     | '/users'
     | '/api/public/hooks/run-backup'
+    | '/api/public/hooks/stripe'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/transfer-orders'
     | '/users'
     | '/api/public/hooks/run-backup'
+    | '/api/public/hooks/stripe'
   id:
     | '__root__'
     | '/'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transfer-orders'
     | '/_authenticated/users'
     | '/api/public/hooks/run-backup'
+    | '/api/public/hooks/stripe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   ApiPublicHooksRunBackupRoute: typeof ApiPublicHooksRunBackupRoute
+  ApiPublicHooksStripeRoute: typeof ApiPublicHooksStripeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -686,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdjustmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/stripe': {
+      id: '/api/public/hooks/stripe'
+      path: '/api/public/hooks/stripe'
+      fullPath: '/api/public/hooks/stripe'
+      preLoaderRoute: typeof ApiPublicHooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/run-backup': {
       id: '/api/public/hooks/run-backup'
       path: '/api/public/hooks/run-backup'
@@ -763,6 +783,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   ApiPublicHooksRunBackupRoute: ApiPublicHooksRunBackupRoute,
+  ApiPublicHooksStripeRoute: ApiPublicHooksStripeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

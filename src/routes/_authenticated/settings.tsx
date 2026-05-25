@@ -14,6 +14,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { CategoryManagerCard } from "@/components/CategoryManagerCard";
 import { UsageSummaryCard } from "@/components/PlanLimitBanner";
 import { useOrgUsage } from "@/lib/use-org-usage";
+import { BillingPanel } from "@/components/billing/BillingPanel";
 import { Building2, Upload, Trash2, Settings as Cog, Lock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -259,6 +260,7 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
+      <BillingPanel />
       <UsageSummaryCard usage={usageQ.data ?? undefined} />
       <CategoryManagerCard />
 

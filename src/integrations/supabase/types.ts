@@ -248,11 +248,14 @@ export type Database = {
           business_type: string | null
           company_name: string
           created_at: string
+          current_period_end: string | null
           deleted_at: string | null
           deleted_by: string | null
           deletion_reason: string | null
           demo_data_installed: boolean
           enabled_modules: Json
+          grace_period_ends_at: string | null
+          has_used_trial: boolean
           id: string
           is_active: boolean
           logo_url: string | null
@@ -266,6 +269,9 @@ export type Database = {
           onboarding_started_at: string | null
           onboarding_step: number
           plan_type: Database["public"]["Enums"]["org_plan"]
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           subscription_status: string
           suspended_at: string | null
           updated_at: string
@@ -276,11 +282,14 @@ export type Database = {
           business_type?: string | null
           company_name: string
           created_at?: string
+          current_period_end?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deletion_reason?: string | null
           demo_data_installed?: boolean
           enabled_modules?: Json
+          grace_period_ends_at?: string | null
+          has_used_trial?: boolean
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -294,6 +303,9 @@ export type Database = {
           onboarding_started_at?: string | null
           onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string
           suspended_at?: string | null
           updated_at?: string
@@ -304,11 +316,14 @@ export type Database = {
           business_type?: string | null
           company_name?: string
           created_at?: string
+          current_period_end?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           deletion_reason?: string | null
           demo_data_installed?: boolean
           enabled_modules?: Json
+          grace_period_ends_at?: string | null
+          has_used_trial?: boolean
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -322,6 +337,9 @@ export type Database = {
           onboarding_started_at?: string | null
           onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_status?: string
           suspended_at?: string | null
           updated_at?: string
