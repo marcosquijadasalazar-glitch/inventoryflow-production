@@ -309,7 +309,7 @@ function UsersPage() {
         }}
         onConfirm={async ({ password, reason }) => {
           if (!purging) return;
-          await purgeUserSecure({
+          await purgeUserFn({
             data: {
               user_id: purging.user_id,
               password,
