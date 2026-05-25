@@ -2112,6 +2112,7 @@ function CompanyDetailSheet({
                           orgs={orgs}
                           loading={false}
                           onChanged={onChanged}
+                          scoped
                         />
                       </CardContent>
                     </Card>
