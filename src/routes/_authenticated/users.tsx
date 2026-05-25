@@ -121,6 +121,7 @@ function UsersPage() {
 
   return (
     <div className="space-y-6">
+      <FirstTimeTooltip storageKey="users" i18nKey="onboarding.tips.users" />
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
