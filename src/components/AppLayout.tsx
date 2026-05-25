@@ -117,35 +117,68 @@ function NavItem({
   label,
   icon: Icon,
   active,
+  locked,
+  module,
+  requiredPlan,
   onClick,
 }: {
   to: string;
   label: string;
   icon: typeof Boxes;
   active: boolean;
+  locked?: boolean;
+  module?: ModuleKey | null;
+  requiredPlan?: PlanType;
   onClick?: () => void;
 }) {
+  const { t } = useTranslation();
+  const upgrade = useUpgradeModal();
+  const baseClass = cn(
+    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+    active
+      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-soft"
+      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+    locked && "opacity-75",
+  );
+  const iconClass = cn(
+    "h-4 w-4 transition-colors shrink-0",
+    active ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80",
+  );
+  const moduleLabel = module ? t(`modules.keys.${module}`, label) : label;
+  const lockTitle = requiredPlan
+    ? t("plan.lockedTooltip", {
+        defaultValue: "Available on {{plan}} and above",
+        plan: t(`plan.tiers.${requiredPlan}`, requiredPlan),
+      })
+    : t("plan.lockedTooltipGeneric", "Upgrade to unlock");
+
+  if (locked) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          onClick?.();
+          upgrade.open({ reason: "feature", featureLabel: moduleLabel });
+        }}
+        title={lockTitle}
+        aria-label={`${label} — ${lockTitle}`}
+        className={cn(baseClass, "w-full text-left")}
+      >
+        <Icon className={iconClass} />
+        <span className="flex-1 truncate">{label}</span>
+        <Lock className="h-3 w-3 text-muted-foreground/70 group-hover:text-primary/80" aria-hidden />
+      </button>
+    );
+  }
+
   return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
-        active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-soft"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
-      )}
-    >
-      <Icon
-        className={cn(
-          "h-4 w-4 transition-colors",
-          active ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80",
-        )}
-      />
-      <span>{label}</span>
+    <Link to={to} onClick={onClick} className={baseClass}>
+      <Icon className={iconClass} />
+      <span className="flex-1 truncate">{label}</span>
     </Link>
   );
 }
+
 
 function Brand() {
   return (
