@@ -256,7 +256,11 @@ function AdminPage() {
           <TabsTrigger value="audit" className="gap-2">
             <History className="h-3.5 w-3.5" /> Audit Log
           </TabsTrigger>
+          <TabsTrigger value="backups" className="gap-2">
+            <Database className="h-3.5 w-3.5" /> Backups
+          </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="companies">
           <Card>
@@ -320,7 +324,12 @@ function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="backups">
+          <BackupPanel />
+        </TabsContent>
       </Tabs>
+
 
       <CompanyDetailSheet
         org={detailOrg}
