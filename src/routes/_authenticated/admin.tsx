@@ -85,22 +85,24 @@ import {
   adminListAuditLog,
   adminResetUserPassword,
 } from "@/lib/admin.functions";
-import { adminUpdateOrgModules } from "@/lib/modules.functions";
+import { adminUpdateOrgModules, adminSetModuleOverrides } from "@/lib/modules.functions";
 import {
   MODULE_KEYS,
   MODULE_LABELS,
   MODULE_PRESETS,
-  PRESET_NAMES,
   detectPreset,
+  diffModulesFromPlan,
   normalizeModules,
+  isModuleLockedByPlan,
+  MODULE_MIN_PLAN,
   type ModuleKey,
   type ModuleMap,
-  type PresetName,
+  type PlanPresetName,
 } from "@/lib/modules";
 import { Switch } from "@/components/ui/switch";
-import { Settings2, Trash2, Search, Pencil } from "lucide-react";
+import { Settings2, Trash2, Search, Pencil, AlertTriangle, Lock } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { deleteUserSecure, deleteOrganizationSecure } from "@/lib/delete.functions";
+import { deleteUserSecure, deleteOrganizationSecure, purgeUserSecure, purgeOrganizationSecure } from "@/lib/delete.functions";
 import { updateCompanyProfile } from "@/lib/company-profile.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
