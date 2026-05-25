@@ -8,42 +8,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail, Upload } from "lucide-react";
+import {
+  Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail, Upload,
+  ScrollText, ShieldQuestion,
+} from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import {
-  orgListUsers,
-  orgInviteUser,
-  orgUpdateUser,
-  orgSetUserStatus,
-  orgDeleteUser,
-  orgResetUserPassword,
-  orgImportUsers,
+  orgListUsers, orgInviteUser, orgUpdateUser, orgSetUserStatus,
+  orgDeleteUser, orgResetUserPassword, orgImportUsers, orgListAudit,
 } from "@/lib/org-users.functions";
 import { ImportDialog } from "@/components/ImportDialog";
 import type { ImportSchema } from "@/lib/import-utils";
+import { PermissionsMatrix } from "@/components/PermissionsMatrix";
+import { DEFAULT_ROLE_PERMISSIONS, MANAGEABLE_ROLES, type ManageableRole } from "@/lib/permissions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const USERS_IMPORT_SCHEMA: ImportSchema = {
   entity: "users",
@@ -56,17 +48,6 @@ const USERS_IMPORT_SCHEMA: ImportSchema = {
     { key: "status", example: "active" },
   ],
 };
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/users")({
   component: UsersPage,
@@ -76,12 +57,23 @@ type AssignableRole = "manager" | "employee" | "custom";
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
-  try {
-    return new Date(d).toLocaleString();
-  } catch {
-    return "—";
-  }
+  try { return new Date(d).toLocaleString(); } catch { return "—"; }
 }
+
+type UserRow = {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  phone: string | null;
+  role: AssignableRole | "owner" | "super_admin";
+  account_status: string;
+  is_active: boolean;
+  suspended_at: string | null;
+  archived_at: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+};
 
 function UsersPage() {
   const { t } = useTranslation();
@@ -106,11 +98,14 @@ function UsersPage() {
 
   if (!canAccess) return <Navigate to="/dashboard" replace />;
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["org-users"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["org-users"] });
+    qc.invalidateQueries({ queryKey: ["org-audit"] });
+  };
 
   const users = (list.data?.users ?? []) as UserRow[];
-  const active = users.filter((u) => u.is_active && !u.suspended_at && !u.archived_at);
-  const pending = active.filter((u) => !u.last_sign_in_at);
+  const active = users.filter((u) => u.is_active && !u.suspended_at && !u.archived_at && u.last_sign_in_at);
+  const pending = users.filter((u) => u.is_active && !u.suspended_at && !u.archived_at && !u.last_sign_in_at);
   const suspended = users.filter((u) => u.suspended_at && !u.archived_at);
   const archived = users.filter((u) => u.archived_at);
 
@@ -136,76 +131,108 @@ function UsersPage() {
               {t("orgUsers.seatUsage", "{{used}} / {{cap}} seats", { used, cap })}
             </Badge>
           )}
-          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={limitReached}>
-            <Upload className="h-4 w-4 mr-2" />
-            {t("importer.button", "Import")}
-          </Button>
-          <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            {t("orgUsers.invite", "Invite user")}
-          </Button>
         </div>
       </header>
 
-      {list.isLoading ? (
-        <div className="text-sm text-muted-foreground">{t("common.loading")}</div>
-      ) : list.error ? (
-        <div className="text-sm text-destructive">{(list.error as Error).message}</div>
-      ) : (
-        <>
+      <Tabs defaultValue="users">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="users">{t("orgUsers.tab.users", "Users")}</TabsTrigger>
+          <TabsTrigger value="roles">{t("orgUsers.tab.roles", "Roles")}</TabsTrigger>
+          <TabsTrigger value="permissions">{t("orgUsers.tab.permissions", "Permissions Matrix")}</TabsTrigger>
+          <TabsTrigger value="invitations">{t("orgUsers.tab.invitations", "Invitations")}</TabsTrigger>
+          <TabsTrigger value="audit">{t("orgUsers.tab.audit", "Audit")}</TabsTrigger>
+        </TabsList>
+
+        {/* USERS */}
+        <TabsContent value="users" className="mt-4 space-y-4">
+          {list.isLoading ? (
+            <div className="text-sm text-muted-foreground">{t("common.loading")}</div>
+          ) : list.error ? (
+            <div className="text-sm text-destructive">{(list.error as Error).message}</div>
+          ) : (
+            <>
+              <SectionTable
+                title={t("orgUsers.active", "Active users")}
+                users={active}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+                onChanged={invalidate}
+              />
+              {suspended.length > 0 && (
+                <SectionTable
+                  title={t("orgUsers.suspended", "Suspended users")}
+                  users={suspended}
+                  onEdit={setEditing}
+                  onDelete={setDeleting}
+                  onChanged={invalidate}
+                />
+              )}
+              {archived.length > 0 && (
+                <SectionTable
+                  title={t("orgUsers.archived", "Archived users")}
+                  users={archived}
+                  onEdit={setEditing}
+                  onDelete={setDeleting}
+                  onChanged={invalidate}
+                />
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ROLES */}
+        <TabsContent value="roles" className="mt-4">
+          <RolesTab />
+        </TabsContent>
+
+        {/* PERMISSIONS MATRIX */}
+        <TabsContent value="permissions" className="mt-4">
+          <PermissionsMatrix />
+        </TabsContent>
+
+        {/* INVITATIONS */}
+        <TabsContent value="invitations" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("orgUsers.inviteActions", "Invite or add users")}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                {t("orgUsers.invite", "Invite user")}
+              </Button>
+              <Button variant="outline" onClick={() => setImportOpen(true)} disabled={limitReached}>
+                <Upload className="h-4 w-4 mr-2" />
+                {t("importer.button", "Import")}
+              </Button>
+              {limitReached && (
+                <span className="text-xs text-destructive self-center">
+                  {t("orgUsers.planLimit", "Seat limit reached for your plan")}
+                </span>
+              )}
+            </CardContent>
+          </Card>
+
           <SectionTable
-            title={t("orgUsers.active", "Active users")}
-            users={active}
+            title={t("orgUsers.pending", "Pending invitations")}
+            users={pending}
             onEdit={setEditing}
             onDelete={setDeleting}
             onChanged={invalidate}
+            hint={t("orgUsers.pendingHint", "Users who have not signed in yet.")}
           />
-          {pending.length > 0 && (
-            <SectionTable
-              title={t("orgUsers.pending", "Pending invitations")}
-              users={pending}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-              onChanged={invalidate}
-              hint={t("orgUsers.pendingHint", "Users who have not signed in yet.")}
-            />
-          )}
-          {suspended.length > 0 && (
-            <SectionTable
-              title={t("orgUsers.suspended", "Suspended users")}
-              users={suspended}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-              onChanged={invalidate}
-            />
-          )}
-          {archived.length > 0 && (
-            <SectionTable
-              title={t("orgUsers.archived", "Archived users")}
-              users={archived}
-              onEdit={setEditing}
-              onDelete={setDeleting}
-              onChanged={invalidate}
-            />
-          )}
-        </>
-      )}
+        </TabsContent>
 
-      <p className="text-xs text-muted-foreground">
-        {t("orgUsers.permissionsHint", "Fine-grained per-user permissions are managed on the")}{" "}
-        <Link to="/permissions" className="underline">
-          {t("permissions.navLabel")}
-        </Link>{" "}
-        {t("orgUsers.permissionsHintTail", "page.")}
-      </p>
+        {/* AUDIT */}
+        <TabsContent value="audit" className="mt-4">
+          <AuditTab />
+        </TabsContent>
+      </Tabs>
 
       <InviteDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
-        onInvited={() => {
-          setInviteOpen(false);
-          invalidate();
-        }}
+        onInvited={() => { setInviteOpen(false); invalidate(); }}
       />
       <ImportDialog
         open={importOpen}
@@ -215,7 +242,11 @@ function UsersPage() {
         onImport={async (rows) => runImport({ data: { rows } })}
         onDone={() => invalidate()}
       />
-      <EditDialog user={editing} onOpenChange={(o) => !o && setEditing(null)} onSaved={() => { setEditing(null); invalidate(); }} />
+      <EditDialog
+        user={editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        onSaved={() => { setEditing(null); invalidate(); }}
+      />
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -248,28 +279,116 @@ function UsersPage() {
   );
 }
 
-type UserRow = {
-  user_id: string;
-  email: string | null;
-  full_name: string | null;
-  phone: string | null;
-  role: AssignableRole | "owner" | "super_admin";
-  account_status: string;
-  is_active: boolean;
-  suspended_at: string | null;
-  archived_at: string | null;
-  deleted_at: string | null;
-  created_at: string;
-  last_sign_in_at: string | null;
-};
+function RolesTab() {
+  const { t } = useTranslation();
+  const allRoles: (ManageableRole)[] = [...MANAGEABLE_ROLES];
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {allRoles.map((r) => {
+        const count = DEFAULT_ROLE_PERMISSIONS[r]?.length ?? 0;
+        return (
+          <Card key={r}>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldQuestion className="h-4 w-4 text-primary" />
+                {t(`permissions.role.${r}`, r)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                {t(`orgUsers.roleDesc.${r}`, defaultRoleDesc(r))}
+              </p>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {t("orgUsers.defaultPerms", "{{n}} default permissions", { n: count })}
+                </Badge>
+                {r === "custom" && (
+                  <Badge variant="secondary">
+                    {t("orgUsers.customHint", "Configure via Permissions Matrix")}
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+      <Card className="md:col-span-2">
+        <CardContent className="pt-6 text-sm text-muted-foreground">
+          {t("orgUsers.rolesNote", "Built-in roles are owner, manager, and employee. Use the 'custom' role plus the Permissions Matrix to define a role tailored to your team. Owner privileges cannot be granted from this page.")}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function defaultRoleDesc(r: ManageableRole) {
+  switch (r) {
+    case "owner": return "Full control of the organization, including billing and members.";
+    case "manager": return "Manage day-to-day operations, products, orders, and members.";
+    case "employee": return "Day-to-day work: view products, record movements, use the scanner.";
+    case "custom": return "Permissions are fully defined by the organization owner.";
+  }
+}
+
+function AuditTab() {
+  const { t } = useTranslation();
+  const fetchAudit = useServerFn(orgListAudit);
+  const q = useQuery({
+    queryKey: ["org-audit"],
+    queryFn: () => fetchAudit({}),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <ScrollText className="h-4 w-4 text-primary" />
+          {t("orgUsers.auditTitle", "Recent user, role and permission changes")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        {q.isLoading ? (
+          <div className="text-sm text-muted-foreground">{t("common.loading")}</div>
+        ) : q.error ? (
+          <div className="text-sm text-destructive">{(q.error as Error).message}</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b">
+                <th className="py-2 pr-4 font-medium">{t("orgUsers.audit.when", "When")}</th>
+                <th className="py-2 pr-4 font-medium">{t("orgUsers.audit.action", "Action")}</th>
+                <th className="py-2 pr-4 font-medium">{t("orgUsers.audit.target", "Target")}</th>
+                <th className="py-2 pr-4 font-medium">{t("orgUsers.audit.by", "Performed by")}</th>
+                <th className="py-2 pr-4 font-medium">{t("orgUsers.audit.details", "Details")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(q.data?.entries ?? []).map((e: any) => (
+                <tr key={e.id} className="border-b last:border-0 align-top">
+                  <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{formatDate(e.created_at)}</td>
+                  <td className="py-2 pr-4"><Badge variant="outline">{e.action_type}</Badge></td>
+                  <td className="py-2 pr-4">{e.target_label ?? e.target_id}</td>
+                  <td className="py-2 pr-4">{e.performed_by_email ?? "—"}</td>
+                  <td className="py-2 pr-4 text-xs text-muted-foreground">
+                    {[e.previous_status && `${e.previous_status} → ${e.new_status ?? ""}`, e.reason].filter(Boolean).join(" · ")}
+                  </td>
+                </tr>
+              ))}
+              {(q.data?.entries ?? []).length === 0 && (
+                <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+                  {t("orgUsers.audit.empty", "No audit entries yet.")}
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function SectionTable({
-  title,
-  users,
-  onEdit,
-  onDelete,
-  onChanged,
-  hint,
+  title, users, onEdit, onDelete, onChanged, hint,
 }: {
   title: string;
   users: UserRow[];
@@ -288,18 +407,14 @@ function SectionTable({
       await setStatus({ data: { user_id: u.user_id, status } });
       toast.success(t("orgUsers.updated", "User updated"));
       onChanged();
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    } catch (e) { toast.error((e as Error).message); }
   };
 
   const sendReset = async (u: UserRow) => {
     try {
       await resetPwd({ data: { user_id: u.user_id } });
       toast.success(t("orgUsers.resetSent", "Password reset email sent"));
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    } catch (e) { toast.error((e as Error).message); }
   };
 
   return (
@@ -404,9 +519,7 @@ function SectionTable({
 }
 
 function InviteDialog({
-  open,
-  onOpenChange,
-  onInvited,
+  open, onOpenChange, onInvited,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -421,10 +534,7 @@ function InviteDialog({
   const [busy, setBusy] = useState(false);
 
   const reset = () => {
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setRole("employee");
+    setFullName(""); setEmail(""); setPhone(""); setRole("employee");
   };
 
   const submit = async () => {
@@ -505,9 +615,7 @@ function InviteDialog({
 }
 
 function EditDialog({
-  user,
-  onOpenChange,
-  onSaved,
+  user, onOpenChange, onSaved,
 }: {
   user: UserRow | null;
   onOpenChange: (v: boolean) => void;

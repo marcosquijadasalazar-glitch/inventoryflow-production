@@ -511,3 +511,42 @@ export const orgImportUsers = createServerFn({ method: "POST" })
 
     return { inserted, failed: errors.length, errors };
   });
+
+// -------- Audit log scoped to caller's org --------
+
+export const orgListAudit = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const me = await assertOrgManager(context.userId);
+
+    // Super admin sees everything (recent 100).
+    if (me.role === "super_admin") {
+      const { data, error } = await supabaseAdmin
+        .from("admin_audit_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw new Error(error.message);
+      return { entries: data ?? [] };
+    }
+
+    const orgId = me.organization_id!;
+    // Fetch org member ids to scope the audit query.
+    const { data: members } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .eq("organization_id", orgId);
+    const ids = (members ?? []).map((m) => m.user_id);
+    if (ids.length === 0) return { entries: [] };
+
+    const { data, error } = await supabaseAdmin
+      .from("admin_audit_log")
+      .select("*")
+      .or(
+        `target_id.in.(${ids.join(",")}),performed_by.in.(${ids.join(",")})`,
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { entries: data ?? [] };
+  });

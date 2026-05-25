@@ -1007,6 +1007,32 @@
       "suspended": "Suspended",
       "archived": "Archived",
       "inactive": "Inactive"
+    },
+    "tab": {
+      "users": "Users",
+      "roles": "Roles",
+      "permissions": "Permissions Matrix",
+      "invitations": "Invitations",
+      "audit": "Audit"
+    },
+    "inviteActions": "Invite or add users",
+    "defaultPerms": "{{n}} default permissions",
+    "customHint": "Configure via Permissions Matrix",
+    "rolesNote": "Built-in roles are owner, manager, and employee. Use the 'custom' role plus the Permissions Matrix to define a role tailored to your team. Owner privileges cannot be granted from this page.",
+    "roleDesc": {
+      "owner": "Full control of the organization, including billing and members.",
+      "manager": "Manage day-to-day operations, products, orders, and members.",
+      "employee": "Day-to-day work: view products, record movements, use the scanner.",
+      "custom": "Permissions are fully defined by the organization owner."
+    },
+    "auditTitle": "Recent user, role and permission changes",
+    "audit": {
+      "when": "When",
+      "action": "Action",
+      "target": "Target",
+      "by": "Performed by",
+      "details": "Details",
+      "empty": "No audit entries yet."
     }
   },
   "customers": {
