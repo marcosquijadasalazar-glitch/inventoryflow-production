@@ -237,6 +237,7 @@ function UsersPage() {
             users={pending}
             onEdit={setEditing}
             onDelete={setDeleting}
+            onPurge={role === "super_admin" ? setPurging : undefined}
             onChanged={invalidate}
             hint={t("orgUsers.pendingHint", "Users who have not signed in yet.")}
           />
