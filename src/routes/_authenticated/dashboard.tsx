@@ -216,18 +216,20 @@ function Dashboard() {
           sub={t("dashboard.unitsOnHand", { count: totalUnits.toLocaleString() as any })}
           trend="up"
         />
-        <Stat
-          icon={DollarSign}
-          label={t("dashboard.inventoryValue")}
-          value={
-            products.isLoading
-              ? null
-              : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-          }
-          sub={t("dashboard.totalStockValue")}
-          trend="up"
-          accent="primary"
-        />
+        {canCost && (
+          <Stat
+            icon={DollarSign}
+            label={t("dashboard.inventoryValue")}
+            value={
+              products.isLoading
+                ? null
+                : `$${inventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+            }
+            sub={t("dashboard.totalStockValue")}
+            trend="up"
+            accent="primary"
+          />
+        )}
         <Stat
           icon={AlertTriangle}
           label={t("dashboard.lowStock")}
