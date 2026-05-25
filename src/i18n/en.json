@@ -1137,5 +1137,17 @@
     "help1": "add — increases stock by quantity",
     "help2": "remove — decreases stock by quantity",
     "help3": "adjustment — sets absolute stock to quantity"
+  },
+  "purge": {
+    "failed": "Purge failed",
+    "irreversibleWarning": "This permanently removes the record and related data. This action cannot be undone.",
+    "password": "Current account password",
+    "typeToConfirm": "Type",
+    "toConfirm": "to confirm",
+    "forceAck": "This company has inventory or orders. Type",
+    "toForce": "to force purge",
+    "reason": "Reason (optional)",
+    "purging": "Purging…",
+    "purgePermanently": "Purge permanently"
   }
 }
