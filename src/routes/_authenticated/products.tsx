@@ -436,13 +436,13 @@ function ProductsPage() {
   const exportSelected = () => {
     const items = (data ?? []).filter((p) => selected.has(p.id));
     if (items.length === 0) return toast.error(t("products.selectToExport"));
-    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items));
+    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(items, { includeCost: canCost, includePrice: canPrice }));
     toast.success(t("products.exported", { count: items.length }));
   };
 
   const exportAll = () => {
     if (!filtered.length) return toast.error(t("products.nothingToExport"));
-    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered));
+    downloadCsv(`products-${Date.now()}.csv`, productsToCsv(filtered, { includeCost: canCost, includePrice: canPrice }));
     toast.success(t("products.exported", { count: filtered.length }));
   };
 
