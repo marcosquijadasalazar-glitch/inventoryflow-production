@@ -465,25 +465,21 @@ function ProblemSolution() {
 /* ---------- Features ---------- */
 
 function Features() {
-  const features = [
-    { icon: Package, title: "Products & catalog", desc: "One clean catalog with SKUs, barcodes, categories, suppliers, locations and live stock." },
-    { icon: ArrowLeftRight, title: "Stock movements", desc: "Add, remove and adjust stock with a full audit trail — every change attributed and timestamped." },
-    { icon: Receipt, title: "Sales & purchase orders", desc: "Issue orders, track fulfillment, and automatically reduce inventory when sales are confirmed." },
-    { icon: ScanLine, title: "Barcode workflows", desc: "Scan in, scan out, and manage stock from any phone — no scanner hardware required." },
-    { icon: AlertTriangle, title: "Low-stock alerts", desc: "Smart thresholds notify your team before something runs out, not after." },
-    { icon: TrendingUp, title: "Reports & insights", desc: "Sales, inventory, movements and operations reports — exportable to CSV and PDF." },
-  ];
+  const { t } = useTranslation();
+  const icons = [Package, ArrowLeftRight, Receipt, ScanLine, AlertTriangle, TrendingUp];
+  const items = t("landing.features.items", { returnObjects: true }) as { title: string; desc: string }[];
+  const features = items.map((it, i) => ({ ...it, icon: icons[i] }));
 
   return (
     <section id="features" className="border-t border-black/[0.06] bg-[#FAFAFA]">
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">Features</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.features.eyebrow")}</p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            Everything you need to run your operations.
+            {t("landing.features.title")}
           </h2>
           <p className="mt-3 text-black/60">
-            A focused set of tools designed for the day-to-day reality of small businesses and warehouses.
+            {t("landing.features.subtitle")}
           </p>
         </div>
 
