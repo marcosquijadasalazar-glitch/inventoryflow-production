@@ -891,6 +891,8 @@
     "trialDaysLeft_one": "{{count}} día restante de prueba",
     "trialDaysLeft_other": "{{count}} días restantes de prueba",
     "trialExpired": "Prueba expirada",
+    "lockedTooltip": "Disponible en {{plan}} y superiores",
+    "lockedTooltipGeneric": "Mejora tu plan para desbloquear",
     "tiers": {
       "free": "Gratis",
       "starter": "Starter",
