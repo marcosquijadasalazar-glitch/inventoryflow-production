@@ -132,6 +132,9 @@ export function ImportDialog({ open, onOpenChange, schema, title, onImport, onDo
           {filename && <span className="text-xs text-muted-foreground self-center">{filename}</span>}
         </div>
 
+        {extraControls && <div className="flex flex-wrap gap-3">{extraControls}</div>}
+
+
         {unknown.length > 0 && (
           <div className="flex items-start gap-2 rounded-md border border-warning/20 bg-warning/5 px-3 py-2 text-xs">
             <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
