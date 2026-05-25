@@ -304,6 +304,28 @@ function StatCard({
   );
 }
 
+type OrgSettings = {
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  timezone: string | null;
+  currency: string | null;
+  website: string | null;
+  footer_notes: string | null;
+  tax_id: string | null;
+  logo_url: string | null;
+} | null;
+
+type OrgOwner = {
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  account_status: string | null;
+  trial_ends_at: string | null;
+} | null;
+
 type OrgRow = {
   id: string;
   company_name: string;
@@ -319,7 +341,12 @@ type OrgRow = {
   product_count: number;
   enabled_modules?: Partial<Record<ModuleKey, boolean>> | null;
   created_at: string;
+  settings: OrgSettings;
+  owner: OrgOwner;
 };
+
+type SortKey = "newest" | "oldest" | "name" | "trial_soon";
+type TrialFilter = "any" | "trial" | "active" | "pending" | "none";
 
 function OrgsTable({
   orgs,
@@ -334,7 +361,15 @@ function OrgsTable({
   const updatePlan = useServerFn(adminUpdateOrgPlan);
   const deleteOrg = useServerFn(deleteOrganizationSecure);
   const [modulesOrg, setModulesOrg] = useState<OrgRow | null>(null);
+  const [editOrg, setEditOrg] = useState<OrgRow | null>(null);
   const [deleteOrgRow, setDeleteOrgRow] = useState<OrgRow | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [trialFilter, setTrialFilter] = useState<TrialFilter>("any");
+  const [dateFilter, setDateFilter] = useState<string>("any"); // any | 7d | 30d | 90d
+  const [sort, setSort] = useState<SortKey>("newest");
 
   const statusMut = useMutation({
     mutationFn: (vars: { id: string; status: Status }) =>
@@ -355,115 +390,245 @@ function OrgsTable({
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (loading) return <Skeleton className="h-32 w-full" />;
-  if (orgs.length === 0)
-    return <p className="p-6 text-sm text-muted-foreground">No companies yet.</p>;
+  // counters across the whole (unfiltered) list
+  const counters = useMemo(() => {
+    let active = 0,
+      pending = 0,
+      trial = 0,
+      suspended = 0;
+    for (const o of orgs) {
+      if (o.status === "suspended") suspended++;
+      else if (o.status === "active") active++;
+      const acct = o.owner?.account_status;
+      if (acct === "pending_approval") pending++;
+      if (acct === "trial_active") trial++;
+    }
+    return { total: orgs.length, active, pending, trial, suspended };
+  }, [orgs]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const dateWindow =
+      dateFilter === "7d" ? 7 :
+      dateFilter === "30d" ? 30 :
+      dateFilter === "90d" ? 90 : null;
+
+    let list = orgs.filter((o) => {
+      if (planFilter !== "all" && o.plan_type !== planFilter) return false;
+      if (statusFilter !== "all" && o.status !== statusFilter) return false;
+      if (trialFilter !== "any") {
+        const acct = o.owner?.account_status ?? "";
+        if (trialFilter === "trial" && acct !== "trial_active") return false;
+        if (trialFilter === "active" && acct !== "active") return false;
+        if (trialFilter === "pending" && acct !== "pending_approval") return false;
+        if (trialFilter === "none" && acct) return false;
+      }
+      if (dateWindow !== null) {
+        const age = (now - new Date(o.created_at).getTime()) / 86400000;
+        if (age > dateWindow) return false;
+      }
+      if (q) {
+        const hay = [
+          o.company_name,
+          o.owner?.full_name,
+          o.owner?.email,
+          o.owner?.phone,
+          o.settings?.email,
+          o.settings?.phone,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    list = [...list].sort((a, b) => {
+      switch (sort) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "name":
+          return a.company_name.localeCompare(b.company_name);
+        case "trial_soon": {
+          const at = a.owner?.trial_ends_at ? new Date(a.owner.trial_ends_at).getTime() : Infinity;
+          const bt = b.owner?.trial_ends_at ? new Date(b.owner.trial_ends_at).getTime() : Infinity;
+          return at - bt;
+        }
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return list;
+  }, [orgs, search, planFilter, statusFilter, trialFilter, dateFilter, sort]);
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Company</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Users</TableHead>
-            <TableHead className="text-right">Products</TableHead>
-            <TableHead className="w-16"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orgs.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell>
-                <div className="font-medium">{o.company_name}</div>
-                {o.business_type && (
-                  <div className="text-xs text-muted-foreground">{o.business_type}</div>
-                )}
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={o.plan_type}
-                  onValueChange={(v) => planMut.mutate({ id: o.id, plan: v as any })}
-                >
-                  <SelectTrigger className="h-8 w-[130px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PLANS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={o.status} />
-              </TableCell>
-              <TableCell className="text-right font-mono">{o.user_count}</TableCell>
-              <TableCell className="text-right font-mono">{o.product_count}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8"
-                    onClick={() => setModulesOrg(o)}
-                    title="Modules"
-                  >
-                    <Settings2 className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline ml-1">Modules</span>
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
+    <div>
+      {/* counters */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-4 border-b border-border">
+        <Counter label="Total" value={counters.total} />
+        <Counter label="Active" value={counters.active} tone="success" />
+        <Counter label="Pending" value={counters.pending} tone="warning" />
+        <Counter label="Trial" value={counters.trial} tone="primary" />
+        <Counter label="Suspended" value={counters.suspended} tone="destructive" />
+      </div>
+
+      {/* filters bar */}
+      <div className="flex flex-wrap items-center gap-2 p-4 border-b border-border">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search company, owner, email, phone…"
+            className="h-9 pl-8"
+          />
+        </div>
+        <Select value={planFilter} onValueChange={setPlanFilter}>
+          <SelectTrigger className="h-9 w-[120px]"><SelectValue placeholder="Plan" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All plans</SelectItem>
+            {PLANS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={trialFilter} onValueChange={(v) => setTrialFilter(v as TrialFilter)}>
+          <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="Trial" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any account</SelectItem>
+            <SelectItem value="trial">Trial</SelectItem>
+            <SelectItem value="active">Active account</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="none">No owner</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="Created" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any date</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90d">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Sort" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="name">Company name</SelectItem>
+            <SelectItem value="trial_soon">Trial ending soon</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {loading ? (
+        <Skeleton className="h-32 w-full m-4" />
+      ) : filtered.length === 0 ? (
+        <p className="p-6 text-sm text-muted-foreground">No companies match.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Company</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Account</TableHead>
+                <TableHead className="text-right">Users</TableHead>
+                <TableHead className="text-right">Products</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((o) => (
+                <TableRow key={o.id}>
+                  <TableCell>
+                    <div className="font-medium">{o.company_name}</div>
+                    {o.business_type && (
+                      <div className="text-xs text-muted-foreground">{o.business_type}</div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <div>{o.owner?.full_name ?? "—"}</div>
+                    <div className="text-muted-foreground">{o.owner?.email ?? o.settings?.email ?? "—"}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={o.plan_type}
+                      onValueChange={(v) => planMut.mutate({ id: o.id, plan: v as any })}
+                    >
+                      <SelectTrigger className="h-8 w-[120px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PLANS.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell><StatusBadge status={o.status} /></TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <Badge variant="outline" className="w-fit capitalize text-[10px]">
+                        {(o.owner?.account_status ?? "—").replace("_", " ")}
+                      </Badge>
+                      {o.owner?.account_status === "trial_active" && o.owner.trial_ends_at && (
+                        <span className="text-[10px] text-muted-foreground">
+                          ends {new Date(o.owner.trial_ends_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-mono">{o.user_count}</TableCell>
+                  <TableCell className="text-right font-mono">{o.product_count}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" className="h-8" onClick={() => setEditOrg(o)} title="Edit">
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline ml-1">Edit</span>
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Status</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        onClick={() => statusMut.mutate({ id: o.id, status: "active" })}
-                      >
-                        Reactivate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => statusMut.mutate({ id: o.id, status: "inactive" })}
-                      >
-                        Deactivate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => statusMut.mutate({ id: o.id, status: "suspended" })}
-                      >
-                        Suspend
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => statusMut.mutate({ id: o.id, status: "archived" })}
-                      >
-                        Archive
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setDeleteOrgRow(o)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Delete company…
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <ModulesDialog
-        org={modulesOrg}
-        onOpenChange={(open) => !open && setModulesOrg(null)}
-        onSaved={onChanged}
-      />
+                      <Button variant="ghost" size="sm" className="h-8" onClick={() => setModulesOrg(o)} title="Modules">
+                        <Settings2 className="h-3.5 w-3.5" />
+                        <span className="hidden md:inline ml-1">Modules</span>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Status</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => statusMut.mutate({ id: o.id, status: "active" })}>Reactivate</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => statusMut.mutate({ id: o.id, status: "inactive" })}>Deactivate</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => statusMut.mutate({ id: o.id, status: "suspended" })}>Suspend</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => statusMut.mutate({ id: o.id, status: "archived" })}>Archive</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOrgRow(o)}>
+                            <Trash2 className="h-3.5 w-3.5" /> Delete company…
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <ModulesDialog org={modulesOrg} onOpenChange={(open) => !open && setModulesOrg(null)} onSaved={onChanged} />
+      <EditOrgDialog org={editOrg} onOpenChange={(open) => !open && setEditOrg(null)} onSaved={onChanged} />
       <DeleteConfirmDialog
         open={!!deleteOrgRow}
         onOpenChange={(o) => !o && setDeleteOrgRow(null)}
@@ -486,6 +651,180 @@ function OrgsTable({
           onChanged();
         }}
       />
+    </div>
+  );
+}
+
+function Counter({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "success" | "warning" | "primary" | "destructive";
+}) {
+  const cls =
+    tone === "success" ? "text-success" :
+    tone === "warning" ? "text-warning" :
+    tone === "primary" ? "text-primary" :
+    tone === "destructive" ? "text-destructive" :
+    "text-foreground";
+  return (
+    <div className="rounded-md border border-border bg-card p-2.5">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-xl font-semibold mt-0.5 ${cls}`}>{value}</div>
+    </div>
+  );
+}
+
+function EditOrgDialog({
+  org,
+  onOpenChange,
+  onSaved,
+}: {
+  org: OrgRow | null;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+}) {
+  const saveProfile = useServerFn(updateCompanyProfile);
+  const updatePlan = useServerFn(adminUpdateOrgPlan);
+  const setOrgStatus = useServerFn(adminSetOrganizationStatus);
+
+  const [form, setForm] = useState({
+    company_name: "",
+    business_type: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    country: "",
+    timezone: "",
+    currency: "",
+    website: "",
+    footer_notes: "",
+    plan_type: "free" as (typeof PLANS)[number],
+    status: "active" as Status,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!org) return;
+    const s = org.settings ?? ({} as any);
+    setForm({
+      company_name: org.company_name ?? "",
+      business_type: org.business_type ?? "",
+      phone: s.phone ?? "",
+      email: s.email ?? "",
+      address: s.address ?? "",
+      city: s.city ?? "",
+      country: s.country ?? "",
+      timezone: s.timezone ?? "",
+      currency: s.currency ?? "",
+      website: s.website ?? "",
+      footer_notes: s.footer_notes ?? "",
+      plan_type: org.plan_type,
+      status: org.status,
+    });
+  }, [org]);
+
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = async () => {
+    if (!org) return;
+    setSaving(true);
+    try {
+      await saveProfile({
+        data: {
+          organizationId: org.id,
+          values: {
+            company_name: form.company_name || null,
+            business_type: form.business_type || null,
+            phone: form.phone || null,
+            email: form.email || null,
+            address: form.address || null,
+            city: form.city || null,
+            country: form.country || null,
+            timezone: form.timezone || null,
+            currency: form.currency || null,
+            website: form.website || null,
+            footer_notes: form.footer_notes || null,
+          },
+        },
+      });
+      if (form.plan_type !== org.plan_type) {
+        await updatePlan({ data: { organization_id: org.id, plan_type: form.plan_type } });
+      }
+      if (form.status !== org.status) {
+        await setOrgStatus({ data: { organization_id: org.id, status: form.status } });
+      }
+      toast.success("Company updated");
+      onSaved();
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!org} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Edit company — {org?.company_name}</DialogTitle>
+          <DialogDescription>
+            Super admin edit. Changes apply across the organization and are recorded in the audit log.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+          <Field label="Company name"><Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} /></Field>
+          <Field label="Business type"><Input value={form.business_type} onChange={(e) => set("business_type", e.target.value)} /></Field>
+          <Field label="Phone"><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
+          <Field label="Email"><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></Field>
+          <Field label="Address" className="sm:col-span-2"><Input value={form.address} onChange={(e) => set("address", e.target.value)} /></Field>
+          <Field label="City"><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></Field>
+          <Field label="Country"><Input value={form.country} onChange={(e) => set("country", e.target.value)} /></Field>
+          <Field label="Timezone"><Input value={form.timezone} onChange={(e) => set("timezone", e.target.value)} placeholder="America/New_York" /></Field>
+          <Field label="Currency"><Input value={form.currency} onChange={(e) => set("currency", e.target.value)} maxLength={10} placeholder="USD" /></Field>
+          <Field label="Website" className="sm:col-span-2"><Input value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://" /></Field>
+          <Field label="Notes" className="sm:col-span-2">
+            <Input value={form.footer_notes} onChange={(e) => set("footer_notes", e.target.value)} />
+          </Field>
+          <Field label="Plan">
+            <Select value={form.plan_type} onValueChange={(v) => set("plan_type", v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PLANS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Status">
+            <Select value={form.status} onValueChange={(v) => set("status", v as Status)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+          <Button onClick={submit} disabled={saving || !form.company_name.trim()}>
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={`space-y-1.5 ${className ?? ""}`}>
+      <Label className="text-xs">{label}</Label>
+      {children}
     </div>
   );
 }
