@@ -473,6 +473,7 @@ function OrgsTable({
       dateFilter === "90d" ? 90 : null;
 
     let list = orgs.filter((o) => {
+      if (!includeArchived && (o.status === "archived" || (o as any).deleted_at)) return false;
       if (planFilter !== "all" && o.plan_type !== planFilter) return false;
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       if (trialFilter !== "any") {
