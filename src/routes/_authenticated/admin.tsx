@@ -86,6 +86,7 @@ import {
   adminResetUserPassword,
 } from "@/lib/admin.functions";
 import { adminUpdateOrgModules, adminSetModuleOverrides } from "@/lib/modules.functions";
+import { adminListOnboarding } from "@/lib/onboarding.functions";
 import {
   MODULE_KEYS,
   MODULE_LABELS,
