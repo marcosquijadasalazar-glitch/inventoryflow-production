@@ -105,14 +105,22 @@ export function ExportMenu<T>(props: ExportMenuProps<T>) {
           orientation,
           meta,
         });
-      else
-        printRows({
-          title,
-          columns,
-          rows: data,
-          settings: s,
-          userEmail,
-        });
+      else {
+        const tid = toast.loading(t("common.preparingPrint", "Preparing print…"));
+        try {
+          await printRows({
+            title,
+            columns,
+            rows: data,
+            settings: s,
+            userEmail,
+            meta,
+            orientation,
+          });
+        } finally {
+          toast.dismiss(tid);
+        }
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Export failed");
     }
