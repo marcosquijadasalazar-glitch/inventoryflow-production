@@ -197,11 +197,11 @@ function SiteHeader() {
 function Hero() {
   const { t } = useTranslation();
   const badges = [
-    { icon: Smartphone, label: "Mobile friendly" },
-    { icon: MapPin, label: "Multi-location" },
-    { icon: Globe, label: "EN / ES" },
-    { icon: ShieldCheck, label: "Secure" },
-    { icon: Cloud, label: "Cloud based" },
+    { icon: Smartphone, label: t("landing.hero.badges.mobile") },
+    { icon: MapPin, label: t("landing.hero.badges.multilocation") },
+    { icon: Globe, label: t("landing.hero.badges.bilingual") },
+    { icon: ShieldCheck, label: t("landing.hero.badges.secure") },
+    { icon: Cloud, label: t("landing.hero.badges.cloud") },
   ];
   return (
     <section className="relative overflow-hidden">
@@ -212,13 +212,12 @@ function Hero() {
         </div>
 
         <h1 className="mt-6 text-4xl sm:text-5xl lg:text-[64px] font-semibold tracking-[-0.025em] max-w-4xl mx-auto leading-[1.02] text-black">
-          Stop losing inventory.{" "}
-          <span className="text-[#0066FF]">Control your business from anywhere.</span>
+          {t("landing.hero.titleA")}{" "}
+          <span className="text-[#0066FF]">{t("landing.hero.titleB")}</span>
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-black/60 max-w-2xl mx-auto leading-relaxed">
-          InventoryFlow helps businesses manage inventory, products, movements, locations and
-          operations from a modern bilingual platform built for real-world operations.
+          {t("landing.hero.subtitle")}
         </p>
 
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -228,7 +227,7 @@ function Hero() {
             className="h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
           >
             <Link to="/signup">
-              Start Free Trial
+              {t("landing.hero.ctaPrimary")}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -238,7 +237,7 @@ function Hero() {
             size="lg"
             className="h-11 px-5 border-black/15 text-black hover:bg-black/5 bg-white"
           >
-            <a href="#demo">Book Demo</a>
+            <a href="#demo">{t("landing.hero.ctaDemo")}</a>
           </Button>
           <Button
             asChild
@@ -247,7 +246,7 @@ function Hero() {
           >
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="h-4 w-4" />
-              Chat on WhatsApp
+              {t("landing.hero.ctaWhatsapp")}
             </a>
           </Button>
         </div>
