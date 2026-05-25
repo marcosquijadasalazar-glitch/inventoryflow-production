@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { runBackupCore, cleanupBackupsCore } from "@/lib/backup.functions";
+import { runBackupCore, cleanupBackupsCore } from "@/lib/backup.server";
 
 /**
  * Public cron endpoint to trigger scheduled backups.
