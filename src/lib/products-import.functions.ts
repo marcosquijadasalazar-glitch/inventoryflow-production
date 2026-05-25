@@ -88,6 +88,8 @@ export const importProducts = createServerFn({ method: "POST" })
     const toInsert: any[] = [];
     const stockOps: { tmpIdx: number; qty: number }[] = [];
     const newCategories = new Set<string>();
+    const newSuppliers = new Map<string, string>(); // lower -> original name
+
 
     data.rows.forEach((raw, idx) => {
       const rowNum = idx + 2;
