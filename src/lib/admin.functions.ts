@@ -4,7 +4,22 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { planForPriceId } from "@/lib/stripe.server";
 import type { Database } from "@/integrations/supabase/types";
+
+// If the organization has an active/trialing Stripe subscription, the effective
+// plan is the one derived from billing (source of truth), not the manually
+// stored plan_type. Falls back to plan_type otherwise.
+function effectivePlanFor(o: any): "free" | "starter" | "pro" | "enterprise" {
+  const status = (o?.subscription_status as string | null) ?? null;
+  const hasSub = !!o?.stripe_subscription_id;
+  const isActive = hasSub && (status === "active" || status === "trialing" || status === "past_due");
+  if (isActive) {
+    const fromPrice = planForPriceId(o?.stripe_price_id ?? null);
+    if (fromPrice) return fromPrice;
+  }
+  return ((o?.plan_type as any) ?? "free");
+}
 
 async function assertSuperAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -106,14 +121,20 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       if (!ownerByOrg.has(o.organization_id)) ownerByOrg.set(o.organization_id, o);
     });
 
-    return (orgs ?? []).map((o: any) => ({
-      ...o,
-      status: deriveOrgStatus(o),
-      user_count: usersByOrg.get(o.id) ?? 0,
-      product_count: productsByOrg.get(o.id) ?? 0,
-      settings: settingsByOrg.get(o.id) ?? null,
-      owner: ownerByOrg.get(o.id) ?? null,
-    }));
+    return (orgs ?? []).map((o: any) => {
+      const eff = effectivePlanFor(o);
+      return {
+        ...o,
+        plan_type: eff,
+        stored_plan_type: o.plan_type,
+        effective_plan: eff,
+        status: deriveOrgStatus(o),
+        user_count: usersByOrg.get(o.id) ?? 0,
+        product_count: productsByOrg.get(o.id) ?? 0,
+        settings: settingsByOrg.get(o.id) ?? null,
+        owner: ownerByOrg.get(o.id) ?? null,
+      };
+    });
   });
 
 export const adminGetStats = createServerFn({ method: "GET" })
