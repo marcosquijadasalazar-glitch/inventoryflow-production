@@ -228,7 +228,7 @@
         "pro": {
           "name": "Pro",
           "price": "$79",
-          "setupFee": "$99 one-time setup fee",
+          "setupFee": "+ $79 guided implementation",
           "tagline": "For growing operations that need control.",
           "features": [
             "Everything in Starter",
