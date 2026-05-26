@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { PLAN_LIMITS } from "./plan-limits";
+import { createNotification } from "./notifications.functions";
 
 // Roles an owner/manager is allowed to assign within their org.
 const ASSIGNABLE_ROLES = ["manager", "employee", "custom"] as const;
