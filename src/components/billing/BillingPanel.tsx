@@ -240,10 +240,11 @@ export function BillingPanel() {
 }
 
 function PlanCard({
-  name, price, features, current, onSelect, busy, ctaLabel, highlight,
+  name, price, setupNote, features, current, onSelect, busy, ctaLabel, highlight,
 }: {
   name: string;
   price: string;
+  setupNote?: string;
   features: string[];
   current: boolean;
   onSelect: () => void;
@@ -257,6 +258,9 @@ function PlanCard({
         <h3 className="font-semibold">{name}</h3>
         <span className="text-sm text-muted-foreground">{price}</span>
       </div>
+      {setupNote && (
+        <div className="mt-1 text-xs text-muted-foreground">{setupNote}</div>
+      )}
       <ul className="mt-3 space-y-1 text-sm text-muted-foreground flex-1">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-1.5">
