@@ -140,9 +140,9 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
     const plan = selectedPlan ?? readStoredPlan() ?? "free";
     const meta = readStoredMeta();
     const effectiveCompany = (companyName || meta.companyName || "").trim();
-    console.info("[signup] post-auth", { plan, hasCompany: !!companyName });
+    console.info("[signup] post-auth", { plan, hasCompany: !!effectiveCompany });
 
-    if (!companyName) {
+    if (!effectiveCompany) {
       // No company info captured (e.g. Google OAuth without onboarding form yet).
       // Send to dashboard; the onboarding wizard will collect it.
       clearStored();
@@ -154,10 +154,10 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
       const result = await bootstrapOrgForSignup({
         data: {
           plan,
-          companyName,
-          businessType: (meta.businessType ?? "").trim() || null,
-          phone: (meta.phone ?? "").trim() || null,
-          fullName: (meta.fullName ?? "").trim() || null,
+          companyName: effectiveCompany,
+          businessType: (businessType || meta.businessType || "").trim() || null,
+          phone: (phone || meta.phone || "").trim() || null,
+          fullName: (fullName || meta.fullName || "").trim() || null,
         },
       });
       console.info("[signup] bootstrap", result);
