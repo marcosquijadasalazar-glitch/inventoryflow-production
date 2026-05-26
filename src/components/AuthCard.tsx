@@ -115,7 +115,7 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           setBusy(false);
           return;
         }
-        const { error: err } = await supabase.auth.signUp({
+        const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -139,8 +139,20 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
             email: email.trim(),
           },
         }).catch((e) => console.warn("[signup-notify] failed:", e?.message ?? e));
-        setSignupSuccess(true);
-        toast.success("Account created. Check your email to verify your account.");
+
+        // If a session was returned, email confirmation is disabled —
+        // route the user straight into the app. Otherwise show the
+        // "check your email" screen so confirmation flows still work.
+        if (data.session) {
+          toast.success("Account created. Welcome!");
+          navigate({ to: "/dashboard", replace: true });
+        } else if (data.user && !data.user.email_confirmed_at) {
+          setSignupSuccess(true);
+          toast.success("Account created. Check your email to verify your account.");
+        } else {
+          toast.success("Account created. Please sign in to continue.");
+          navigate({ to: "/login", replace: true });
+        }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
