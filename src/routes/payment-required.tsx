@@ -59,40 +59,56 @@ function PaymentRequiredPage() {
   const pricing = PLAN_PRICING[planKey];
 
   const onCheckout = async () => {
-    if (!pendingPlan) {
-      console.warn("[payment-required] no pending_plan on access status; cannot start checkout");
-      toast.error(t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
+    const orgId = (access.data as any)?.organization_id ?? null;
+    console.info("[payment-required] click fired", {
+      pending_plan: pendingPlan ?? null,
+      organization_id: orgId,
+    });
+    setCheckoutError(null);
+    if (!pendingPlan || (pendingPlan !== "starter" && pendingPlan !== "pro")) {
+      const msg = t("payment.checkoutErrorSupport", {
+        defaultValue: "Checkout could not be started. Please contact support.",
+      });
+      console.warn("[payment-required] no/invalid pending_plan; aborting", { pendingPlan });
+      setCheckoutError(msg);
       return;
     }
-    const orgId = (access.data as any)?.organization_id ?? null;
     setSubmitting(true);
-    console.info("[payment-required] starting checkout", {
+    console.info("[payment-required] createCheckoutSession() started", {
       pending_plan: pendingPlan,
       organization_id: orgId,
     });
     try {
-      const result = await checkout({ data: { plan: pendingPlan } });
-      const url = result?.url ?? null;
-      console.info("[payment-required] checkout session result", {
+      const raw: any = await checkout({ data: { plan: pendingPlan } });
+      // Normalize possible response shapes -> { url: string }
+      const url: string | null =
+        (raw && typeof raw === "object" && (raw.url ?? raw.checkoutUrl ?? raw.session?.url)) || null;
+      console.info("[payment-required] createCheckoutSession() response", {
         pending_plan: pendingPlan,
         organization_id: orgId,
-        session_created: !!result,
+        response_keys: raw && typeof raw === "object" ? Object.keys(raw) : null,
         redirect_url_exists: !!url,
       });
       if (!url) {
-        toast.error(t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
+        const msg = t("payment.checkoutErrorSupport", {
+          defaultValue: "Checkout could not be started. Please contact support.",
+        });
+        setCheckoutError(msg);
         setSubmitting(false);
         return;
       }
-      // Keep submitting=true so the button stays disabled during the browser redirect.
-      window.location.href = url;
+      console.info("[payment-required] redirecting via window.location.assign");
+      window.location.assign(url);
     } catch (e: any) {
-      console.error("[payment-required] checkout failed", {
+      const message = e?.message ?? String(e);
+      console.error("[payment-required] createCheckoutSession() threw", {
         pending_plan: pendingPlan,
         organization_id: orgId,
-        message: e?.message,
+        message,
       });
-      toast.error(e?.message ?? t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
+      setCheckoutError(message || t("payment.checkoutErrorSupport", {
+        defaultValue: "Checkout could not be started. Please contact support.",
+      }));
       setSubmitting(false);
     }
   };
