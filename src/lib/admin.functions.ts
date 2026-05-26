@@ -121,14 +121,20 @@ export const adminListOrganizations = createServerFn({ method: "GET" })
       if (!ownerByOrg.has(o.organization_id)) ownerByOrg.set(o.organization_id, o);
     });
 
-    return (orgs ?? []).map((o: any) => ({
-      ...o,
-      status: deriveOrgStatus(o),
-      user_count: usersByOrg.get(o.id) ?? 0,
-      product_count: productsByOrg.get(o.id) ?? 0,
-      settings: settingsByOrg.get(o.id) ?? null,
-      owner: ownerByOrg.get(o.id) ?? null,
-    }));
+    return (orgs ?? []).map((o: any) => {
+      const eff = effectivePlanFor(o);
+      return {
+        ...o,
+        plan_type: eff,
+        stored_plan_type: o.plan_type,
+        effective_plan: eff,
+        status: deriveOrgStatus(o),
+        user_count: usersByOrg.get(o.id) ?? 0,
+        product_count: productsByOrg.get(o.id) ?? 0,
+        settings: settingsByOrg.get(o.id) ?? null,
+        owner: ownerByOrg.get(o.id) ?? null,
+      };
+    });
   });
 
 export const adminGetStats = createServerFn({ method: "GET" })
