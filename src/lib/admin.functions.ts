@@ -583,6 +583,20 @@ export const getMyAccessStatus = createServerFn({ method: "GET" })
         if (orgStatus !== "active") {
           return { ok: false as const, reason: orgStatus, scope: "organization" as const, account_status: accountStatus, trial_ends_at: p.trial_ends_at ?? null };
         }
+        // Payment-required gate: paid plan was selected at signup but
+        // Stripe Checkout has not been completed yet.
+        const pendingPlan = (org as any).pending_plan as "starter" | "pro" | null;
+        const subStatus = (org as any).subscription_status as string | null;
+        if (pendingPlan && subStatus !== "active") {
+          return {
+            ok: false as const,
+            reason: "payment_required" as const,
+            scope: "billing" as const,
+            account_status: accountStatus,
+            trial_ends_at: p.trial_ends_at ?? null,
+            pending_plan: pendingPlan,
+          };
+        }
       }
     }
     return { ok: true as const, reason: null, scope: "ok" as const, account_status: accountStatus, trial_ends_at: p.trial_ends_at ?? null };

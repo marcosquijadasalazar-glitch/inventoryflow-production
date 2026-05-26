@@ -75,8 +75,11 @@ function AuthenticatedLayout() {
 
 
   if (access.data && !access.data.ok) {
-    // Redirect to pending-approval page (handles all not-ok scopes)
-    if (pathname !== "/pending-approval") {
+    if ((access.data as any).scope === "billing") {
+      if (pathname !== "/payment-required") {
+        navigate({ to: "/payment-required", replace: true });
+      }
+    } else if (pathname !== "/pending-approval") {
       navigate({
         to: "/pending-approval",
         replace: true,
