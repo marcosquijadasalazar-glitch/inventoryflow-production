@@ -126,6 +126,17 @@
     "cancelledTitle": "Your account has been cancelled.",
     "body": "An administrator will review your access shortly. You'll receive an email once your account is activated."
   },
+  "payment": {
+    "title": "Payment required",
+    "body": "Complete your payment to activate your {{plan}} plan.",
+    "perMonth": "/month",
+    "setupFee": "One-time setup fee",
+    "taxNote": "Tax calculated at checkout.",
+    "continueCheckout": "Continue to Checkout",
+    "changePlan": "Change plan",
+    "contactSupport": "Contact support on WhatsApp",
+    "checkoutError": "Could not start checkout. Please try again."
+  },
   "landing": {
     "nav": {
       "features": "Features",
