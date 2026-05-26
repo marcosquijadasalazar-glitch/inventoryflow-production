@@ -95,11 +95,26 @@ export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode
     }
   };
 
+  const goPostAuth = async () => {
+    if (checkoutPlan) {
+      try {
+        const { url } = await createCheckoutSession({ data: { plan: checkoutPlan } });
+        window.location.href = url;
+        return;
+      } catch (e: any) {
+        console.warn("[signup] checkout failed, falling back to dashboard", e?.message);
+        toast.error(e?.message ?? "Could not start checkout. Opening dashboard.");
+      }
+    }
+    navigate({ to: "/dashboard", replace: true });
+  };
+
   useEffect(() => {
     if (!authLoading && session && !signupSuccess) {
-      navigate({ to: "/dashboard", replace: true });
+      void goPostAuth();
     }
-  }, [authLoading, session, navigate, signupSuccess]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, session, signupSuccess]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
