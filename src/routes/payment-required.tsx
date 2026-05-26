@@ -17,8 +17,8 @@ export const Route = createFileRoute("/payment-required")({
 });
 
 const PLAN_PRICING = {
-  starter: { monthly: "$14.99", setup: "$49", label: "Starter" },
-  pro: { monthly: "$79", setup: "$99", label: "Pro" },
+  starter: { monthly: "$14.99", setup: "$19", label: "Starter", setupLabel: "One-time onboarding" },
+  pro: { monthly: "$79", setup: "$79", label: "Pro", setupLabel: "Guided implementation" },
 } as const;
 
 function PaymentRequiredPage() {
