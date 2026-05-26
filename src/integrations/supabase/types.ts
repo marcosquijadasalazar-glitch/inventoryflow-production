@@ -241,6 +241,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          organization_id: string
+          read: boolean
+          read_at: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          organization_id: string
+          read?: boolean
+          read_at?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          organization_id?: string
+          read?: boolean
+          read_at?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           active_status: boolean
@@ -1146,6 +1185,13 @@ export type Database = {
       app_role: "super_admin" | "owner" | "manager" | "employee"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
+      notification_type:
+        | "low_stock"
+        | "payment_failed"
+        | "trial_ending"
+        | "user_created"
+        | "role_changed"
+        | "system"
       org_plan: "free" | "starter" | "pro" | "enterprise"
       payment_status: "unpaid" | "paid" | "partial" | "refunded"
       po_status:
@@ -1333,6 +1379,14 @@ export const Constants = {
       app_role: ["super_admin", "owner", "manager", "employee"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
       movement_type: ["add", "remove", "adjustment"],
+      notification_type: [
+        "low_stock",
+        "payment_failed",
+        "trial_ending",
+        "user_created",
+        "role_changed",
+        "system",
+      ],
       org_plan: ["free", "starter", "pro", "enterprise"],
       payment_status: ["unpaid", "paid", "partial", "refunded"],
       po_status: [
