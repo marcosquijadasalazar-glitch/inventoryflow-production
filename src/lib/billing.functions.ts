@@ -192,17 +192,14 @@ export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ url: string }> => {
     const { profile, org } = await loadOwnerOrg(context.userId);
+    void profile;
+    // Do NOT auto-create a Stripe customer here. The Billing Portal is for
+    // existing customers (invoice history, payment method, cancel). If the org
+    // has never checked out, there's no customer to manage.
     if (!org.stripe_customer_id) {
-      // create the customer on the fly so the portal opens cleanly
-      await ensureStripeCustomer(org.id, profile.email);
+      throw new Error("No billing account found.");
     }
-    const refreshed = await supabaseAdmin
-      .from("organizations")
-      .select("stripe_customer_id")
-      .eq("id", org.id)
-      .maybeSingle();
-    const customerId = refreshed.data?.stripe_customer_id as string | null;
-    if (!customerId) throw new Error("Stripe customer not configured");
+    const customerId = org.stripe_customer_id;
 
     const stripe = getStripe();
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
@@ -214,3 +211,4 @@ export const createPortalSession = createServerFn({ method: "POST" })
     });
     return { url: session.url };
   });
+
