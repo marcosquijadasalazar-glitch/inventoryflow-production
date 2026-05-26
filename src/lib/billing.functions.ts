@@ -3,9 +3,13 @@ import { z } from "zod";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { ensureStripeCustomer, getStripe, priceIdForPlan, type BillingPlan } from "./stripe.server";
-
-const TRIAL_DAYS = 14;
+import {
+  ensureStripeCustomer,
+  getStripe,
+  priceIdForPlan,
+  setupPriceIdForPlan,
+  type BillingPlan,
+} from "./stripe.server";
 
 async function loadOwnerOrg(userId: string) {
   const { data: profile, error: pErr } = await supabaseAdmin
