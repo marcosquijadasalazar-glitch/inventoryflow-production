@@ -665,7 +665,10 @@ function InviteDialog({
             <Select value={role} onValueChange={(v) => setRole(v as AssignableRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
+                {canAssignManager && (
+                  <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
+                )}
+
                 <SelectItem value="employee">{t("permissions.role.employee")}</SelectItem>
                 <SelectItem value="custom">{t("permissions.role.custom")}</SelectItem>
               </SelectContent>
