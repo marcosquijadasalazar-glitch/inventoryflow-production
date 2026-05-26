@@ -311,6 +311,16 @@ export const orgUpdateUser = createServerFn({ method: "POST" })
         previous_status: target.role,
         new_status: data.role,
       });
+      if (me.organization_id) {
+        await createNotification({
+          organization_id: me.organization_id,
+          user_id: data.user_id,
+          type: "role_changed",
+          title: "Your role was updated",
+          message: `Your role was changed from ${target.role} to ${data.role}.`,
+          metadata: { previous: target.role, next: data.role },
+        });
+      }
     } else {
       await writeAudit({
         action_type: "update_user",
