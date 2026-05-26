@@ -40,6 +40,9 @@ export type BillingStatus = {
   has_used_trial: boolean;
   is_owner: boolean;
   cancel_at_period_end: boolean | null;
+  setup_fee_paid: boolean;
+  setup_fee_paid_at: string | null;
+  setup_fee_plan: string | null;
 };
 
 export const getBillingStatus = createServerFn({ method: "GET" })
@@ -53,7 +56,7 @@ export const getBillingStatus = createServerFn({ method: "GET" })
     if (!profile?.organization_id) return null;
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("plan_type, subscription_status, current_period_end, grace_period_ends_at, has_used_trial, stripe_subscription_id")
+      .select("plan_type, subscription_status, current_period_end, grace_period_ends_at, has_used_trial, stripe_subscription_id, setup_fee_paid, setup_fee_paid_at, setup_fee_plan")
       .eq("id", profile.organization_id)
       .maybeSingle();
     if (!org) return null;
@@ -78,6 +81,9 @@ export const getBillingStatus = createServerFn({ method: "GET" })
       has_used_trial: !!org.has_used_trial,
       is_owner: profile.role === "owner" || profile.role === "super_admin",
       cancel_at_period_end,
+      setup_fee_paid: !!(org as any).setup_fee_paid,
+      setup_fee_paid_at: ((org as any).setup_fee_paid_at as string | null) ?? null,
+      setup_fee_plan: ((org as any).setup_fee_plan as string | null) ?? null,
     };
   });
 
