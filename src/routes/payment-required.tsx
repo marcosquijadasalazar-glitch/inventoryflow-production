@@ -58,12 +58,39 @@ function PaymentRequiredPage() {
   const pricing = PLAN_PRICING[planKey];
 
   const onCheckout = async () => {
-    if (!pendingPlan) return;
+    if (!pendingPlan) {
+      console.warn("[payment-required] no pending_plan on access status; cannot start checkout");
+      toast.error(t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
+      return;
+    }
+    const orgId = (access.data as any)?.organization_id ?? null;
     setSubmitting(true);
+    console.info("[payment-required] starting checkout", {
+      pending_plan: pendingPlan,
+      organization_id: orgId,
+    });
     try {
-      const { url } = await checkout({ data: { plan: pendingPlan } });
+      const result = await checkout({ data: { plan: pendingPlan } });
+      const url = result?.url ?? null;
+      console.info("[payment-required] checkout session result", {
+        pending_plan: pendingPlan,
+        organization_id: orgId,
+        session_created: !!result,
+        redirect_url_exists: !!url,
+      });
+      if (!url) {
+        toast.error(t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
+        setSubmitting(false);
+        return;
+      }
+      // Keep submitting=true so the button stays disabled during the browser redirect.
       window.location.href = url;
     } catch (e: any) {
+      console.error("[payment-required] checkout failed", {
+        pending_plan: pendingPlan,
+        organization_id: orgId,
+        message: e?.message,
+      });
       toast.error(e?.message ?? t("payment.checkoutError", { defaultValue: "Could not start checkout. Please try again." }));
       setSubmitting(false);
     }
@@ -117,7 +144,10 @@ function PaymentRequiredPage() {
         <div className="mt-6 flex flex-col gap-2">
           <Button onClick={onCheckout} disabled={submitting || !pendingPlan} className="w-full h-11">
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {t("payment.redirecting", { defaultValue: "Redirecting to checkout…" })}
+              </>
             ) : (
               <>
                 {t("payment.continueCheckout", { defaultValue: "Continue to Checkout" })}

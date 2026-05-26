@@ -595,6 +595,7 @@ export const getMyAccessStatus = createServerFn({ method: "GET" })
             account_status: accountStatus,
             trial_ends_at: p.trial_ends_at ?? null,
             pending_plan: pendingPlan,
+            organization_id: p.organization_id,
           };
         }
       }
