@@ -902,8 +902,10 @@ function Pricing() {
                   >
                     {key === "enterprise" ? (
                       <a href={to}>{ctaLabel}</a>
+                    ) : plan ? (
+                      <Link to="/signup" search={{ plan }}>{ctaLabel}</Link>
                     ) : (
-                      <Link to={to}>{ctaLabel}</Link>
+                      <Link to="/signup">{ctaLabel}</Link>
                     )}
                   </Button>
                   {isTrial && (
