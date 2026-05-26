@@ -268,6 +268,7 @@ export type Database = {
           onboarding_product_volume: string | null
           onboarding_started_at: string | null
           onboarding_step: number
+          pending_plan: string | null
           plan_type: Database["public"]["Enums"]["org_plan"]
           setup_fee_paid: boolean
           setup_fee_paid_at: string | null
@@ -305,6 +306,7 @@ export type Database = {
           onboarding_product_volume?: string | null
           onboarding_started_at?: string | null
           onboarding_step?: number
+          pending_plan?: string | null
           plan_type?: Database["public"]["Enums"]["org_plan"]
           setup_fee_paid?: boolean
           setup_fee_paid_at?: string | null
@@ -342,6 +344,7 @@ export type Database = {
           onboarding_product_volume?: string | null
           onboarding_started_at?: string | null
           onboarding_step?: number
+          pending_plan?: string | null
           plan_type?: Database["public"]["Enums"]["org_plan"]
           setup_fee_paid?: boolean
           setup_fee_paid_at?: string | null
