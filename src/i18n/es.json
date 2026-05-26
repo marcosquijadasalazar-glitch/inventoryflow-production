@@ -180,11 +180,13 @@
       "startStarter": "Comenzar",
       "upgradeToPro": "Actualizar a Pro",
       "choosePlan": "Elegir plan",
-      "trialNote": "La tarifa de configuración se cobra una sola vez · Prueba gratis de 7 días en el plan Free · Cancela cuando quieras",
+      "trialNote": "La tarifa única de onboarding/implementación se cobra una sola vez · Prueba gratis de 7 días en el plan Free · Garantía de satisfacción de 30 días · Cancela cuando quieras",
       "freeTrialBanner": "Prueba gratis de 7 días",
       "noCardRequired": "No se requiere tarjeta de crédito",
       "noTrialPaid": "Sin prueba gratis • Activación inmediata tras el pago",
-      "setupFeeOnce": "La tarifa de configuración se cobra una sola vez",
+      "setupFeeOnce": "Configuración cobrada una sola vez",
+      "implementationOnce": "Implementación cobrada una sola vez",
+      "satisfactionGuarantee": "Garantía de satisfacción de 30 días",
       "modulesLabel": "Módulos incluidos",
       "limitsLabel": "Límites del plan",
       "recurringModel": "SaaS recurrente — cancela cuando quieras",
@@ -207,7 +209,7 @@
         "starter": {
           "name": "Starter",
           "price": "$14.99",
-          "setupFee": "$49 tarifa única de configuración",
+          "setupFee": "+ $19 de onboarding (pago único)",
           "tagline": "Para pequeñas empresas que se organizan.",
           "features": [
             "Panel de control",
@@ -226,7 +228,7 @@
         "pro": {
           "name": "Pro",
           "price": "$79",
-          "setupFee": "$99 tarifa única de configuración",
+          "setupFee": "+ $79 de implementación guiada (pago único)",
           "tagline": "Para operaciones en crecimiento que necesitan control.",
           "features": [
             "Todo lo de Starter",

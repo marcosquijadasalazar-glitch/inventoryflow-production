@@ -17,8 +17,8 @@ export const Route = createFileRoute("/payment-required")({
 });
 
 const PLAN_PRICING = {
-  starter: { monthly: "$14.99", setup: "$49", label: "Starter" },
-  pro: { monthly: "$79", setup: "$99", label: "Pro" },
+  starter: { monthly: "$14.99", setup: "$19", label: "Starter", setupLabel: "One-time onboarding" },
+  pro: { monthly: "$79", setup: "$79", label: "Pro", setupLabel: "Guided implementation" },
 } as const;
 
 function PaymentRequiredPage() {
@@ -149,14 +149,15 @@ function PaymentRequiredPage() {
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-muted-foreground">
-              {t("payment.setupFee", { defaultValue: "One-time setup fee" })}
+              {pricing.setupLabel}
             </span>
             <span className="text-sm font-medium">{pricing.setup}</span>
           </div>
           <p className="pt-1 text-xs text-muted-foreground">
-            {t("payment.taxNote", { defaultValue: "Tax calculated at checkout." })}
+            {t("payment.taxNote", { defaultValue: "Tax calculated at checkout." })} · {t("landing.pricing.satisfactionGuarantee", { defaultValue: "30-Day Satisfaction Guarantee" })}
           </p>
         </div>
+
 
         {checkoutError && (
           <div

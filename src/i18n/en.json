@@ -180,11 +180,13 @@
       "startStarter": "Get Started",
       "upgradeToPro": "Upgrade to Pro",
       "choosePlan": "Choose Plan",
-      "trialNote": "Setup fee is charged only once for first-time setup · 7-day free trial on the Free plan · Cancel anytime",
+      "trialNote": "One-time onboarding/implementation fee charged only once · 7-day free trial on the Free plan · 30-Day Satisfaction Guarantee · Cancel anytime",
       "freeTrialBanner": "Free 7-Day Trial",
       "noCardRequired": "No credit card required",
       "noTrialPaid": "No free trial • Instant activation after payment",
-      "setupFeeOnce": "Setup fee charged only once",
+      "setupFeeOnce": "Setup charged only once",
+      "implementationOnce": "Implementation charged only once",
+      "satisfactionGuarantee": "30-Day Satisfaction Guarantee",
       "modulesLabel": "Included modules",
       "limitsLabel": "Plan limits",
       "recurringModel": "Recurring SaaS — cancel anytime",
@@ -207,7 +209,7 @@
         "starter": {
           "name": "Starter",
           "price": "$14.99",
-          "setupFee": "$49 one-time setup fee",
+          "setupFee": "+ $19 one-time onboarding",
           "tagline": "For small businesses getting organized.",
           "features": [
             "Dashboard",
@@ -226,7 +228,7 @@
         "pro": {
           "name": "Pro",
           "price": "$79",
-          "setupFee": "$99 one-time setup fee",
+          "setupFee": "+ $79 guided implementation",
           "tagline": "For growing operations that need control.",
           "features": [
             "Everything in Starter",
