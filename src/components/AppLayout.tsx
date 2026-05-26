@@ -260,14 +260,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 border-b border-border bg-background/80 backdrop-blur-md">
         <Brand />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile drawer */}
