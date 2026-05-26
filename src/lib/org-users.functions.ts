@@ -148,6 +148,13 @@ export const orgInviteUser = createServerFn({ method: "POST" })
     const orgId = me.organization_id!;
     if (!orgId) throw new Error("No organization");
 
+    // RBAC: managers cannot create other managers; only owners/super_admins can.
+    if (me.role === "manager" && data.role === "manager") {
+      throw new Error("Forbidden: managers cannot create other managers");
+    }
+
+
+
     // Plan cap pre-check
     const { data: org } = await supabaseAdmin
       .from("organizations")
