@@ -128,9 +128,11 @@ function AuthenticatedLayout() {
             pathname,
           }}
         >
-          <ModuleGate pathname={pathname}>
-            <Outlet />
-          </ModuleGate>
+          <MustChangePasswordGate>
+            <ModuleGate pathname={pathname}>
+              <Outlet />
+            </ModuleGate>
+          </MustChangePasswordGate>
         </ErrorBoundary>
         <OnboardingGate />
       </UpgradeModalProvider>
