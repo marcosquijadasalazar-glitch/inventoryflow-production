@@ -133,6 +133,7 @@
     "setupFee": "Tarifa única de configuración",
     "taxNote": "Los impuestos se calculan al pagar.",
     "continueCheckout": "Continuar al pago",
+    "redirecting": "Redirigiendo al pago…",
     "changePlan": "Cambiar de plan",
     "contactSupport": "Contactar soporte por WhatsApp",
     "checkoutError": "No se pudo iniciar el pago. Inténtalo de nuevo."
