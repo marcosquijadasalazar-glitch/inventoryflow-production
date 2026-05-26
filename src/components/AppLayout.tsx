@@ -322,6 +322,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <ScanBarcodeButton />
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <NotificationBell />
             <LanguageSwitcher compact />
             <span className="hidden lg:inline truncate max-w-[200px]">{user?.email}</span>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold">
