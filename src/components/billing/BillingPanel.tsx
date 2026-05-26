@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, ExternalLink, Loader2, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CreditCard, ExternalLink, Loader2, Sparkles, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   getBillingStatus,
