@@ -750,11 +750,12 @@ function Pricing() {
     ctaLabel: string;
     ctaVariant: "primary" | "secondary" | "outline";
     to: string;
+    plan?: "starter" | "pro";
   }[] = [
     { key: "trial", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup" },
-    { key: "starter", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup" },
-    { key: "pro", popular: true, ctaLabel: t("landing.pricing.upgradeToPro"), ctaVariant: "primary", to: "/signup" },
-    { key: "enterprise", ctaLabel: t("landing.pricing.contactSales"), ctaVariant: "secondary", to: "/signup" },
+    { key: "starter", ctaLabel: t("landing.pricing.startStarter", "Get Started"), ctaVariant: "outline", to: "/signup", plan: "starter" },
+    { key: "pro", popular: true, ctaLabel: t("landing.pricing.upgradeToPro"), ctaVariant: "primary", to: "/signup", plan: "pro" },
+    { key: "enterprise", ctaLabel: t("landing.pricing.contactSales"), ctaVariant: "secondary", to: `mailto:${SALES_EMAIL}?subject=InventoryFlow%20Enterprise%20Inquiry` },
   ];
 
   const limits: Record<PlanKey, { users: string; products: string; locations: string }> = {
@@ -808,7 +809,7 @@ function Pricing() {
         )}
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {plans.map(({ key, popular, ctaLabel, ctaVariant, to }) => {
+          {plans.map(({ key, popular, ctaLabel, ctaVariant, to, plan }) => {
             const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
             const price = t(`landing.pricing.plans.${key}.price`);
             const setupFee = t(`landing.pricing.plans.${key}.setupFee`, { defaultValue: "" });
@@ -899,8 +900,25 @@ function Pricing() {
                           : "bg-black hover:bg-black/85 text-white"
                     }`}
                   >
-                    <Link to={to}>{ctaLabel}</Link>
+                    {key === "enterprise" ? (
+                      <a href={to}>{ctaLabel}</a>
+                    ) : plan ? (
+                      <Link to="/signup" search={{ plan }}>{ctaLabel}</Link>
+                    ) : (
+                      <Link to="/signup">{ctaLabel}</Link>
+                    )}
                   </Button>
+                  {isTrial && (
+                    <p className="mt-2 text-center text-[11px] text-black/50">
+                      {t("landing.pricing.noCardRequired", "No credit card required")}
+                    </p>
+                  )}
+                  {(key === "starter" || key === "pro") && (
+                    <div className="mt-2 space-y-0.5 text-center text-[11px] text-black/50">
+                      <p>{t("landing.pricing.noTrialPaid", "No free trial • Instant activation after payment")}</p>
+                      <p>{t("landing.pricing.setupFeeOnce", "Setup fee charged only once")}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             );

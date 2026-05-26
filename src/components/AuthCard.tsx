@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { notifyAdminOfSignup } from "@/lib/signup-notify.functions";
+import { createCheckoutSession } from "@/lib/billing.functions";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
 
-export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
+export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode?: Mode; checkoutPlan?: "starter" | "pro" }) {
   const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -94,11 +95,26 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
     }
   };
 
+  const goPostAuth = async () => {
+    if (checkoutPlan) {
+      try {
+        const { url } = await createCheckoutSession({ data: { plan: checkoutPlan } });
+        window.location.href = url;
+        return;
+      } catch (e: any) {
+        console.warn("[signup] checkout failed, falling back to dashboard", e?.message);
+        toast.error(e?.message ?? "Could not start checkout. Opening dashboard.");
+      }
+    }
+    navigate({ to: "/dashboard", replace: true });
+  };
+
   useEffect(() => {
     if (!authLoading && session && !signupSuccess) {
-      navigate({ to: "/dashboard", replace: true });
+      void goPostAuth();
     }
-  }, [authLoading, session, navigate, signupSuccess]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, session, signupSuccess]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -156,7 +172,7 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
         // 1) Session returned → confirmation disabled. Go straight in.
         if (data.session) {
           toast.success("Account created. Welcome!");
-          navigate({ to: "/dashboard", replace: true });
+          await goPostAuth();
         } else if (data.user?.email_confirmed_at) {
           // 2) Already confirmed (auto-confirm) but no session → sign in now.
           const { data: signInData, error: signInErr } =
@@ -167,7 +183,7 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
             navigate({ to: "/login", replace: true });
           } else {
             toast.success("Account created. Welcome!");
-            navigate({ to: "/dashboard", replace: true });
+            await goPostAuth();
           }
         } else if (data.user) {
           // 3) No session, not confirmed → try auto sign-in. If it works,
@@ -177,7 +193,7 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
             await supabase.auth.signInWithPassword({ email, password });
           if (signInData?.session) {
             toast.success("Account created. Welcome!");
-            navigate({ to: "/dashboard", replace: true });
+            await goPostAuth();
           } else {
             setSignupSuccess(true);
             toast.success("Account created. Check your email to verify your account.");
