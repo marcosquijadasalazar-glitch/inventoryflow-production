@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { notifyAdminOfSignup } from "@/lib/signup-notify.functions";
 import { createCheckoutSession } from "@/lib/billing.functions";
+import { bootstrapOrgForSignup } from "@/lib/signup-bootstrap.functions";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,12 @@ import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield, User, Build
 import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
+type SelectedPlan = "free" | "starter" | "pro";
 
-export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode?: Mode; checkoutPlan?: "starter" | "pro" }) {
+const PLAN_KEY = "if_selected_plan";
+const PLAN_META_KEY = "if_signup_meta";
+
+export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode?: Mode; selectedPlan?: SelectedPlan }) {
   const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
