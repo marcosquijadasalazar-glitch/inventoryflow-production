@@ -22,10 +22,24 @@ export function priceIdForPlan(plan: BillingPlan): string {
   return id;
 }
 
+export function setupPriceIdForPlan(plan: BillingPlan): string | null {
+  const id = plan === "starter"
+    ? process.env.STRIPE_SETUP_STARTER
+    : process.env.STRIPE_SETUP_PRO;
+  return id || null;
+}
+
 export function planForPriceId(priceId: string | null | undefined): BillingPlan | null {
   if (!priceId) return null;
   if (priceId === process.env.STRIPE_PRICE_STARTER) return "starter";
   if (priceId === process.env.STRIPE_PRICE_PRO) return "pro";
+  return null;
+}
+
+export function isSetupPriceId(priceId: string | null | undefined): BillingPlan | null {
+  if (!priceId) return null;
+  if (priceId === process.env.STRIPE_SETUP_STARTER) return "starter";
+  if (priceId === process.env.STRIPE_SETUP_PRO) return "pro";
   return null;
 }
 
