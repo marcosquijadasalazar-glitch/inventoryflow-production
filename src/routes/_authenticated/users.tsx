@@ -138,7 +138,14 @@ function UsersPage() {
               {t("orgUsers.seatUsage", "{{used}} / {{cap}} seats", { used, cap })}
             </Badge>
           )}
+          {(role === "owner" || role === "manager") && (
+            <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              {t("orgUsers.addUser", "Add User")}
+            </Button>
+          )}
         </div>
+
       </header>
 
       <Tabs defaultValue="users">
