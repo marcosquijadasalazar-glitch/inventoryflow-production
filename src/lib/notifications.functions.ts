@@ -18,7 +18,7 @@ export type NotificationRow = {
   type: NotificationType;
   title: string;
   message: string;
-  metadata: Record<string, unknown> | null;
+  metadata: Record<string, string | number | boolean | null> | null;
   read: boolean;
   read_at: string | null;
   created_at: string;
