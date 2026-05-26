@@ -899,8 +899,23 @@ function Pricing() {
                           : "bg-black hover:bg-black/85 text-white"
                     }`}
                   >
-                    <Link to={to}>{ctaLabel}</Link>
+                    {key === "enterprise" ? (
+                      <a href={to}>{ctaLabel}</a>
+                    ) : (
+                      <Link to={to}>{ctaLabel}</Link>
+                    )}
                   </Button>
+                  {isTrial && (
+                    <p className="mt-2 text-center text-[11px] text-black/50">
+                      {t("landing.pricing.noCardRequired", "No credit card required")}
+                    </p>
+                  )}
+                  {(key === "starter" || key === "pro") && (
+                    <div className="mt-2 space-y-0.5 text-center text-[11px] text-black/50">
+                      <p>{t("landing.pricing.noTrialPaid", "No free trial • Instant activation after payment")}</p>
+                      <p>{t("landing.pricing.setupFeeOnce", "Setup fee charged only once")}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             );
