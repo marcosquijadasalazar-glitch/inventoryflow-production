@@ -172,7 +172,7 @@ export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode
         // 1) Session returned → confirmation disabled. Go straight in.
         if (data.session) {
           toast.success("Account created. Welcome!");
-          navigate({ to: "/dashboard", replace: true });
+          await goPostAuth();
         } else if (data.user?.email_confirmed_at) {
           // 2) Already confirmed (auto-confirm) but no session → sign in now.
           const { data: signInData, error: signInErr } =
@@ -183,7 +183,7 @@ export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode
             navigate({ to: "/login", replace: true });
           } else {
             toast.success("Account created. Welcome!");
-            navigate({ to: "/dashboard", replace: true });
+            await goPostAuth();
           }
         } else if (data.user) {
           // 3) No session, not confirmed → try auto sign-in. If it works,
@@ -193,7 +193,7 @@ export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode
             await supabase.auth.signInWithPassword({ email, password });
           if (signInData?.session) {
             toast.success("Account created. Welcome!");
-            navigate({ to: "/dashboard", replace: true });
+            await goPostAuth();
           } else {
             setSignupSuccess(true);
             toast.success("Account created. Check your email to verify your account.");
