@@ -139,6 +139,10 @@
     "checkoutError": "Could not start checkout. Please try again.",
     "checkoutErrorSupport": "Checkout could not be started. Please contact support."
   },
+  "billing": {
+    "guaranteeTitle": "30-Day Satisfaction Guarantee",
+    "guaranteeDesc": "Refunds are reviewed manually and apply only to the first subscription purchase. Onboarding/implementation fees are normally non-refundable."
+  },
   "landing": {
     "nav": {
       "features": "Features",
@@ -611,6 +615,10 @@
         {
           "q": "How does setup work?",
           "a": "Sign up, complete a short onboarding wizard, import your products, and you're live. Guided onboarding is included in all paid plans."
+        },
+        {
+          "q": "Do you offer refunds?",
+          "a": "We offer a 30-Day Satisfaction Guarantee for first-time subscription purchases. Refunds are reviewed manually. One-time onboarding or implementation fees are normally non-refundable."
         }
       ]
     },

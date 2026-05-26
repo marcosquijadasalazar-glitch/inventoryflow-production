@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, ExternalLink, Loader2, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CreditCard, ExternalLink, Loader2, Sparkles, AlertTriangle, CheckCircle2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   getBillingStatus,
@@ -37,6 +38,7 @@ function statusBadge(status: string) {
 }
 
 export function BillingPanel() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const fetchStatus = useServerFn(getBillingStatus);
   const checkout = useServerFn(createCheckoutSession);
@@ -221,6 +223,16 @@ export function BillingPanel() {
             ctaLabel={data.plan === "pro" ? "Current" : "Upgrade"}
             highlight
           />
+        </div>
+
+        <div className="rounded-lg border border-border bg-muted/40 p-3.5">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-foreground">{t("billing.guaranteeTitle")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("billing.guaranteeDesc")}</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between pt-2 border-t border-border">
