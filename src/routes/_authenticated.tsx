@@ -18,6 +18,26 @@ import { ShieldOff } from "lucide-react";
 import { UpgradeModalProvider } from "@/components/UpgradeDialog";
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 
+function MustChangePasswordGate({ children }: { children: ReactNode }) {
+  const profile = useProfile();
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const must = (profile.data as any)?.must_change_password === true;
+  useEffect(() => {
+    if (must && pathname !== "/change-password") {
+      navigate({ to: "/change-password", replace: true });
+    }
+  }, [must, pathname, navigate]);
+  if (must) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <span className="h-3.5 w-3.5 rounded-full border-2 border-muted border-t-primary animate-spin" />
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });

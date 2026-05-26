@@ -19,6 +19,7 @@ import { Route as PaymentRequiredRouteImport } from './routes/payment-required'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
+import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
@@ -94,6 +95,11 @@ const EmailConfirmedRoute = EmailConfirmedRouteImport.update({
 const DisclaimerRoute = DisclaimerRouteImport.update({
   id: '/disclaimer',
   path: '/disclaimer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangePasswordRoute = ChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -236,6 +242,7 @@ const ApiPublicHooksRunBackupRoute = ApiPublicHooksRunBackupRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/change-password': typeof ChangePasswordRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/change-password': typeof ChangePasswordRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -312,6 +320,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/change-password': typeof ChangePasswordRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/change-password'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/change-password'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/change-password'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -465,6 +477,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ChangePasswordRoute: typeof ChangePasswordRoute
   DisclaimerRoute: typeof DisclaimerRoute
   EmailConfirmedRoute: typeof EmailConfirmedRoute
   LoginRoute: typeof LoginRoute
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/disclaimer'
       fullPath: '/disclaimer'
       preLoaderRoute: typeof DisclaimerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/change-password': {
+      id: '/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof ChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -793,6 +813,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ChangePasswordRoute: ChangePasswordRoute,
   DisclaimerRoute: DisclaimerRoute,
   EmailConfirmedRoute: EmailConfirmedRoute,
   LoginRoute: LoginRoute,
