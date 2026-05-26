@@ -144,7 +144,10 @@ function PaymentRequiredPage() {
         <div className="mt-6 flex flex-col gap-2">
           <Button onClick={onCheckout} disabled={submitting || !pendingPlan} className="w-full h-11">
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {t("payment.redirecting", { defaultValue: "Redirecting to checkout…" })}
+              </>
             ) : (
               <>
                 {t("payment.continueCheckout", { defaultValue: "Continue to Checkout" })}
