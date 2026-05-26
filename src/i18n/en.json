@@ -136,7 +136,8 @@
     "redirecting": "Redirecting to checkout…",
     "changePlan": "Change plan",
     "contactSupport": "Contact support on WhatsApp",
-    "checkoutError": "Could not start checkout. Please try again."
+    "checkoutError": "Could not start checkout. Please try again.",
+    "checkoutErrorSupport": "Checkout could not be started. Please contact support."
   },
   "landing": {
     "nav": {
