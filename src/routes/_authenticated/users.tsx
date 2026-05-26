@@ -138,7 +138,14 @@ function UsersPage() {
               {t("orgUsers.seatUsage", "{{used}} / {{cap}} seats", { used, cap })}
             </Badge>
           )}
+          {(role === "owner" || role === "manager") && (
+            <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              {t("orgUsers.addUser", "Add User")}
+            </Button>
+          )}
         </div>
+
       </header>
 
       <Tabs defaultValue="users">
@@ -255,8 +262,10 @@ function UsersPage() {
       <InviteDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
+        actorRole={role}
         onInvited={() => { setInviteOpen(false); invalidate(); }}
       />
+
       <ImportDialog
         open={importOpen}
         onOpenChange={setImportOpen}
@@ -577,11 +586,12 @@ function SectionTable({
 }
 
 function InviteDialog({
-  open, onOpenChange, onInvited,
+  open, onOpenChange, onInvited, actorRole,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onInvited: () => void;
+  actorRole?: string;
 }) {
   const { t } = useTranslation();
   const invite = useServerFn(orgInviteUser);
@@ -591,9 +601,12 @@ function InviteDialog({
   const [role, setRole] = useState<AssignableRole>("employee");
   const [busy, setBusy] = useState(false);
 
+  const canAssignManager = actorRole === "owner" || actorRole === "super_admin";
+
   const reset = () => {
     setFullName(""); setEmail(""); setPhone(""); setRole("employee");
   };
+
 
   const submit = async () => {
     if (!fullName.trim() || !email.trim()) {
@@ -652,7 +665,10 @@ function InviteDialog({
             <Select value={role} onValueChange={(v) => setRole(v as AssignableRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
+                {canAssignManager && (
+                  <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
+                )}
+
                 <SelectItem value="employee">{t("permissions.role.employee")}</SelectItem>
                 <SelectItem value="custom">{t("permissions.role.custom")}</SelectItem>
               </SelectContent>
