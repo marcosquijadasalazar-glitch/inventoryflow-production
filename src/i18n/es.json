@@ -209,7 +209,7 @@
         "starter": {
           "name": "Starter",
           "price": "$14.99",
-          "setupFee": "$49 tarifa única de configuración",
+          "setupFee": "+ $19 de onboarding (pago único)",
           "tagline": "Para pequeñas empresas que se organizan.",
           "features": [
             "Panel de control",
