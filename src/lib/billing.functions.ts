@@ -24,7 +24,7 @@ async function loadOwnerOrg(userId: string) {
   if (!profile.organization_id) throw new Error("No organization for user");
   const { data: org, error: oErr } = await supabaseAdmin
     .from("organizations")
-    .select("id, company_name, plan_type, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_price_id, current_period_end, grace_period_ends_at, has_used_trial")
+    .select("id, company_name, plan_type, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_price_id, current_period_end, grace_period_ends_at, has_used_trial, setup_fee_paid, setup_fee_paid_at, setup_fee_plan")
     .eq("id", profile.organization_id)
     .maybeSingle();
   if (oErr || !org) throw new Error("Organization not found");
