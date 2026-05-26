@@ -19,6 +19,7 @@ export function priceIdForPlan(plan: BillingPlan): string {
     ? process.env.STRIPE_PRICE_STARTER
     : process.env.STRIPE_PRICE_PRO;
   if (!id) throw new Error(`Missing Stripe price ID for plan ${plan}`);
+  console.log(`[stripe] subscription price for ${plan} ends with ...${id.slice(-6)}`);
   return id;
 }
 
