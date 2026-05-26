@@ -131,7 +131,7 @@ export const orgListUsers = createServerFn({ method: "GET" })
     };
   });
 
-// -------- Invite (create + reset link) --------
+// -------- Create user (direct, with temporary password) --------
 
 const InviteSchema = z.object({
   email: z.string().trim().email().max(255),
@@ -139,6 +139,29 @@ const InviteSchema = z.object({
   phone: z.string().trim().max(40).optional().nullable(),
   role: AssignableRole,
 });
+
+function generateTempPassword(): string {
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const digits = "23456789";
+  const symbols = "!@#$%^&*-_=+";
+  const all = lower + upper + digits + symbols;
+  const pick = (set: string, n: number) => {
+    const buf = new Uint32Array(n);
+    crypto.getRandomValues(buf);
+    return Array.from(buf, (v) => set[v % set.length]).join("");
+  };
+  const base =
+    pick(lower, 1) + pick(upper, 1) + pick(digits, 1) + pick(symbols, 1) + pick(all, 12);
+  const arr = base.split("");
+  const r = new Uint32Array(arr.length);
+  crypto.getRandomValues(r);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = r[i] % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join("");
+}
 
 export const orgInviteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -152,8 +175,6 @@ export const orgInviteUser = createServerFn({ method: "POST" })
     if (me.role === "manager" && data.role === "manager") {
       throw new Error("Forbidden: managers cannot create other managers");
     }
-
-
 
     // Plan cap pre-check
     const { data: org } = await supabaseAdmin
@@ -176,8 +197,8 @@ export const orgInviteUser = createServerFn({ method: "POST" })
       }
     }
 
-    // Create auth user with random throwaway password.
-    const tempPass = `Tmp_${crypto.randomUUID()}A1!`;
+    // Create auth user with a cryptographically-secure temporary password.
+    const tempPass = generateTempPassword();
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: tempPass,
@@ -193,7 +214,7 @@ export const orgInviteUser = createServerFn({ method: "POST" })
     const uid = created.user?.id;
     if (!uid) throw new Error("Failed to create user");
 
-    // Upsert profile with org + active status so they can use the app once they set password.
+    // Upsert profile with org + active status + must_change_password flag.
     const { error: upErr } = await supabaseAdmin
       .from("profiles")
       .upsert(
@@ -206,34 +227,35 @@ export const orgInviteUser = createServerFn({ method: "POST" })
           organization_id: orgId,
           account_status: "active" as never,
           is_active: true,
+          must_change_password: true,
         } as never,
         { onConflict: "user_id" },
       );
     if (upErr) throw new Error(upErr.message);
 
-    // Send password reset email so the invitee sets their own password.
-    const c = publicAuthClient();
-    const origin = getOrigin();
-    const { error: rpErr } = await c.auth.resetPasswordForEmail(data.email, {
-      redirectTo: `${origin}/reset-password`,
-    });
-    if (rpErr) {
-      // Don't fail invite if email transport hiccups; still log it.
-      // eslint-disable-next-line no-console
-      console.error("[orgInviteUser] reset email failed", rpErr.message);
-    }
-
     await writeAudit({
-      action_type: "invite",
+      action_type: "create_user",
       target_id: uid,
       target_label: data.email,
       performed_by: context.userId,
       performed_by_email: me.email ?? null,
       new_status: "active",
-      metadata: { role: data.role, organization_id: orgId },
+      metadata: { role: data.role, organization_id: orgId, temp_password_issued: true },
     });
 
-    return { user_id: uid };
+    return { user_id: uid, email: data.email, temp_password: tempPass };
+  });
+
+// Clears must_change_password for the current authenticated user.
+export const clearMustChangePassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ must_change_password: false } as never)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 // -------- Update profile (name / phone / role) --------

@@ -600,13 +600,13 @@ function InviteDialog({
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<AssignableRole>("employee");
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState<{ email: string; temp_password: string } | null>(null);
 
   const canAssignManager = actorRole === "owner" || actorRole === "super_admin";
 
   const reset = () => {
     setFullName(""); setEmail(""); setPhone(""); setRole("employee");
   };
-
 
   const submit = async () => {
     if (!fullName.trim() || !email.trim()) {
@@ -615,7 +615,7 @@ function InviteDialog({
     }
     setBusy(true);
     try {
-      await invite({
+      const res = await invite({
         data: {
           full_name: fullName.trim(),
           email: email.trim(),
@@ -623,7 +623,8 @@ function InviteDialog({
           role,
         },
       });
-      toast.success(t("orgUsers.invited", "Invitation sent"));
+      toast.success(t("orgUsers.created", "User created"));
+      setCreated({ email: res.email, temp_password: res.temp_password });
       reset();
       onInvited();
     } catch (e) {
@@ -638,53 +639,124 @@ function InviteDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("orgUsers.invite", "Invite user")}</DialogTitle>
-          <DialogDescription>
-            {t("orgUsers.inviteDesc", "The user will receive an email to set their password.")}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label>{t("orgUsers.fullName", "Full name")}</Label>
-            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={120} />
-          </div>
-          <div>
-            <Label>{t("orgUsers.email", "Email")}</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} />
-          </div>
-          <div>
-            <Label>{t("orgUsers.phone", "Phone")}</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} />
-          </div>
-          <div>
-            <Label>{t("orgUsers.role", "Role")}</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as AssignableRole)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {canAssignManager && (
-                  <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
-                )}
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t("orgUsers.copied", "{{label}} copied", { label }));
+    } catch {
+      toast.error(t("orgUsers.copyFailed", "Copy failed"));
+    }
+  };
 
-                <SelectItem value="employee">{t("permissions.role.employee")}</SelectItem>
-                <SelectItem value="custom">{t("permissions.role.custom")}</SelectItem>
-              </SelectContent>
-            </Select>
+  return (
+    <>
+      <Dialog open={open && !created} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("orgUsers.addUser", "Add User")}</DialogTitle>
+            <DialogDescription>
+              {t("orgUsers.addUserDesc", "Create an active user. A temporary password will be generated and shown once.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>{t("orgUsers.fullName", "Full name")}</Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={120} />
+            </div>
+            <div>
+              <Label>{t("orgUsers.email", "Email")}</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} />
+            </div>
+            <div>
+              <Label>{t("orgUsers.phone", "Phone")}</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} />
+            </div>
+            <div>
+              <Label>{t("orgUsers.role", "Role")}</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AssignableRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {canAssignManager && (
+                    <SelectItem value="manager">{t("permissions.role.manager")}</SelectItem>
+                  )}
+                  <SelectItem value="employee">{t("permissions.role.employee")}</SelectItem>
+                  <SelectItem value="custom">{t("permissions.role.custom")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            {t("common.cancel", "Cancel")}
-          </Button>
-          <Button onClick={submit} disabled={busy}>
-            {busy ? t("common.saving", "Saving…") : t("orgUsers.sendInvite", "Send invitation")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+              {t("common.cancel", "Cancel")}
+            </Button>
+            <Button onClick={submit} disabled={busy}>
+              {busy ? t("common.saving", "Saving…") : t("orgUsers.createUser", "Create user")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!created}
+        onOpenChange={(o) => { if (!o) { setCreated(null); onOpenChange(false); } }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("orgUsers.credentialsTitle", "User created")}</DialogTitle>
+            <DialogDescription>
+              {t(
+                "orgUsers.credentialsDesc",
+                "Share these credentials with the user. The temporary password is shown only once and must be changed on first login.",
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {created && (
+            <div className="space-y-3">
+              <div>
+                <Label>{t("orgUsers.email", "Email")}</Label>
+                <div className="flex gap-2">
+                  <Input readOnly value={created.email} className="font-mono text-sm" />
+                  <Button type="button" variant="outline" onClick={() => copy(created.email, t("orgUsers.email", "Email"))}>
+                    {t("orgUsers.copy", "Copy")}
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label>{t("orgUsers.tempPassword", "Temporary password")}</Label>
+                <div className="flex gap-2">
+                  <Input readOnly value={created.temp_password} className="font-mono text-sm" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => copy(created.temp_password, t("orgUsers.tempPassword", "Temporary password"))}
+                  >
+                    {t("orgUsers.copy", "Copy")}
+                  </Button>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() =>
+                  copy(
+                    `${t("orgUsers.email", "Email")}: ${created.email}\n${t("orgUsers.tempPassword", "Temporary password")}: ${created.temp_password}`,
+                    t("orgUsers.credentials", "Credentials"),
+                  )
+                }
+              >
+                {t("orgUsers.copyBoth", "Copy both")}
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => { setCreated(null); onOpenChange(false); }}>
+              {t("common.done", "Done")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
