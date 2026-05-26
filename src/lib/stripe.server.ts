@@ -19,6 +19,7 @@ export function priceIdForPlan(plan: BillingPlan): string {
     ? process.env.STRIPE_PRICE_STARTER
     : process.env.STRIPE_PRICE_PRO;
   if (!id) throw new Error(`Missing Stripe price ID for plan ${plan}`);
+  console.log(`[stripe] subscription price for ${plan} ends with ...${id.slice(-6)}`);
   return id;
 }
 
@@ -26,6 +27,11 @@ export function setupPriceIdForPlan(plan: BillingPlan): string | null {
   const id = plan === "starter"
     ? process.env.STRIPE_SETUP_STARTER
     : process.env.STRIPE_SETUP_PRO;
+  if (id) {
+    console.log(`[stripe] setup price for ${plan} ends with ...${id.slice(-6)}`);
+  } else {
+    console.log(`[stripe] setup price for ${plan} is not set`);
+  }
   return id || null;
 }
 
