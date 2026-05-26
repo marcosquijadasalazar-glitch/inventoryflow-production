@@ -216,7 +216,7 @@ export function BillingPanel() {
             current={data.plan === "starter"}
             onSelect={() => goCheckout("starter")}
             busy={busy === "starter"}
-            ctaLabel={data.plan === "free" ? "Subscribe" : data.plan === "pro" ? "Downgrade" : "Current"}
+            ctaLabel={data.plan === "free" ? "Subscribe to Starter" : data.plan === "pro" ? "Downgrade to Starter" : "Current"}
           />
           <PlanCard
             name="Pro"
