@@ -228,7 +228,7 @@
         "pro": {
           "name": "Pro",
           "price": "$79",
-          "setupFee": "$99 tarifa única de configuración",
+          "setupFee": "+ $79 de implementación guiada (pago único)",
           "tagline": "Para operaciones en crecimiento que necesitan control.",
           "features": [
             "Todo lo de Starter",
