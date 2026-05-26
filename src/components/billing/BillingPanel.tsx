@@ -225,6 +225,16 @@ export function BillingPanel() {
           />
         </div>
 
+        <div className="rounded-lg border border-border bg-muted/40 p-3.5">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-foreground">{t("billing.guaranteeTitle")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("billing.guaranteeDesc")}</p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground">
             Need Enterprise? <a href="mailto:sales@inventoryflowapp.com" className="underline">Contact sales</a>.
