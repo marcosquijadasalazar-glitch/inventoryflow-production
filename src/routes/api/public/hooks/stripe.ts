@@ -7,6 +7,7 @@ import {
   type BillingPlan,
 } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createNotification } from "@/lib/notifications.functions";
 
 const GRACE_PERIOD_DAYS = 3;
 
