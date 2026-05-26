@@ -136,7 +136,8 @@
     "redirecting": "Redirigiendo al pago…",
     "changePlan": "Cambiar de plan",
     "contactSupport": "Contactar soporte por WhatsApp",
-    "checkoutError": "No se pudo iniciar el pago. Inténtalo de nuevo."
+    "checkoutError": "No se pudo iniciar el pago. Inténtalo de nuevo.",
+    "checkoutErrorSupport": "No se pudo iniciar el pago. Por favor contacta a soporte."
   },
   "landing": {
     "nav": {
