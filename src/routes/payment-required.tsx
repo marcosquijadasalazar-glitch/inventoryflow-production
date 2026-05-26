@@ -28,6 +28,7 @@ function PaymentRequiredPage() {
   const fetchAccess = useServerFn(getMyAccessStatus);
   const checkout = useServerFn(createCheckoutSession);
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login", replace: true });
