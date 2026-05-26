@@ -38,6 +38,7 @@ function statusBadge(status: string) {
 }
 
 export function BillingPanel() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const fetchStatus = useServerFn(getBillingStatus);
   const checkout = useServerFn(createCheckoutSession);
