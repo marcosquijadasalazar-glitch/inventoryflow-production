@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
-import { getStripe, planForPriceId, subscriptionToOrgUpdate } from "@/lib/stripe.server";
+import {
+  getStripe,
+  isSetupPriceId,
+  subscriptionToOrgUpdate,
+  type BillingPlan,
+} from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const GRACE_PERIOD_DAYS = 3;
@@ -8,6 +13,7 @@ const GRACE_PERIOD_DAYS = 3;
 async function updateOrgFromSubscription(sub: Stripe.Subscription) {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
   const orgIdFromMeta = (sub.metadata?.organization_id as string | undefined) ?? null;
+  const selectedPlan = (sub.metadata?.selected_plan as BillingPlan | undefined) ?? null;
 
   let orgId = orgIdFromMeta;
   if (!orgId) {
@@ -30,15 +36,13 @@ async function updateOrgFromSubscription(sub: Stripe.Subscription) {
     subscription_status: upd.subscription_status,
     current_period_end: upd.current_period_end,
   };
-  if (upd.plan) patch.plan_type = upd.plan;
-  if (upd.trial_end_at_iso) {
-    patch.has_used_trial = true;
-  }
-  // Clear grace if subscription is healthy again
+  // Prefer recurring price → plan mapping, fall back to checkout metadata.
+  const plan = upd.plan ?? selectedPlan;
+  if (plan) patch.plan_type = plan;
+
   if (sub.status === "active" || sub.status === "trialing") {
     patch.grace_period_ends_at = null;
   }
-  // On cancel, downgrade to free
   if (sub.status === "canceled") {
     patch.plan_type = "free";
     patch.stripe_subscription_id = null;
@@ -84,6 +88,37 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     .eq("stripe_customer_id", customerId);
 }
 
+async function markSetupFeePaidIfPresent(
+  session: Stripe.Checkout.Session,
+  orgId: string,
+) {
+  try {
+    const stripe = getStripe();
+    const items = await stripe.checkout.sessions.listLineItems(session.id, { limit: 20 });
+    let paidPlan: BillingPlan | null = null;
+    for (const li of items.data) {
+      const pid = li.price?.id ?? null;
+      const setupPlan = isSetupPriceId(pid);
+      if (setupPlan) {
+        paidPlan = setupPlan;
+        break;
+      }
+    }
+    if (paidPlan) {
+      await supabaseAdmin
+        .from("organizations")
+        .update({
+          setup_fee_paid: true,
+          setup_fee_paid_at: new Date().toISOString(),
+          setup_fee_plan: paidPlan,
+        } as any)
+        .eq("id", orgId);
+    }
+  } catch (err) {
+    console.error("[stripe webhook] setup-fee detection failed", err);
+  }
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const orgId = session.metadata?.organization_id;
   if (!orgId) return;
@@ -94,10 +129,34 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       .update({ stripe_customer_id: customerId })
       .eq("id", orgId);
   }
+
+  // Detect & mark setup fee payment from line items.
+  await markSetupFeePaidIfPresent(session, orgId);
+
   if (session.subscription) {
     const subId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
     const stripe = getStripe();
     const sub = await stripe.subscriptions.retrieve(subId);
+    // Carry the selected_plan metadata from checkout to subscription if missing.
+    const selectedPlan = session.metadata?.selected_plan;
+    if (selectedPlan && !sub.metadata?.selected_plan) {
+      try {
+        await stripe.subscriptions.update(subId, {
+          metadata: {
+            ...(sub.metadata ?? {}),
+            organization_id: orgId,
+            selected_plan: selectedPlan,
+          },
+        });
+        (sub as any).metadata = {
+          ...(sub.metadata ?? {}),
+          organization_id: orgId,
+          selected_plan: selectedPlan,
+        };
+      } catch (e) {
+        console.error("[stripe webhook] failed to copy metadata to subscription", e);
+      }
+    }
     await updateOrgFromSubscription(sub);
   }
 }
