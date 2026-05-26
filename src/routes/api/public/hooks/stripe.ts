@@ -7,6 +7,7 @@ import {
   type BillingPlan,
 } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createNotification } from "@/lib/notifications.functions";
 
 const GRACE_PERIOD_DAYS = 3;
 
@@ -77,6 +78,14 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       grace_period_ends_at: graceEnd.toISOString(),
     })
     .eq("id", org.id);
+
+  await createNotification({
+    organization_id: org.id,
+    type: "payment_failed",
+    title: "Payment failed",
+    message: "We could not charge your payment method. Update your billing details to avoid service interruption.",
+    metadata: { invoice_id: invoice.id ?? null, grace_period_ends_at: graceEnd.toISOString() },
+  });
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScanBarcodeButton } from "./ScanBarcodeButton";
+import { NotificationBell } from "./NotificationBell";
 import { useProfile } from "@/lib/profile";
 import { useEnabledModules } from "@/lib/use-modules";
 import { isModuleLockedByPlan, MODULE_MIN_PLAN, type ModuleKey } from "@/lib/modules";
@@ -259,14 +260,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 border-b border-border bg-background/80 backdrop-blur-md">
         <Brand />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile drawer */}
@@ -321,6 +325,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <ScanBarcodeButton />
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <NotificationBell />
             <LanguageSwitcher compact />
             <span className="hidden lg:inline truncate max-w-[200px]">{user?.email}</span>
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-[oklch(0.45_0.22_270)] text-primary-foreground flex items-center justify-center text-[11px] font-semibold">

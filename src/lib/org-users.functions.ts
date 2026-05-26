@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { PLAN_LIMITS } from "./plan-limits";
+import { createNotification } from "./notifications.functions";
 
 // Roles an owner/manager is allowed to assign within their org.
 const ASSIGNABLE_ROLES = ["manager", "employee", "custom"] as const;
@@ -243,6 +244,14 @@ export const orgInviteUser = createServerFn({ method: "POST" })
       metadata: { role: data.role, organization_id: orgId, temp_password_issued: true },
     });
 
+    await createNotification({
+      organization_id: orgId,
+      type: "user_created",
+      title: "New user added",
+      message: `${data.full_name} (${data.email}) was added as ${data.role}.`,
+      metadata: { user_id: uid, email: data.email, role: data.role },
+    });
+
     return { user_id: uid, email: data.email, temp_password: tempPass };
   });
 
@@ -302,6 +311,16 @@ export const orgUpdateUser = createServerFn({ method: "POST" })
         previous_status: target.role,
         new_status: data.role,
       });
+      if (me.organization_id) {
+        await createNotification({
+          organization_id: me.organization_id,
+          user_id: data.user_id,
+          type: "role_changed",
+          title: "Your role was updated",
+          message: `Your role was changed from ${target.role} to ${data.role}.`,
+          metadata: { previous: target.role, next: data.role },
+        });
+      }
     } else {
       await writeAudit({
         action_type: "update_user",
