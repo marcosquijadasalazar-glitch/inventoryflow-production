@@ -139,6 +139,10 @@
     "checkoutError": "Could not start checkout. Please try again.",
     "checkoutErrorSupport": "Checkout could not be started. Please contact support."
   },
+  "billing": {
+    "guaranteeTitle": "30-Day Satisfaction Guarantee",
+    "guaranteeDesc": "Refunds are reviewed manually and apply only to the first subscription purchase. Onboarding/implementation fees are normally non-refundable."
+  },
   "landing": {
     "nav": {
       "features": "Features",
