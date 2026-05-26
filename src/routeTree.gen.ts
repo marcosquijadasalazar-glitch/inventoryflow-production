@@ -41,7 +41,6 @@ import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
-import { Route as AuthenticatedAdminRecoveryRouteImport } from './routes/_authenticated/admin-recovery'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdjustmentsRouteImport } from './routes/_authenticated/adjustments'
 import { Route as ApiPublicHooksStripeRouteImport } from './routes/api/public/hooks/stripe'
@@ -212,12 +211,6 @@ const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdminRecoveryRoute =
-  AuthenticatedAdminRecoveryRouteImport.update({
-    id: '/admin-recovery',
-    path: '/admin-recovery',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -255,7 +248,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -293,7 +285,6 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/alerts': typeof AuthenticatedAlertsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -333,7 +324,6 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/admin-recovery': typeof AuthenticatedAdminRecoveryRoute
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -373,7 +363,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/adjustments'
     | '/admin'
-    | '/admin-recovery'
     | '/alerts'
     | '/customers'
     | '/dashboard'
@@ -411,7 +400,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/adjustments'
     | '/admin'
-    | '/admin-recovery'
     | '/alerts'
     | '/customers'
     | '/dashboard'
@@ -450,7 +438,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/adjustments'
     | '/_authenticated/admin'
-    | '/_authenticated/admin-recovery'
     | '/_authenticated/alerts'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
@@ -718,13 +705,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin-recovery': {
-      id: '/_authenticated/admin-recovery'
-      path: '/admin-recovery'
-      fullPath: '/admin-recovery'
-      preLoaderRoute: typeof AuthenticatedAdminRecoveryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -759,7 +739,6 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAdjustmentsRoute: typeof AuthenticatedAdjustmentsRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAdminRecoveryRoute: typeof AuthenticatedAdminRecoveryRoute
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -784,7 +763,6 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdjustmentsRoute: AuthenticatedAdjustmentsRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAdminRecoveryRoute: AuthenticatedAdminRecoveryRoute,
   AuthenticatedAlertsRoute: AuthenticatedAlertsRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
@@ -830,3 +808,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
