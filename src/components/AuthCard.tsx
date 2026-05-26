@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
 
-export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
+export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode?: Mode; checkoutPlan?: "starter" | "pro" }) {
   const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
