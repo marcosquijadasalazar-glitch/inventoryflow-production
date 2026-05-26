@@ -216,7 +216,7 @@ export function BillingPanel() {
             current={data.plan === "starter"}
             onSelect={() => goCheckout("starter")}
             busy={busy === "starter"}
-            ctaLabel={data.plan === "free" ? "Subscribe" : data.plan === "pro" ? "Downgrade" : "Current"}
+            ctaLabel={data.plan === "free" ? "Subscribe to Starter" : data.plan === "pro" ? "Downgrade to Starter" : "Current"}
           />
           <PlanCard
             name="Pro"
@@ -226,7 +226,7 @@ export function BillingPanel() {
             current={data.plan === "pro"}
             onSelect={() => goCheckout("pro")}
             busy={busy === "pro"}
-            ctaLabel={data.plan === "pro" ? "Current" : "Upgrade"}
+            ctaLabel={data.plan === "pro" ? "Current" : "Upgrade to Pro"}
             highlight
           />
         </div>
@@ -247,7 +247,7 @@ export function BillingPanel() {
           </p>
           <Button variant="outline" size="sm" onClick={goPortal} disabled={busy === "portal"}>
             {busy === "portal" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5 mr-1.5" />}
-            Billing Portal
+            Manage Billing / Invoice History
           </Button>
         </div>
       </CardContent>
