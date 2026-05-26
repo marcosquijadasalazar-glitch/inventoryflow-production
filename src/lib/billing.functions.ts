@@ -95,19 +95,37 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
 
+    // Build line items: recurring subscription + one-time setup fee (only
+    // charged once per organization, ever — not per plan switch).
+    const lineItems: Array<{ price: string; quantity: number }> = [
+      { price: priceIdForPlan(data.plan as BillingPlan), quantity: 1 },
+    ];
+    let includesSetupFee = false;
+    if (!(org as any).setup_fee_paid) {
+      const setupPrice = setupPriceIdForPlan(data.plan as BillingPlan);
+      if (setupPrice) {
+        lineItems.push({ price: setupPrice, quantity: 1 });
+        includesSetupFee = true;
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price: priceIdForPlan(data.plan as BillingPlan), quantity: 1 }],
+      line_items: lineItems,
       success_url: `${base}/settings?billing=success`,
       cancel_url: `${base}/settings?billing=cancelled`,
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      customer_update: { address: "auto", name: "auto" },
       subscription_data: {
-        metadata: { organization_id: org.id },
-        // Trial on first subscription only
-        ...(org.has_used_trial ? {} : { trial_period_days: TRIAL_DAYS }),
+        metadata: { organization_id: org.id, selected_plan: data.plan },
       },
-      metadata: { organization_id: org.id, plan: data.plan },
+      metadata: {
+        organization_id: org.id,
+        selected_plan: data.plan,
+        includes_setup_fee: includesSetupFee ? "true" : "false",
+      },
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
