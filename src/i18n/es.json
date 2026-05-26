@@ -139,6 +139,10 @@
     "checkoutError": "No se pudo iniciar el pago. Inténtalo de nuevo.",
     "checkoutErrorSupport": "No se pudo iniciar el pago. Por favor contacta a soporte."
   },
+  "billing": {
+    "guaranteeTitle": "Garantía de satisfacción de 30 días",
+    "guaranteeDesc": "Los reembolsos se revisan manualmente y aplican solo a la primera compra de suscripción. Las tarifas de onboarding/implementación normalmente no son reembolsables."
+  },
   "landing": {
     "nav": {
       "features": "Funciones",
