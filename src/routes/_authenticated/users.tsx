@@ -586,11 +586,12 @@ function SectionTable({
 }
 
 function InviteDialog({
-  open, onOpenChange, onInvited,
+  open, onOpenChange, onInvited, actorRole,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onInvited: () => void;
+  actorRole?: string;
 }) {
   const { t } = useTranslation();
   const invite = useServerFn(orgInviteUser);
@@ -600,9 +601,12 @@ function InviteDialog({
   const [role, setRole] = useState<AssignableRole>("employee");
   const [busy, setBusy] = useState(false);
 
+  const canAssignManager = actorRole === "owner" || actorRole === "super_admin";
+
   const reset = () => {
     setFullName(""); setEmail(""); setPhone(""); setRole("employee");
   };
+
 
   const submit = async () => {
     if (!fullName.trim() || !email.trim()) {
