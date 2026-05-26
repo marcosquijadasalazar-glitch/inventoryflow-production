@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.notify_on_low_stock() FROM PUBLIC, anon, authenticated;
