@@ -916,7 +916,11 @@ function Pricing() {
                   {(key === "starter" || key === "pro") && (
                     <div className="mt-2 space-y-0.5 text-center text-[11px] text-black/50">
                       <p>{t("landing.pricing.noTrialPaid", "No free trial • Instant activation after payment")}</p>
-                      <p>{t("landing.pricing.setupFeeOnce", "Setup fee charged only once")}</p>
+                      <p>
+                        {key === "pro"
+                          ? t("landing.pricing.implementationOnce", "Implementation charged only once")
+                          : t("landing.pricing.setupFeeOnce", "Setup charged only once")}
+                      </p>
                     </div>
                   )}
                 </div>
