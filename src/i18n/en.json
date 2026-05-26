@@ -133,6 +133,7 @@
     "setupFee": "One-time setup fee",
     "taxNote": "Tax calculated at checkout.",
     "continueCheckout": "Continue to Checkout",
+    "redirecting": "Redirecting to checkout…",
     "changePlan": "Change plan",
     "contactSupport": "Contact support on WhatsApp",
     "checkoutError": "Could not start checkout. Please try again."
