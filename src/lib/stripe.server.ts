@@ -26,6 +26,11 @@ export function setupPriceIdForPlan(plan: BillingPlan): string | null {
   const id = plan === "starter"
     ? process.env.STRIPE_SETUP_STARTER
     : process.env.STRIPE_SETUP_PRO;
+  if (id) {
+    console.log(`[stripe] setup price for ${plan} ends with ...${id.slice(-6)}`);
+  } else {
+    console.log(`[stripe] setup price for ${plan} is not set`);
+  }
   return id || null;
 }
 
