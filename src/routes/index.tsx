@@ -850,8 +850,8 @@ function Pricing() {
                 </div>
 
                 {!isTrial && !isCustom && setupFee && (
-                  <p className="mt-1 text-xs text-black/50">
-                    {t("landing.pricing.setupFee")}: {setupFee}
+                  <p className="mt-1 text-xs text-black/60">
+                    {setupFee}
                   </p>
                 )}
 
