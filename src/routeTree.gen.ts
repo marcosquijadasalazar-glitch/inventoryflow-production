@@ -15,6 +15,7 @@ import { Route as ServiceAgreementRouteImport } from './routes/service-agreement
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
+import { Route as PaymentRequiredRouteImport } from './routes/payment-required'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
@@ -73,6 +74,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PendingApprovalRoute = PendingApprovalRouteImport.update({
   id: '/pending-approval',
   path: '/pending-approval',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentRequiredRoute = PaymentRequiredRouteImport.update({
+  id: '/payment-required',
+  path: '/payment-required',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
+  '/payment-required': typeof PaymentRequiredRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
+  '/payment-required': typeof PaymentRequiredRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -307,6 +315,7 @@ export interface FileRoutesById {
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
+  '/payment-required': typeof PaymentRequiredRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -345,6 +354,7 @@ export interface FileRouteTypes {
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
+    | '/payment-required'
     | '/pending-approval'
     | '/privacy'
     | '/reset-password'
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
+    | '/payment-required'
     | '/pending-approval'
     | '/privacy'
     | '/reset-password'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
+    | '/payment-required'
     | '/pending-approval'
     | '/privacy'
     | '/reset-password'
@@ -456,6 +468,7 @@ export interface RootRouteChildren {
   DisclaimerRoute: typeof DisclaimerRoute
   EmailConfirmedRoute: typeof EmailConfirmedRoute
   LoginRoute: typeof LoginRoute
+  PaymentRequiredRoute: typeof PaymentRequiredRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -508,6 +521,13 @@ declare module '@tanstack/react-router' {
       path: '/pending-approval'
       fullPath: '/pending-approval'
       preLoaderRoute: typeof PendingApprovalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-required': {
+      id: '/payment-required'
+      path: '/payment-required'
+      fullPath: '/payment-required'
+      preLoaderRoute: typeof PaymentRequiredRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -776,6 +796,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisclaimerRoute: DisclaimerRoute,
   EmailConfirmedRoute: EmailConfirmedRoute,
   LoginRoute: LoginRoute,
+  PaymentRequiredRoute: PaymentRequiredRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
