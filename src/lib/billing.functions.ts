@@ -3,9 +3,13 @@ import { z } from "zod";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { ensureStripeCustomer, getStripe, priceIdForPlan, type BillingPlan } from "./stripe.server";
-
-const TRIAL_DAYS = 14;
+import {
+  ensureStripeCustomer,
+  getStripe,
+  priceIdForPlan,
+  setupPriceIdForPlan,
+  type BillingPlan,
+} from "./stripe.server";
 
 async function loadOwnerOrg(userId: string) {
   const { data: profile, error: pErr } = await supabaseAdmin
@@ -20,7 +24,7 @@ async function loadOwnerOrg(userId: string) {
   if (!profile.organization_id) throw new Error("No organization for user");
   const { data: org, error: oErr } = await supabaseAdmin
     .from("organizations")
-    .select("id, company_name, plan_type, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_price_id, current_period_end, grace_period_ends_at, has_used_trial")
+    .select("id, company_name, plan_type, subscription_status, stripe_customer_id, stripe_subscription_id, stripe_price_id, current_period_end, grace_period_ends_at, has_used_trial, setup_fee_paid, setup_fee_paid_at, setup_fee_plan")
     .eq("id", profile.organization_id)
     .maybeSingle();
   if (oErr || !org) throw new Error("Organization not found");
@@ -36,6 +40,9 @@ export type BillingStatus = {
   has_used_trial: boolean;
   is_owner: boolean;
   cancel_at_period_end: boolean | null;
+  setup_fee_paid: boolean;
+  setup_fee_paid_at: string | null;
+  setup_fee_plan: string | null;
 };
 
 export const getBillingStatus = createServerFn({ method: "GET" })
@@ -49,7 +56,7 @@ export const getBillingStatus = createServerFn({ method: "GET" })
     if (!profile?.organization_id) return null;
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("plan_type, subscription_status, current_period_end, grace_period_ends_at, has_used_trial, stripe_subscription_id")
+      .select("plan_type, subscription_status, current_period_end, grace_period_ends_at, has_used_trial, stripe_subscription_id, setup_fee_paid, setup_fee_paid_at, setup_fee_plan")
       .eq("id", profile.organization_id)
       .maybeSingle();
     if (!org) return null;
@@ -74,6 +81,9 @@ export const getBillingStatus = createServerFn({ method: "GET" })
       has_used_trial: !!org.has_used_trial,
       is_owner: profile.role === "owner" || profile.role === "super_admin",
       cancel_at_period_end,
+      setup_fee_paid: !!(org as any).setup_fee_paid,
+      setup_fee_paid_at: ((org as any).setup_fee_paid_at as string | null) ?? null,
+      setup_fee_plan: ((org as any).setup_fee_plan as string | null) ?? null,
     };
   });
 
@@ -91,19 +101,37 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
 
+    // Build line items: recurring subscription + one-time setup fee (only
+    // charged once per organization, ever — not per plan switch).
+    const lineItems: Array<{ price: string; quantity: number }> = [
+      { price: priceIdForPlan(data.plan as BillingPlan), quantity: 1 },
+    ];
+    let includesSetupFee = false;
+    if (!(org as any).setup_fee_paid) {
+      const setupPrice = setupPriceIdForPlan(data.plan as BillingPlan);
+      if (setupPrice) {
+        lineItems.push({ price: setupPrice, quantity: 1 });
+        includesSetupFee = true;
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price: priceIdForPlan(data.plan as BillingPlan), quantity: 1 }],
+      line_items: lineItems,
       success_url: `${base}/settings?billing=success`,
       cancel_url: `${base}/settings?billing=cancelled`,
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      customer_update: { address: "auto", name: "auto" },
       subscription_data: {
-        metadata: { organization_id: org.id },
-        // Trial on first subscription only
-        ...(org.has_used_trial ? {} : { trial_period_days: TRIAL_DAYS }),
+        metadata: { organization_id: org.id, selected_plan: data.plan },
       },
-      metadata: { organization_id: org.id, plan: data.plan },
+      metadata: {
+        organization_id: org.id,
+        selected_plan: data.plan,
+        includes_setup_fee: includesSetupFee ? "true" : "false",
+      },
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");

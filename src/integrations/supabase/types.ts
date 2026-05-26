@@ -269,6 +269,9 @@ export type Database = {
           onboarding_started_at: string | null
           onboarding_step: number
           plan_type: Database["public"]["Enums"]["org_plan"]
+          setup_fee_paid: boolean
+          setup_fee_paid_at: string | null
+          setup_fee_plan: string | null
           stripe_customer_id: string | null
           stripe_price_id: string | null
           stripe_subscription_id: string | null
@@ -303,6 +306,9 @@ export type Database = {
           onboarding_started_at?: string | null
           onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          setup_fee_paid?: boolean
+          setup_fee_paid_at?: string | null
+          setup_fee_plan?: string | null
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
@@ -337,6 +343,9 @@ export type Database = {
           onboarding_started_at?: string | null
           onboarding_step?: number
           plan_type?: Database["public"]["Enums"]["org_plan"]
+          setup_fee_paid?: boolean
+          setup_fee_paid_at?: string | null
+          setup_fee_plan?: string | null
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null

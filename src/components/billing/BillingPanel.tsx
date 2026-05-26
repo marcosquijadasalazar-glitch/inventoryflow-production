@@ -185,12 +185,15 @@ export function BillingPanel() {
             <div className="font-medium mt-1">{fmtDate(data.current_period_end)}</div>
           </div>
           <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Free trial</div>
+            <div className="text-xs text-muted-foreground">Setup fee</div>
             <div className="font-medium mt-1 flex items-center gap-1.5">
-              {data.has_used_trial ? (
-                <>Used <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" /></>
+              {data.setup_fee_paid ? (
+                <>
+                  Paid
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                </>
               ) : (
-                <>14 days available</>
+                <>One-time on first paid plan</>
               )}
             </div>
           </div>
@@ -200,6 +203,7 @@ export function BillingPanel() {
           <PlanCard
             name="Starter"
             price="$14.99/mo"
+            setupNote={data.setup_fee_paid ? "Setup fee already paid" : "+ $49 one-time setup fee"}
             features={["3 users", "500 products", "2 locations", "Purchase & sales orders"]}
             current={data.plan === "starter"}
             onSelect={() => goCheckout("starter")}
@@ -209,6 +213,7 @@ export function BillingPanel() {
           <PlanCard
             name="Pro"
             price="$79/mo"
+            setupNote={data.setup_fee_paid ? "Setup fee already paid" : "+ $99 one-time setup fee"}
             features={["25 users", "Unlimited products", "10 locations", "All modules + reports"]}
             current={data.plan === "pro"}
             onSelect={() => goCheckout("pro")}
@@ -235,10 +240,11 @@ export function BillingPanel() {
 }
 
 function PlanCard({
-  name, price, features, current, onSelect, busy, ctaLabel, highlight,
+  name, price, setupNote, features, current, onSelect, busy, ctaLabel, highlight,
 }: {
   name: string;
   price: string;
+  setupNote?: string;
   features: string[];
   current: boolean;
   onSelect: () => void;
@@ -252,6 +258,9 @@ function PlanCard({
         <h3 className="font-semibold">{name}</h3>
         <span className="text-sm text-muted-foreground">{price}</span>
       </div>
+      {setupNote && (
+        <div className="mt-1 text-xs text-muted-foreground">{setupNote}</div>
+      )}
       <ul className="mt-3 space-y-1 text-sm text-muted-foreground flex-1">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-1.5">
