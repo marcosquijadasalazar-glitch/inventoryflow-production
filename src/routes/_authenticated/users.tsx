@@ -262,8 +262,10 @@ function UsersPage() {
       <InviteDialog
         open={inviteOpen}
         onOpenChange={setInviteOpen}
+        actorRole={role}
         onInvited={() => { setInviteOpen(false); invalidate(); }}
       />
+
       <ImportDialog
         open={importOpen}
         onOpenChange={setImportOpen}
