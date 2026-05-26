@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ScanBarcodeButton } from "./ScanBarcodeButton";
+import { NotificationBell } from "./NotificationBell";
 import { useProfile } from "@/lib/profile";
 import { useEnabledModules } from "@/lib/use-modules";
 import { isModuleLockedByPlan, MODULE_MIN_PLAN, type ModuleKey } from "@/lib/modules";
