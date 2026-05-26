@@ -139,7 +139,7 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
   const goPostAuth = async () => {
     const plan = selectedPlan ?? readStoredPlan() ?? "free";
     const meta = readStoredMeta();
-    const companyName = (companyNameRef.current || meta.companyName || "").trim();
+    const companyName = (companyName_ || meta.companyName || "").trim();
     console.info("[signup] post-auth", { plan, hasCompany: !!companyName });
 
     if (!companyName) {
