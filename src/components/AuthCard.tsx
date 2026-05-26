@@ -140,15 +140,48 @@ export function AuthCard({ initialMode = "signin" }: { initialMode?: Mode }) {
           },
         }).catch((e) => console.warn("[signup-notify] failed:", e?.message ?? e));
 
-        // If a session was returned, email confirmation is disabled —
-        // route the user straight into the app. Otherwise show the
-        // "check your email" screen so confirmation flows still work.
+        // Safe diagnostic log (no PII beyond presence flags).
+        console.info("[signup] response", {
+          hasUser: !!data.user,
+          hasSession: !!data.session,
+          emailConfirmed: !!data.user?.email_confirmed_at,
+          identitiesCount: data.user?.identities?.length ?? 0,
+        });
+
+        // Clear any stale session before deciding next step.
+        if (!data.session) {
+          try { await supabase.auth.signOut({ scope: "local" } as any); } catch {}
+        }
+
+        // 1) Session returned → confirmation disabled. Go straight in.
         if (data.session) {
           toast.success("Account created. Welcome!");
           navigate({ to: "/dashboard", replace: true });
-        } else if (data.user && !data.user.email_confirmed_at) {
-          setSignupSuccess(true);
-          toast.success("Account created. Check your email to verify your account.");
+        } else if (data.user?.email_confirmed_at) {
+          // 2) Already confirmed (auto-confirm) but no session → sign in now.
+          const { data: signInData, error: signInErr } =
+            await supabase.auth.signInWithPassword({ email, password });
+          if (signInErr || !signInData.session) {
+            console.warn("[signup] auto sign-in failed", signInErr?.message);
+            toast.success("Account created. Please sign in to continue.");
+            navigate({ to: "/login", replace: true });
+          } else {
+            toast.success("Account created. Welcome!");
+            navigate({ to: "/dashboard", replace: true });
+          }
+        } else if (data.user) {
+          // 3) No session, not confirmed → try auto sign-in. If it works,
+          // confirmation is not actually required; otherwise show the
+          // "check your email" screen for the standard confirmation flow.
+          const { data: signInData } =
+            await supabase.auth.signInWithPassword({ email, password });
+          if (signInData?.session) {
+            toast.success("Account created. Welcome!");
+            navigate({ to: "/dashboard", replace: true });
+          } else {
+            setSignupSuccess(true);
+            toast.success("Account created. Check your email to verify your account.");
+          }
         } else {
           toast.success("Account created. Please sign in to continue.");
           navigate({ to: "/login", replace: true });
