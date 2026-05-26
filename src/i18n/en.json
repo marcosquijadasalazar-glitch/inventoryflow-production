@@ -209,7 +209,7 @@
         "starter": {
           "name": "Starter",
           "price": "$14.99",
-          "setupFee": "$49 one-time setup fee",
+          "setupFee": "+ $19 one-time onboarding",
           "tagline": "For small businesses getting organized.",
           "features": [
             "Dashboard",
