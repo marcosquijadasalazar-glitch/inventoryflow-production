@@ -87,7 +87,12 @@ export function BillingPanel() {
       const { url } = await portal({});
       window.location.href = url;
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to open billing portal");
+      const msg = String(e?.message ?? "");
+      if (/customer not configured|No organization|Stripe customer/i.test(msg)) {
+        toast.error("No billing account found.");
+      } else {
+        toast.error(msg || "Failed to open billing portal");
+      }
       setBusy(null);
     }
   };
