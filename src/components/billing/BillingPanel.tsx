@@ -247,7 +247,7 @@ export function BillingPanel() {
           </p>
           <Button variant="outline" size="sm" onClick={goPortal} disabled={busy === "portal"}>
             {busy === "portal" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5 mr-1.5" />}
-            Billing Portal
+            Manage Billing / Invoice History
           </Button>
         </div>
       </CardContent>
