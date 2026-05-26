@@ -126,6 +126,17 @@
     "cancelledTitle": "Tu cuenta ha sido cancelada.",
     "body": "Un administrador revisará tu acceso en breve. Recibirás un correo cuando se active tu cuenta."
   },
+  "payment": {
+    "title": "Pago requerido",
+    "body": "Completa tu pago para activar tu plan {{plan}}.",
+    "perMonth": "/mes",
+    "setupFee": "Tarifa única de configuración",
+    "taxNote": "Los impuestos se calculan al pagar.",
+    "continueCheckout": "Continuar al pago",
+    "changePlan": "Cambiar de plan",
+    "contactSupport": "Contactar soporte por WhatsApp",
+    "checkoutError": "No se pudo iniciar el pago. Inténtalo de nuevo."
+  },
   "landing": {
     "nav": {
       "features": "Funciones",
