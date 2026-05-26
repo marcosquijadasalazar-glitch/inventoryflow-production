@@ -809,7 +809,7 @@ function Pricing() {
         )}
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {plans.map(({ key, popular, ctaLabel, ctaVariant, to }) => {
+          {plans.map(({ key, popular, ctaLabel, ctaVariant, to, plan }) => {
             const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
             const price = t(`landing.pricing.plans.${key}.price`);
             const setupFee = t(`landing.pricing.plans.${key}.setupFee`, { defaultValue: "" });
