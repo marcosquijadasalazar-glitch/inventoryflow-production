@@ -189,8 +189,8 @@
         },
         "starter": {
           "name": "Starter",
-          "price": "$29",
-          "setupFee": "$49 one-time",
+          "price": "$14.99",
+          "setupFee": "$49 one-time setup fee",
           "tagline": "For small businesses getting organized.",
           "features": [
             "Dashboard",
@@ -208,8 +208,8 @@
         },
         "pro": {
           "name": "Pro",
-          "price": "$99",
-          "setupFee": "$199 one-time",
+          "price": "$79",
+          "setupFee": "$99 one-time setup fee",
           "tagline": "For growing operations that need control.",
           "features": [
             "Everything in Starter",
