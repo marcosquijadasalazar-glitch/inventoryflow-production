@@ -750,9 +750,9 @@ function Pricing() {
     ctaLabel: string;
     ctaVariant: "primary" | "secondary" | "outline";
     to: string;
-    plan?: "starter" | "pro";
+    plan?: "free" | "starter" | "pro";
   }[] = [
-    { key: "trial", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup" },
+    { key: "trial", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup", plan: "free" },
     { key: "starter", ctaLabel: t("landing.pricing.startStarter", "Get Started"), ctaVariant: "outline", to: "/signup", plan: "starter" },
     { key: "pro", popular: true, ctaLabel: t("landing.pricing.upgradeToPro"), ctaVariant: "primary", to: "/signup", plan: "pro" },
     { key: "enterprise", ctaLabel: t("landing.pricing.contactSales"), ctaVariant: "secondary", to: `mailto:${SALES_EMAIL}?subject=InventoryFlow%20Enterprise%20Inquiry` },
