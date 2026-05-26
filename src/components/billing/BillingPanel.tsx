@@ -244,12 +244,10 @@ export function BillingPanel() {
           <p className="text-xs text-muted-foreground">
             Need Enterprise? <a href="mailto:sales@inventoryflowapp.com" className="underline">Contact sales</a>.
           </p>
-          {data.has_subscription && (
-            <Button variant="outline" size="sm" onClick={goPortal} disabled={busy === "portal"}>
-              {busy === "portal" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5 mr-1.5" />}
-              Manage billing
-            </Button>
-          )}
+          <Button variant="outline" size="sm" onClick={goPortal} disabled={busy === "portal"}>
+            {busy === "portal" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5 mr-1.5" />}
+            Billing Portal
+          </Button>
         </div>
       </CardContent>
     </Card>
