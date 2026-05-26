@@ -226,7 +226,7 @@ export function BillingPanel() {
             current={data.plan === "pro"}
             onSelect={() => goCheckout("pro")}
             busy={busy === "pro"}
-            ctaLabel={data.plan === "pro" ? "Current" : "Upgrade"}
+            ctaLabel={data.plan === "pro" ? "Current" : "Upgrade to Pro"}
             highlight
           />
         </div>
