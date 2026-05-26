@@ -244,6 +244,14 @@ export const orgInviteUser = createServerFn({ method: "POST" })
       metadata: { role: data.role, organization_id: orgId, temp_password_issued: true },
     });
 
+    await createNotification({
+      organization_id: orgId,
+      type: "user_created",
+      title: "New user added",
+      message: `${data.full_name} (${data.email}) was added as ${data.role}.`,
+      metadata: { user_id: uid, email: data.email, role: data.role },
+    });
+
     return { user_id: uid, email: data.email, temp_password: tempPass };
   });
 
