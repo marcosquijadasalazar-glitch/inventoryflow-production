@@ -123,12 +123,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const orgId = session.metadata?.organization_id;
   if (!orgId) return;
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
-  if (customerId) {
-    await supabaseAdmin
-      .from("organizations")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", orgId);
-  }
+  const basePatch: Record<string, unknown> = { pending_plan: null };
+  if (customerId) basePatch.stripe_customer_id = customerId;
+  await supabaseAdmin
+    .from("organizations")
+    .update(basePatch as any)
+    .eq("id", orgId);
+  console.info("[stripe webhook] checkout completed", { orgId, plan: session.metadata?.selected_plan });
 
   // Detect & mark setup fee payment from line items.
   await markSetupFeePaidIfPresent(session, orgId);

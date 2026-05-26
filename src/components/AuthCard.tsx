@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { notifyAdminOfSignup } from "@/lib/signup-notify.functions";
 import { createCheckoutSession } from "@/lib/billing.functions";
+import { bootstrapOrgForSignup } from "@/lib/signup-bootstrap.functions";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,12 @@ import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield, User, Build
 import { toast } from "sonner";
 
 type Mode = "signin" | "signup";
+type SelectedPlan = "free" | "starter" | "pro";
 
-export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode?: Mode; checkoutPlan?: "starter" | "pro" }) {
+const PLAN_KEY = "if_selected_plan";
+const PLAN_META_KEY = "if_signup_meta";
+
+export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode?: Mode; selectedPlan?: SelectedPlan }) {
   const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -95,17 +100,85 @@ export function AuthCard({ initialMode = "signin", checkoutPlan }: { initialMode
     }
   };
 
-  const goPostAuth = async () => {
-    if (checkoutPlan) {
+  // Persist the selected plan + signup metadata across the auth round-trip
+  // (Google OAuth navigates away; email signup needs it after session ready).
+  useEffect(() => {
+    if (selectedPlan && typeof window !== "undefined") {
       try {
-        const { url } = await createCheckoutSession({ data: { plan: checkoutPlan } });
-        window.location.href = url;
-        return;
-      } catch (e: any) {
-        console.warn("[signup] checkout failed, falling back to dashboard", e?.message);
-        toast.error(e?.message ?? "Could not start checkout. Opening dashboard.");
-      }
+        sessionStorage.setItem(PLAN_KEY, selectedPlan);
+      } catch {}
     }
+  }, [selectedPlan]);
+
+  const readStoredPlan = (): SelectedPlan | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const v = sessionStorage.getItem(PLAN_KEY);
+      return v === "free" || v === "starter" || v === "pro" ? v : null;
+    } catch {
+      return null;
+    }
+  };
+  const readStoredMeta = (): { companyName?: string; businessType?: string; phone?: string; fullName?: string } => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = sessionStorage.getItem(PLAN_META_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  };
+  const clearStored = () => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.removeItem(PLAN_KEY);
+      sessionStorage.removeItem(PLAN_META_KEY);
+    } catch {}
+  };
+
+  const goPostAuth = async () => {
+    const plan = selectedPlan ?? readStoredPlan() ?? "free";
+    const meta = readStoredMeta();
+    const effectiveCompany = (companyName || meta.companyName || "").trim();
+    console.info("[signup] post-auth", { plan, hasCompany: !!effectiveCompany });
+
+    if (!effectiveCompany) {
+      // No company info captured (e.g. Google OAuth without onboarding form yet).
+      // Send to dashboard; the onboarding wizard will collect it.
+      clearStored();
+      navigate({ to: "/dashboard", replace: true });
+      return;
+    }
+
+    try {
+      const result = await bootstrapOrgForSignup({
+        data: {
+          plan,
+          companyName: effectiveCompany,
+          businessType: (businessType || meta.businessType || "").trim() || null,
+          phone: (phone || meta.phone || "").trim() || null,
+          fullName: (fullName || meta.fullName || "").trim() || null,
+        },
+      });
+      console.info("[signup] bootstrap", result);
+
+      if (result.needsCheckout && (plan === "starter" || plan === "pro")) {
+        try {
+          const { url } = await createCheckoutSession({ data: { plan } });
+          console.info("[signup] redirecting to Stripe checkout");
+          clearStored();
+          window.location.href = url;
+          return;
+        } catch (e: any) {
+          console.warn("[signup] checkout failed", e?.message);
+          toast.error(e?.message ?? "Could not start checkout. You can retry from Settings → Billing.");
+        }
+      }
+    } catch (e: any) {
+      console.warn("[signup] bootstrap failed", e?.message);
+      toast.error(e?.message ?? "Could not finish setting up your workspace.");
+    }
+    clearStored();
     navigate({ to: "/dashboard", replace: true });
   };
 
