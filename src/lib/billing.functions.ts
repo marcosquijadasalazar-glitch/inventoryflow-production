@@ -95,16 +95,46 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CheckoutSchema.parse(input))
   .handler(async ({ context, data }): Promise<{ url: string }> => {
-    const { profile, org } = await loadOwnerOrg(context.userId);
+    console.info("[billing.checkout] start", { userId: context.userId, plan: data.plan });
+    let profile: { email: string | null }; let org: any;
+    try {
+      const loaded = await loadOwnerOrg(context.userId);
+      profile = loaded.profile as any;
+      org = loaded.org;
+    } catch (e: any) {
+      console.error("[billing.checkout] loadOwnerOrg failed", { message: e?.message });
+      throw new Error(e?.message ?? "Could not load organization");
+    }
+    console.info("[billing.checkout] org loaded", {
+      organization_id: org.id,
+      setup_fee_paid: !!org.setup_fee_paid,
+      pending_plan: (org as any).pending_plan ?? null,
+      subscription_status: (org as any).subscription_status,
+    });
+
+    // Validate required Stripe price IDs up front for a clearer error.
+    let recurringPriceId: string;
+    try {
+      recurringPriceId = priceIdForPlan(data.plan as BillingPlan);
+    } catch (e: any) {
+      console.error("[billing.checkout] missing recurring price", { plan: data.plan });
+      throw new Error("Billing is not fully configured. Please contact support.");
+    }
+
     const stripe = getStripe();
-    const customerId = await ensureStripeCustomer(org.id, profile.email);
+    let customerId: string;
+    try {
+      customerId = await ensureStripeCustomer(org.id, profile.email);
+    } catch (e: any) {
+      console.error("[billing.checkout] ensureStripeCustomer failed", { message: e?.message });
+      throw new Error("Could not create Stripe customer. Please contact support.");
+    }
+
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
 
-    // Build line items: recurring subscription + one-time setup fee (only
-    // charged once per organization, ever — not per plan switch).
     const lineItems: Array<{ price: string; quantity: number }> = [
-      { price: priceIdForPlan(data.plan as BillingPlan), quantity: 1 },
+      { price: recurringPriceId, quantity: 1 },
     ];
     let includesSetupFee = false;
     if (!(org as any).setup_fee_paid) {
@@ -112,30 +142,50 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       if (setupPrice) {
         lineItems.push({ price: setupPrice, quantity: 1 });
         includesSetupFee = true;
+      } else {
+        console.warn("[billing.checkout] no setup price configured for plan", { plan: data.plan });
       }
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: lineItems,
-      success_url: `${base}/settings?billing=success`,
-      cancel_url: `${base}/settings?billing=cancelled`,
-      allow_promotion_codes: true,
-      automatic_tax: { enabled: true },
-      customer_update: { address: "auto", name: "auto" },
-      subscription_data: {
-        metadata: { organization_id: org.id, selected_plan: data.plan },
-      },
-      metadata: {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: lineItems,
+        success_url: `${base}/settings?billing=success`,
+        cancel_url: `${base}/payment-required?billing=cancelled`,
+        allow_promotion_codes: true,
+        automatic_tax: { enabled: true },
+        customer_update: { address: "auto", name: "auto" },
+        subscription_data: {
+          metadata: { organization_id: org.id, selected_plan: data.plan },
+        },
+        metadata: {
+          organization_id: org.id,
+          selected_plan: data.plan,
+          includes_setup_fee: includesSetupFee ? "true" : "false",
+        },
+      });
+      const url = session.url ?? null;
+      console.info("[billing.checkout] session created", {
         organization_id: org.id,
-        selected_plan: data.plan,
-        includes_setup_fee: includesSetupFee ? "true" : "false",
-      },
-    });
-
-    if (!session.url) throw new Error("Failed to create checkout session");
-    return { url: session.url };
+        plan: data.plan,
+        session_id: session.id,
+        has_url: !!url,
+        includes_setup_fee: includesSetupFee,
+      });
+      if (!url) throw new Error("Stripe did not return a checkout URL");
+      return { url };
+    } catch (e: any) {
+      console.error("[billing.checkout] stripe.checkout.sessions.create failed", {
+        organization_id: org.id,
+        plan: data.plan,
+        message: e?.message,
+        code: e?.code,
+        type: e?.type,
+      });
+      throw new Error(e?.message ?? "Could not start Stripe Checkout");
+    }
   });
 
 export const createPortalSession = createServerFn({ method: "POST" })
