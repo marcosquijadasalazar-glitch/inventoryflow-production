@@ -1189,7 +1189,58 @@ function QuickActionSheet({
               inputMode="numeric"
               className="text-lg h-12"
             />
+            {action === "adjustment" && product && !isNaN(parsedQty) && (
+              <p className="text-xs text-muted-foreground">
+                {t("sa.diff", "Difference")}:{" "}
+                <span
+                  className={
+                    adjustDiff > 0
+                      ? "font-semibold text-success"
+                      : adjustDiff < 0
+                        ? "font-semibold text-destructive"
+                        : "font-medium"
+                  }
+                >
+                  {adjustDiff > 0 ? "+" : ""}
+                  {adjustDiff}
+                </span>
+              </p>
+            )}
           </div>
+
+          {action === "adjustment" && (
+            <div className="space-y-1.5">
+              <Label>{t("sa.adjust_reason", "Reason for adjustment")}</Label>
+              <Select value={adjustReason} onValueChange={setAdjustReason}>
+                <SelectTrigger className="h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="physical_count">
+                    {t("sa.adj_reasons.physical_count", "Physical count")}
+                  </SelectItem>
+                  <SelectItem value="correction">
+                    {t("sa.adj_reasons.correction", "Inventory correction")}
+                  </SelectItem>
+                  <SelectItem value="damaged">
+                    {t("sa.adj_reasons.damaged", "Damaged items")}
+                  </SelectItem>
+                  <SelectItem value="expired">
+                    {t("sa.adj_reasons.expired", "Expired inventory")}
+                  </SelectItem>
+                  <SelectItem value="shrinkage">
+                    {t("sa.adj_reasons.shrinkage", "Shrinkage")}
+                  </SelectItem>
+                  <SelectItem value="reconciliation">
+                    {t("sa.adj_reasons.reconciliation", "Manual reconciliation")}
+                  </SelectItem>
+                  <SelectItem value="other">
+                    {t("sa.adj_reasons.other", "Other")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {locations.length > 1 && (
             <div className="space-y-1.5">
