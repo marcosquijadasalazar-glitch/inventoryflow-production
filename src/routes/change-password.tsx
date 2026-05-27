@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Lock, KeyRound } from "lucide-react";
 import { clearMustChangePassword } from "@/lib/org-users.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/change-password")({
   component: ChangePasswordPage,
@@ -52,9 +53,17 @@ function ChangePasswordPage() {
       const { error: err } = await supabase.auth.updateUser({ password });
       if (err) throw err;
       await clearFlag({});
-      await qc.invalidateQueries({ queryKey: ["profile"] });
+      // Refresh the Supabase session so any downstream checks see the latest token.
+      await supabase.auth.refreshSession();
+      // Force-refetch the profile so the MustChangePasswordGate sees the
+      // updated must_change_password=false BEFORE we navigate into the
+      // authenticated layout — otherwise the stale cache bounces us back here.
+      await qc.refetchQueries({ queryKey: ["profile"] });
       setSuccess(true);
-      setTimeout(() => navigate({ to: "/dashboard", replace: true }), 1200);
+      toast.success(
+        t("changePassword.success", { defaultValue: "Password updated successfully" })
+      );
+      navigate({ to: "/dashboard", replace: true });
     } catch (e: any) {
       setError(e?.message ?? "Failed to update password");
     } finally {
