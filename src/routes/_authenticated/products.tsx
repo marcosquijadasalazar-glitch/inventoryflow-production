@@ -542,9 +542,10 @@ function ProductsPage() {
             selectedRows={(data ?? []).filter((p) => selected.has(p.id))}
             columns={exportColumns}
           />
-          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={productsAtLimit}>
+          <Button variant="outline" onClick={tryOpenImport} disabled={productsAtLimit}>
             <Upload className="h-4 w-4" /> {t("importer.button", "Import")}
           </Button>
+
           <Button variant="outline" onClick={() => setScanOpen(true)}>
             <ScanLine className="h-4 w-4" /> {t("common.scanBarcode")}
           </Button>
