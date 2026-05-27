@@ -297,6 +297,7 @@ export type Database = {
           has_used_trial: boolean
           id: string
           is_active: boolean
+          is_trialing: boolean
           logo_url: string | null
           module_overrides_enabled: boolean
           onboarding_business_size: string | null
@@ -335,6 +336,7 @@ export type Database = {
           has_used_trial?: boolean
           id?: string
           is_active?: boolean
+          is_trialing?: boolean
           logo_url?: string | null
           module_overrides_enabled?: boolean
           onboarding_business_size?: string | null
@@ -373,6 +375,7 @@ export type Database = {
           has_used_trial?: boolean
           id?: string
           is_active?: boolean
+          is_trialing?: boolean
           logo_url?: string | null
           module_overrides_enabled?: boolean
           onboarding_business_size?: string | null
@@ -878,6 +881,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signup_sessions: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          email: string
+          organization_id: string | null
+          plan: string
+          session_id: string
+          status: string
+          temp_password: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          organization_id?: string | null
+          plan: string
+          session_id: string
+          status?: string
+          temp_password?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          organization_id?: string | null
+          plan?: string
+          session_id?: string
+          status?: string
+          temp_password?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       suppliers: {
         Row: {
