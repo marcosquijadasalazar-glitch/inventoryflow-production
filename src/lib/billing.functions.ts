@@ -151,6 +151,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       automatic_tax: { enabled: true },
       billing_address_collection: "required",
       customer_update: { address: "auto", name: "auto" },
+      tax_id_collection: { enabled: true },
       subscription_data: subscriptionData,
       metadata: {
         organization_id: org.id,
@@ -250,6 +251,7 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
       automatic_tax: { enabled: true },
       billing_address_collection: "required",
       customer_update: { address: "auto", name: "auto" },
+      tax_id_collection: { enabled: true },
       subscription_data: subscriptionData,
       metadata: {
         signup: "true",
