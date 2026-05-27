@@ -947,6 +947,31 @@
     "noPermission": "No tienes permiso para guardar esta sesión.",
     "recentScans": "Escaneos recientes"
   },
+  "insights": {
+    "title": "Insights de inventario",
+    "subtitle": "Inteligencia ligera basada en tu actividad reciente.",
+    "view": "Ver insights",
+    "empty": "Aún no hay actividad suficiente para generar insights.",
+    "failed": "No se pudieron cargar los insights ahora mismo.",
+    "lowStockRisk": "Riesgo de stock bajo",
+    "fastMovers": "Productos de alta rotación",
+    "anomalies": "Anomalías de inventario",
+    "deadInventory": "Inventario inactivo",
+    "reorderSuggestions": "Sugerencias de reposición",
+    "frequentlyScanned": "Escaneados hoy con frecuencia",
+    "today": "hoy",
+    "left": "rest.",
+    "unitsShort": "u",
+    "movesShort": "mov.",
+    "runsOutInDays": "Puede agotarse en {{days}}d",
+    "noActivityDays": "Sin actividad en {{days}}d",
+    "reorderHint": "Stock {{stock}} · sugerido {{suggested}}",
+    "anomalyKind": {
+      "spike_removals": "Pico",
+      "spike_adjustments": "Muchos ajustes",
+      "repeated_scans": "Escaneos repetidos"
+    }
+  },
   "movements": {
     "title": "Movimientos de inventario",
     "subtitle": "Registra entradas, salidas y ajustes de stock.",

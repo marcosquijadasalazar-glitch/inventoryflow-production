@@ -62,6 +62,7 @@ import {
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { cn } from "@/lib/utils";
+import { InsightsPanel } from "@/components/InsightsPanel";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   component: ScannerPage,
@@ -223,6 +224,8 @@ function ScannerPage() {
         ))}
 
       <ScanHistoryPanel />
+
+      <InsightsPanel />
     </div>
   );
 }

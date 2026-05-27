@@ -947,6 +947,31 @@
     "noPermission": "You don't have permission to save this session.",
     "recentScans": "Recent scans"
   },
+  "insights": {
+    "title": "Inventory insights",
+    "subtitle": "Lightweight intelligence based on your recent activity.",
+    "view": "View insights",
+    "empty": "Not enough activity yet to generate insights.",
+    "failed": "Couldn't load insights right now.",
+    "lowStockRisk": "Low stock risk",
+    "fastMovers": "Fast-moving products",
+    "anomalies": "Inventory anomalies",
+    "deadInventory": "Dead inventory",
+    "reorderSuggestions": "Reorder suggestions",
+    "frequentlyScanned": "Frequently scanned today",
+    "today": "today",
+    "left": "left",
+    "unitsShort": "u",
+    "movesShort": "moves",
+    "runsOutInDays": "May run out in {{days}}d",
+    "noActivityDays": "No activity in {{days}}d",
+    "reorderHint": "Stock {{stock}} · suggested {{suggested}}",
+    "anomalyKind": {
+      "spike_removals": "Spike",
+      "spike_adjustments": "Many adjustments",
+      "repeated_scans": "Repeated scans"
+    }
+  },
   "movements": {
     "title": "Inventory Movements",
     "subtitle": "Record stock additions, removals and adjustments.",
