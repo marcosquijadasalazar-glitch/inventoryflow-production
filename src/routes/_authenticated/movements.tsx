@@ -807,6 +807,13 @@ function MovementsPage() {
                           })}
                           {cleanNote ? ` · ${cleanNote}` : ""}
                         </p>
+                        <LocationPath
+                          nodeId={(m.products as any)?.bin_id}
+                          fallback={m.products?.location}
+                          nodes={nodesQ.data ?? []}
+                          hideEmpty
+                          className="mt-0.5"
+                        />
                       </div>
                     </div>
                     <Badge
