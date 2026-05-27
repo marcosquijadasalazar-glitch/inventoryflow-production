@@ -1086,28 +1086,58 @@ function ProductsPage() {
         schema={PRODUCTS_IMPORT_SCHEMA}
         title={t("products.importTitle", "Import products")}
         extraControls={
-          <label className="inline-flex items-center gap-2 text-xs">
-            <Checkbox
-              checked={autoCreateSuppliers}
-              onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
-            />
-            <span>
-              {t(
-                "products.importAutoCreateSuppliers",
-                "Auto-create missing suppliers",
-              )}
-            </span>
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs">
+                {t("importer.assignLocation", "Assign to location")}
+              </Label>
+              <Select
+                value={importLocation}
+                onValueChange={setImportLocation}
+                disabled={orgLocations.length <= 1}
+              >
+                <SelectTrigger className="h-8 w-56 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgLocations.map((l) => (
+                    <SelectItem key={l.id} value={l.name}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="inline-flex items-center gap-2 text-xs">
+              <Checkbox
+                checked={autoCreateSuppliers}
+                onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
+              />
+              <span>
+                {t(
+                  "products.importAutoCreateSuppliers",
+                  "Auto-create missing suppliers",
+                )}
+              </span>
+            </label>
+          </div>
         }
-        onImport={async (rows) =>
-          runImport({
+        onImport={async (rows) => {
+          const validNames = new Set(orgLocations.map((l) => l.name.toLowerCase()));
+          const normalized = rows.map((r) => {
+            const provided = (r.location ?? "").trim();
+            const useProvided = provided && validNames.has(provided.toLowerCase());
+            return { ...r, location: useProvided ? provided : importLocation };
+          });
+          return runImport({
             data: {
-              rows,
+              rows: normalized,
               auto_create_categories: true,
               auto_create_suppliers: autoCreateSuppliers,
             },
-          })
-        }
+          });
+        }}
+
         onDone={refresh}
       />
 
