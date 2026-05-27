@@ -130,7 +130,7 @@
     "title": "Payment required",
     "body": "Complete your payment to activate your {{plan}} plan.",
     "perMonth": "/month",
-    "setupFee": "One-time setup fee",
+    "setupFee": "One-time Onboarding Process",
     "taxNote": "Tax calculated at checkout.",
     "continueCheckout": "Continue to Checkout",
     "redirecting": "Redirecting to checkout…",
