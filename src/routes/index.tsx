@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAuth } from "@/lib/auth";
 import {
   ArrowRight,
   Check,
@@ -99,6 +100,7 @@ function LandingPage() {
 
 function SiteHeader() {
   const { t } = useTranslation();
+  const { session } = useAuth();
   const [resourcesOpen, setResourcesOpen] = useState(false);
   const resourcesRef = useRef<HTMLDivElement>(null);
 
@@ -182,6 +184,25 @@ function SiteHeader() {
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>
+          {session ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-9 px-4 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+            >
+              <Link to="/dashboard">{t("landing.nav.dashboard", "Dashboard")}</Link>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-9 px-4 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+            >
+              <Link to="/login">{t("landing.nav.login", "Log In")}</Link>
+            </Button>
+          )}
           <Button
             asChild
             size="sm"
