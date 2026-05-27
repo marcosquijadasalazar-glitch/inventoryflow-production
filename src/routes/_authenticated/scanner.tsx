@@ -1129,11 +1129,16 @@ function QuickActionSheet({
     if (isNaN(q) || q < 0) return toast.error("Invalid quantity");
     if (action !== "adjustment" && q <= 0)
       return toast.error("Invalid quantity");
+    if (action === "adjustment" && q === product.stock) {
+      toast.info(t("scanner.noChange", "New quantity matches current stock"));
+      return;
+    }
     setSaving(true);
     try {
       const locName =
         locationId && locations.find((l) => l.id === locationId)?.name;
-      const noteParts = ["[scan]", locName ? `@${locName}` : "", reason]
+      const tag = action === "adjustment" ? `[${adjustReason}]` : "";
+      const noteParts = ["[scan]", tag, locName ? `@${locName}` : "", reason]
         .filter(Boolean)
         .join(" ");
       await createMovement({
@@ -1142,7 +1147,11 @@ function QuickActionSheet({
         quantity: q,
         note: noteParts,
       });
-      toast.success(t("scanner.saveMovement"));
+      toast.success(
+        action === "adjustment"
+          ? t("scanner.adjustedTo", "Stock set to {{qty}}", { qty: q })
+          : t("scanner.saveMovement"),
+      );
       await onSaved();
       onClose();
     } catch (e: any) {
