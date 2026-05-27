@@ -738,36 +738,44 @@ function BuiltForGrowth() {
 
 /* ---------- Pricing ---------- */
 
-type PlanKey = "trial" | "starter" | "pro" | "enterprise";
+type PlanKey = "starter" | "pro";
 
 function Pricing() {
   const { t } = useTranslation();
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
   const plans: {
     key: PlanKey;
     popular?: boolean;
     ctaLabel: string;
-    ctaVariant: "primary" | "secondary" | "outline";
-    to: string;
-    plan?: "free" | "starter" | "pro";
+    ctaVariant: "primary" | "outline";
+    trialLine?: string;
+    cardLine?: string;
+    growthLine?: string;
   }[] = [
-    { key: "trial", ctaLabel: t("landing.pricing.startTrial"), ctaVariant: "outline", to: "/signup", plan: "free" },
-    { key: "starter", ctaLabel: t("landing.pricing.startStarter", "Get Started"), ctaVariant: "outline", to: "/signup", plan: "starter" },
-    { key: "pro", popular: true, ctaLabel: t("landing.pricing.upgradeToPro"), ctaVariant: "primary", to: "/signup", plan: "pro" },
-    { key: "enterprise", ctaLabel: t("landing.pricing.contactSales"), ctaVariant: "secondary", to: `mailto:${SALES_EMAIL}?subject=InventoryFlow%20Enterprise%20Inquiry` },
+    {
+      key: "starter",
+      ctaLabel: t("landing.pricing.startStarter", "Start 7-Day Free Trial"),
+      ctaVariant: "outline",
+      trialLine: t("landing.pricing.starterTrial", "7-day free trial"),
+      cardLine: t("landing.pricing.starterCard", "Card required"),
+    },
+    {
+      key: "pro",
+      popular: true,
+      ctaLabel: t("landing.pricing.upgradeToPro", "Upgrade to Pro"),
+      ctaVariant: "primary",
+      growthLine: t("landing.pricing.proGrowth", "For growing businesses"),
+    },
   ];
 
   const limits: Record<PlanKey, { users: string; products: string; locations: string }> = {
-    trial: { users: "2", products: "100", locations: "1" },
     starter: { users: "3", products: "500", locations: "2" },
     pro: { users: "25", products: "∞", locations: "10" },
-    enterprise: { users: "∞", products: "∞", locations: "∞" },
   };
 
   return (
     <section id="pricing" className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
+      <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
             {t("landing.pricing.eyebrow")}
@@ -778,44 +786,13 @@ function Pricing() {
           <p className="mt-3 text-black/60">{t("landing.pricing.subtitle")}</p>
         </div>
 
-        {/* Billing toggle (placeholder — yearly pricing coming soon) */}
-        <div className="mt-8 inline-flex items-center gap-1 rounded-full border border-black/10 bg-white p-1">
-          <button
-            type="button"
-            onClick={() => setBilling("monthly")}
-            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-colors ${
-              billing === "monthly" ? "bg-black text-white" : "text-black/60 hover:text-black"
-            }`}
-          >
-            {t("landing.pricingExtra.billingMonthly")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setBilling("yearly")}
-            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-colors inline-flex items-center gap-1.5 ${
-              billing === "yearly" ? "bg-black text-white" : "text-black/60 hover:text-black"
-            }`}
-          >
-            {t("landing.pricingExtra.billingYearly")}
-            <span className="text-[10px] font-semibold text-[#0066FF] bg-[#0066FF]/10 px-1.5 py-0.5 rounded-full">
-              {t("landing.pricingExtra.billingSave")}
-            </span>
-          </button>
-        </div>
-        {billing === "yearly" && (
-          <p className="mt-2 text-xs text-black/50">
-            {t("landing.pricingExtra.yearlyNote")}
-          </p>
-        )}
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {plans.map(({ key, popular, ctaLabel, ctaVariant, to, plan }) => {
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {plans.map(({ key, popular, ctaLabel, ctaVariant, trialLine, cardLine, growthLine }) => {
             const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
             const price = t(`landing.pricing.plans.${key}.price`);
-            const setupFee = t(`landing.pricing.plans.${key}.setupFee`, { defaultValue: "" });
-            const isCustom = key === "enterprise";
-            const isTrial = key === "trial";
+            const onboarding = t(`landing.pricing.plans.${key}.onboarding`, { defaultValue: "" });
             const planLimits = limits[key];
+            const to = `/checkout?plan=${key}`;
 
             return (
               <div
@@ -831,38 +808,46 @@ function Pricing() {
                     <Star className="h-3 w-3" /> {t("landing.pricing.mostPopular")}
                   </div>
                 )}
-                {isTrial && (
-                  <div className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-black px-2.5 py-1 text-[11px] font-medium text-white">
-                    {t("landing.pricing.freeTrialBanner")}
-                  </div>
-                )}
 
                 <div className="text-sm font-medium text-black">{t(`landing.pricing.plans.${key}.name`)}</div>
 
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-3xl font-semibold tracking-tight text-black">{price}</span>
-                  {!isCustom && !isTrial && (
-                    <span className="text-sm text-black/50">{t("landing.pricing.perMonth")}</span>
-                  )}
-                  {isTrial && (
-                    <span className="text-sm text-black/50">· {t("landing.pricing.plans.trial.period")}</span>
-                  )}
+                  <span className="text-sm text-black/50">{t("landing.pricing.perMonth")}</span>
                 </div>
 
-                {!isTrial && !isCustom && setupFee && (
-                  <p className="mt-1 text-xs text-black/60">
-                    {setupFee}
-                  </p>
+                {onboarding && (
+                  <p className="mt-1 text-xs text-black/60">{onboarding}</p>
                 )}
 
                 <p className="mt-2 text-sm text-black/60 min-h-[40px]">
                   {t(`landing.pricing.plans.${key}.tagline`)}
                 </p>
 
-                {/* Plan limits */}
+                {(trialLine || growthLine) && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {trialLine && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[11px] font-medium">
+                        {trialLine}
+                      </span>
+                    )}
+                    {cardLine && (
+                      <span className="inline-flex items-center rounded-full bg-black/[0.05] text-black/70 px-2.5 py-1 text-[11px] font-medium">
+                        {cardLine}
+                      </span>
+                    )}
+                    {growthLine && (
+                      <span className="inline-flex items-center rounded-full bg-[#0066FF]/10 text-[#0066FF] px-2.5 py-1 text-[11px] font-medium">
+                        {growthLine}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Capacity limits — growth, not feature locks */}
                 <div className="mt-4 rounded-lg bg-black/[0.03] p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-black/50 mb-2">
-                    {t("landing.pricing.limitsLabel")}
+                    {t("landing.pricing.capacityLabel", "Capacity")}
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
@@ -880,7 +865,10 @@ function Pricing() {
                   </div>
                 </div>
 
-                <ul className="mt-4 space-y-2 text-sm">
+                <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-black/50">
+                  {t("landing.pricing.includedLabel", "All modules included")}
+                </p>
+                <ul className="mt-2 space-y-2 text-sm">
                   {features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-black/80">
                       <Check className="h-4 w-4 text-[#0066FF] shrink-0 mt-0.5" />
@@ -895,41 +883,27 @@ function Pricing() {
                     className={`w-full h-10 shadow-none ${
                       ctaVariant === "primary"
                         ? "bg-[#0066FF] hover:bg-[#0052CC] text-white"
-                        : ctaVariant === "outline"
-                          ? "bg-white border border-black/15 text-black hover:bg-black/5"
-                          : "bg-black hover:bg-black/85 text-white"
+                        : "bg-white border border-black/15 text-black hover:bg-black/5"
                     }`}
                   >
-                    {key === "enterprise" ? (
-                      <a href={to}>{ctaLabel}</a>
-                    ) : plan ? (
-                      <Link to="/signup" search={{ plan }}>{ctaLabel}</Link>
-                    ) : (
-                      <Link to="/signup">{ctaLabel}</Link>
-                    )}
+                    <a href={to}>{ctaLabel}</a>
                   </Button>
-                  {isTrial && (
-                    <p className="mt-2 text-center text-[11px] text-black/50">
-                      {t("landing.pricing.noCardRequired", "No credit card required")}
-                    </p>
-                  )}
-                  {(key === "starter" || key === "pro") && (
-                    <div className="mt-2 space-y-0.5 text-center text-[11px] text-black/50">
-                      <p>{t("landing.pricing.noTrialPaid", "No free trial • Instant activation after payment")}</p>
-                      <p>
-                        {key === "pro"
-                          ? t("landing.pricing.implementationOnce", "Implementation charged only once")
-                          : t("landing.pricing.setupFeeOnce", "Setup charged only once")}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
-        <p className="mt-6 text-center text-xs text-black/50">{t("landing.pricing.trialNote")}</p>
+        <p className="mt-8 text-center text-xs text-black/50">
+          {t("landing.pricing.trialNote", "7-day free trial on Starter · 30-Day Satisfaction Guarantee · Cancel anytime")}
+        </p>
+
+        <p className="mt-2 text-center text-xs text-black/50">
+          {t("landing.pricing.enterpriseLine", "Need Enterprise? ")}
+          <a href={`mailto:${SALES_EMAIL}?subject=InventoryFlow%20Enterprise%20Inquiry`} className="underline">
+            {t("landing.pricing.contactSales", "Contact Sales")}
+          </a>
+        </p>
       </div>
     </section>
   );
