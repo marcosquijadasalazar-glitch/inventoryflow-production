@@ -16,6 +16,7 @@ import { type Location } from "@/lib/locations";
 import { listProducts } from "@/lib/inventory";
 import { getCompanySettings } from "@/lib/settings";
 import { exportTransferOrderPdf } from "@/lib/pdf";
+import { LocationPath } from "@/components/LocationPath";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
