@@ -871,11 +871,11 @@ function LocationStockPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!selectedBinId ? (
+                  {!selectedNodeId ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
                         <ScanLine className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
-                        {t("ls.pick_bin", "Select a bin to view its stock.")}
+                        {t("ls.pick_location", "Select a location, aisle, or bin to view its stock.")}
                       </TableCell>
                     </TableRow>
                   ) : productsQ.isLoading ? (
