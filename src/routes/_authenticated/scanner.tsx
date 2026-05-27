@@ -283,12 +283,14 @@ function ModeTabs({
 function LookupMode() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { can } = usePermissions();
   const [scanned, setScanned] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [actionOpen, setActionOpen] = useState<Action | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const scanRegionRef = useRef<HTMLDivElement>(null);
 
   const handleScan = async (code: string) => {
