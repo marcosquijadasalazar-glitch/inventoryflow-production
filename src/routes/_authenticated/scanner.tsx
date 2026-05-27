@@ -224,6 +224,8 @@ function ScannerPage() {
         ))}
 
       <ScanHistoryPanel />
+
+      <InsightsPanel />
     </div>
   );
 }
