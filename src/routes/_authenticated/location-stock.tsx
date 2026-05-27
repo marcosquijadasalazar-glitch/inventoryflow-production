@@ -55,10 +55,13 @@ import {
 import { ExportMenu } from "@/components/ExportMenu";
 import { StockActionDialog } from "@/components/StockActionDialog";
 import { LocationNodeDialog } from "@/components/LocationNodeDialog";
+import { LocationNodeActions } from "@/components/LocationNodeActions";
+import { ImportLocationsDialog } from "@/components/ImportLocationsDialog";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { usePermissions } from "@/lib/use-permissions";
 import { cn } from "@/lib/utils";
 import { getStockStatus } from "@/lib/stock";
+import { Upload } from "lucide-react";
 
 const sb = supabase as any;
 
@@ -128,6 +131,7 @@ function LocationStockPage() {
     mode: "add" | "remove" | "adjust" | "move";
   } | null>(null);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const nodesQ = useQuery({ queryKey: ["location-nodes-all"], queryFn: listAllNodes });
   const productsQ = useQuery({ queryKey: ["products"], queryFn: listProducts });
@@ -392,6 +396,12 @@ function LocationStockPage() {
               {t("ls.back_to_transfers", "Back to Transfers")}
             </Link>
           </Button>
+          {canCreateLoc && (
+            <Button variant="outline" onClick={() => setShowImport(true)}>
+              <Upload className="h-4 w-4" />
+              {t("ln.import", "Import")}
+            </Button>
+          )}
           <ExportMenu
             title={`${t("ls.title", "Location Stock")}${selectedBin ? " — " + (selectedBin.code || selectedBin.name) : ""}`}
             filename={`location-stock${selectedBin ? "-" + selectedBin.name.toLowerCase().replace(/\s+/g, "-") : ""}`}
@@ -417,7 +427,8 @@ function LocationStockPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3">
           <Card className="border-border shadow-soft">
-            <CardContent className="p-4">
+            <CardContent className="p-4 flex items-center gap-2">
+              <div className="min-w-0 flex-1">
               <Select
                 value={selectedLocationId ?? ""}
                 onValueChange={(v) => setSelectedLocationId(v)}
@@ -461,6 +472,20 @@ function LocationStockPage() {
                   )}
                 </SelectContent>
               </Select>
+              </div>
+              {canCreateLoc && selectedLocation && (
+                <LocationNodeActions node={selectedLocation} allNodes={nodes} />
+              )}
+              {canCreateLoc && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCreateParent({ parentId: null, level: "location" })}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("ln.new_location", "New Location")}
+                </Button>
+              )}
             </CardContent>
           </Card>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -514,11 +539,16 @@ function LocationStockPage() {
               const active = a.id === selectedAisleId;
               const count = itemsCount(a.id);
               return (
-                <button
+                <div
                   key={a.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedAisleId(a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedAisleId(a.id);
+                  }}
                   className={cn(
-                    "snap-start text-left shrink-0 w-[200px] rounded-lg border bg-card p-3 transition-all hover:shadow-soft",
+                    "snap-start text-left shrink-0 w-[200px] rounded-lg border bg-card p-3 transition-all hover:shadow-soft cursor-pointer",
                     active
                       ? "border-primary ring-1 ring-primary text-primary"
                       : "border-border",
@@ -531,16 +561,21 @@ function LocationStockPage() {
                         active ? "text-primary" : "text-muted-foreground",
                       )}
                     />
-                    <span
-                      className={cn(
-                        "text-xs font-semibold rounded-md px-1.5 py-0.5",
-                        active
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground",
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={cn(
+                          "text-xs font-semibold rounded-md px-1.5 py-0.5",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {count}
+                      </span>
+                      {canCreateLoc && (
+                        <LocationNodeActions node={a} allNodes={nodes} />
                       )}
-                    >
-                      {count}
-                    </span>
+                    </div>
                   </div>
                   <p
                     className={cn(
@@ -553,7 +588,7 @@ function LocationStockPage() {
                   <p className="text-xs text-muted-foreground truncate">
                     {a.code || t("ls.items_count", { defaultValue: "{{n}} items", n: count })}
                   </p>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -638,11 +673,16 @@ function LocationStockPage() {
               const active = b.id === selectedBinId;
               const count = itemsCount(b.id);
               return (
-                <button
+                <div
                   key={b.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedBinId(b.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                  }}
                   className={cn(
-                    "snap-start shrink-0 inline-flex items-center gap-2 rounded-full border px-3.5 h-10 transition-all hover:shadow-soft",
+                    "snap-start shrink-0 inline-flex items-center gap-2 rounded-full border pl-3.5 pr-1.5 h-10 transition-all hover:shadow-soft cursor-pointer",
                     active
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card text-foreground",
@@ -667,7 +707,10 @@ function LocationStockPage() {
                   >
                     {count} {t("ls.items", "items")}
                   </span>
-                </button>
+                  {canCreateLoc && (
+                    <LocationNodeActions node={b} allNodes={nodes} />
+                  )}
+                </div>
               );
             })}
           </div>
@@ -677,11 +720,16 @@ function LocationStockPage() {
               const active = b.id === selectedBinId;
               const count = itemsCount(b.id);
               return (
-                <button
+                <div
                   key={b.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedBinId(b.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                  }}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 text-left border-b border-border last:border-b-0",
+                    "w-full flex items-center justify-between px-3 py-2 text-left border-b border-border last:border-b-0 cursor-pointer",
                     active ? "bg-primary/5 text-primary" : "hover:bg-muted/50",
                   )}
                 >
@@ -689,10 +737,13 @@ function LocationStockPage() {
                     <MapPin className="h-3.5 w-3.5" />
                     {b.code || b.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {count} {t("ls.items", "items")}
-                  </span>
-                </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {count} {t("ls.items", "items")}
+                    </span>
+                    {canCreateLoc && <LocationNodeActions node={b} allNodes={nodes} />}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -968,6 +1019,10 @@ function LocationStockPage() {
       <ProductDetailsDialog
         product={viewProduct}
         onClose={() => setViewProduct(null)}
+      />
+      <ImportLocationsDialog
+        open={showImport}
+        onClose={() => setShowImport(false)}
       />
     </div>
   );
