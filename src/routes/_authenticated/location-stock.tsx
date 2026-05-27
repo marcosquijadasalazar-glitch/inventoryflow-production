@@ -673,11 +673,16 @@ function LocationStockPage() {
               const active = b.id === selectedBinId;
               const count = itemsCount(b.id);
               return (
-                <button
+                <div
                   key={b.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedBinId(b.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                  }}
                   className={cn(
-                    "snap-start shrink-0 inline-flex items-center gap-2 rounded-full border px-3.5 h-10 transition-all hover:shadow-soft",
+                    "snap-start shrink-0 inline-flex items-center gap-2 rounded-full border pl-3.5 pr-1.5 h-10 transition-all hover:shadow-soft cursor-pointer",
                     active
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-border bg-card text-foreground",
@@ -702,7 +707,10 @@ function LocationStockPage() {
                   >
                     {count} {t("ls.items", "items")}
                   </span>
-                </button>
+                  {canCreateLoc && (
+                    <LocationNodeActions node={b} allNodes={nodes} />
+                  )}
+                </div>
               );
             })}
           </div>
