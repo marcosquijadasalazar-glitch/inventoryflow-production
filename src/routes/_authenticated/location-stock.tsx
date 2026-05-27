@@ -396,6 +396,12 @@ function LocationStockPage() {
               {t("ls.back_to_transfers", "Back to Transfers")}
             </Link>
           </Button>
+          {canCreateLoc && (
+            <Button variant="outline" onClick={() => setShowImport(true)}>
+              <Upload className="h-4 w-4" />
+              {t("ln.import", "Import")}
+            </Button>
+          )}
           <ExportMenu
             title={`${t("ls.title", "Location Stock")}${selectedBin ? " — " + (selectedBin.code || selectedBin.name) : ""}`}
             filename={`location-stock${selectedBin ? "-" + selectedBin.name.toLowerCase().replace(/\s+/g, "-") : ""}`}
