@@ -539,11 +539,16 @@ function LocationStockPage() {
               const active = a.id === selectedAisleId;
               const count = itemsCount(a.id);
               return (
-                <button
+                <div
                   key={a.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedAisleId(a.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedAisleId(a.id);
+                  }}
                   className={cn(
-                    "snap-start text-left shrink-0 w-[200px] rounded-lg border bg-card p-3 transition-all hover:shadow-soft",
+                    "snap-start text-left shrink-0 w-[200px] rounded-lg border bg-card p-3 transition-all hover:shadow-soft cursor-pointer",
                     active
                       ? "border-primary ring-1 ring-primary text-primary"
                       : "border-border",
@@ -556,16 +561,21 @@ function LocationStockPage() {
                         active ? "text-primary" : "text-muted-foreground",
                       )}
                     />
-                    <span
-                      className={cn(
-                        "text-xs font-semibold rounded-md px-1.5 py-0.5",
-                        active
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground",
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={cn(
+                          "text-xs font-semibold rounded-md px-1.5 py-0.5",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {count}
+                      </span>
+                      {canCreateLoc && (
+                        <LocationNodeActions node={a} allNodes={nodes} />
                       )}
-                    >
-                      {count}
-                    </span>
+                    </div>
                   </div>
                   <p
                     className={cn(
@@ -578,7 +588,7 @@ function LocationStockPage() {
                   <p className="text-xs text-muted-foreground truncate">
                     {a.code || t("ls.items_count", { defaultValue: "{{n}} items", n: count })}
                   </p>
-                </button>
+                </div>
               );
             })}
           </div>
