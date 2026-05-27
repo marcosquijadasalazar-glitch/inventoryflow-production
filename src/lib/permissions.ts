@@ -62,6 +62,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ManageableRole, AppPermission[]> =
     "manage_transfer_orders",
     "manage_internal_use",
     "use_barcode_scanner",
+    "print_labels",
     "manage_alerts",
     "manage_locations",
   ],
