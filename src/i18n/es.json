@@ -113,10 +113,129 @@
     "statusLabel": "Estado"
   },
   "onboarding": {
-    "verifiedTitle": "Correo verificado correctamente.",
-    "verifiedPending": "Tu cuenta está pendiente de aprobación.",
-    "verifiedReview": "Un administrador revisará tu acceso en breve.",
-    "backToLogin": "Volver al inicio de sesión"
+    "welcome": {
+      "title": "Bienvenido a InventoryFlow 👋",
+      "subtitle": "Vamos a configurar tu espacio de trabajo.",
+      "intro": "Son 4 pasos rápidos para dejar tu inventario listo. Puedes saltar cualquier paso y volver después.",
+      "feat1": "Controla productos, stock y movimientos en tiempo real",
+      "feat2": "Datos de ejemplo opcionales para explorar la plataforma",
+      "feat3": "Invita a tu equipo con permisos adecuados",
+      "feat4": "Obtén tus primeros resultados en menos de 10 minutos"
+    },
+    "wizard": {
+      "title": "Configuración rápida",
+      "stepLabel": "Paso {{step}} de {{total}}"
+    },
+    "actions": {
+      "start": "Comenzar configuración",
+      "skip": "Saltar por ahora",
+      "finish": "Finalizar"
+    },
+    "business": {
+      "title": "Cuéntanos sobre tu negocio",
+      "subtitle": "Esto nos ayuda a personalizar tu experiencia.",
+      "businessType": "Tipo de negocio",
+      "productVolume": "Cantidad aproximada de productos",
+      "employees": "Cantidad de empleados",
+      "locations": "Cantidad de ubicaciones",
+      "language": "Idioma preferido",
+      "selectPlaceholder": "Selecciona una opción",
+      "types": {
+        "retail": "Tienda minorista",
+        "wholesale": "Mayorista / distribución",
+        "ecommerce": "E-commerce",
+        "warehouse": "Almacén / 3PL",
+        "manufacturing": "Manufactura",
+        "food_beverage": "Alimentos y bebidas",
+        "services": "Servicios",
+        "other": "Otro"
+      },
+      "vol": {
+        "lt50": "Menos de 50",
+        "50_500": "50 – 500",
+        "500_5000": "500 – 5.000",
+        "gt5000": "Más de 5.000"
+      },
+      "size": {
+        "solo": "Solo yo",
+        "s2_5": "2 – 5",
+        "s6_25": "6 – 25",
+        "s26_100": "26 – 100",
+        "s100p": "100+"
+      }
+    },
+    "demo": {
+      "title": "¿Quieres datos de ejemplo para explorar?",
+      "subtitle": "Crearemos productos, un proveedor, un cliente, una ubicación y movimientos de demo para que no empieces con el panel vacío.",
+      "yes": "Sí, instalar datos de ejemplo",
+      "yesDesc": "Ideal para explorar al inicio. Puedes borrarlos cuando quieras.",
+      "no": "No, empezar vacío",
+      "noDesc": "Agregaré mis propios productos directamente.",
+      "installed": "Datos de ejemplo instalados"
+    },
+    "import": {
+      "title": "Importa tus productos",
+      "subtitle": "Sube un archivo Excel o CSV — o salta este paso y agrega productos después.",
+      "helperTitle": "Trae tu inventario actual",
+      "helperBody": "Soportamos Excel (.xlsx) y CSV. Dentro del importador encontrarás una plantilla descargable.",
+      "openImporter": "Abrir importador de productos",
+      "skipHint": "Puedes saltar este paso e importar productos desde la página de Productos más adelante."
+    },
+    "invite": {
+      "title": "Invita a tu equipo",
+      "subtitle": "Agrega gerentes o empleados. Recibirán un correo para crear su contraseña.",
+      "addRow": "Agregar otro miembro",
+      "skipHint": "Puedes invitar a tu equipo más adelante desde Usuarios y Roles.",
+      "roles": {
+        "manager": "Gerente",
+        "employee": "Empleado"
+      },
+      "success": "Se enviaron {{count}} invitación(es)",
+      "partial": "{{count}} invitación(es) fallaron"
+    },
+    "success": {
+      "title": "Tu espacio está listo 🚀",
+      "subtitle": "Todo listo. Empieza a gestionar tu inventario.",
+      "goDashboard": "Ir al Panel",
+      "watchDemo": "Ver demo rápida",
+      "whatsapp": "Chatear por WhatsApp"
+    },
+    "help": {
+      "title": "¿Necesitas ayuda para configurar?",
+      "subtitle": "Escríbenos por WhatsApp o agenda una llamada rápida de onboarding.",
+      "whatsapp": "WhatsApp",
+      "bookDemo": "Agendar demo",
+      "needHelp": "¿Necesitas ayuda?"
+    },
+    "checklist": {
+      "title": "Primeros pasos",
+      "progress": "{{done}}/{{total}} completados",
+      "items": {
+        "created_product": "Crea tu primer producto",
+        "imported_products": "Importa productos (5+)",
+        "used_scanner": "Prueba el escáner de códigos",
+        "created_location": "Crea una ubicación",
+        "invited_employee": "Invita a un miembro"
+      }
+    },
+    "tips": {
+      "products": {
+        "title": "Productos",
+        "body": "Agrega productos manualmente, escanea códigos o importa desde Excel/CSV."
+      },
+      "scanner": {
+        "title": "Escáner de códigos",
+        "body": "Usa la cámara del teléfono o un lector USB para mover stock al instante."
+      },
+      "reports": {
+        "title": "Reportes",
+        "body": "Exporta inventario, ventas y movimientos en PDF, Excel o CSV."
+      },
+      "users": {
+        "title": "Usuarios y Roles",
+        "body": "Invita a tu equipo y define qué puede ver y hacer cada rol."
+      }
+    }
   },
   "pending": {
     "title": "Tu cuenta está pendiente de aprobación.",
@@ -150,7 +269,12 @@
       "how": "Cómo funciona",
       "who": "Para quién es",
       "login": "Iniciar sesión",
-      "startTrial": "Iniciar prueba gratis"
+      "startTrial": "Iniciar prueba gratis",
+      "resources": "Recursos",
+      "helpCenter": "Centro de ayuda",
+      "setupGuides": "Guías de configuración",
+      "contactSupport": "Contactar soporte",
+      "demo": "Demo"
     },
     "hero": {
       "titleA": "Deja de perder inventario.",
@@ -167,7 +291,13 @@
         "bilingual": "EN / ES",
         "secure": "Seguro",
         "cloud": "En la nube"
-      }
+      },
+      "eyebrow": "Plataforma todo-en-uno de Inventario y Operaciones",
+      "bullet1": "Todos los módulos incluidos",
+      "bullet2": "Tarjeta requerida",
+      "bullet3": "Configuración rápida",
+      "ctaPrimarySub": "Todos los módulos incluidos",
+      "ctaDemoSub": "Míralo en acción"
     },
     "pricing": {
       "eyebrow": "Precios",
@@ -328,6 +458,20 @@
             "enterprise": "yes"
           }
         ]
+      },
+      "billedMonthly": "Facturación mensual",
+      "cardRequired": "Tarjeta requerida",
+      "starter": {
+        "f1": "Todos los módulos incluidos",
+        "f2": "Hasta 3 usuarios",
+        "f3": "Hasta 500 productos",
+        "f4": "2 ubicaciones"
+      },
+      "pro": {
+        "f1": "Todos los módulos incluidos",
+        "f2": "Hasta 25 usuarios",
+        "f3": "Productos ilimitados",
+        "f4": "Soporte multi-ubicación (10)"
       }
     },
     "recurring": {
@@ -612,7 +756,7 @@
       "yearlyNote": "El cobro anual se habilitará con Stripe. Contacta a ventas para precios de acceso anticipado."
     },
     "footer": {
-      "tagline": "Gestión de inventario bilingüe e inteligente para negocios en crecimiento. Hecho por SamVic Technologies.",
+      "tagline": "Controla tu inventario. Haz crecer tu negocio.",
       "product": "Producto",
       "contact": "Contacto",
       "legal": "Legal",
@@ -626,11 +770,72 @@
       "disclaimer": "Aviso legal",
       "serviceAgreement": "Acuerdo de servicio",
       "copyright": "© {{year}} SamVic Technologies. Todos los derechos reservados.",
-      "builtFor": "Hecho para negocios en crecimiento · Bilingüe EN / ES"
+      "builtFor": "Hecho para negocios en crecimiento · Bilingüe EN / ES",
+      "company": "Empresa",
+      "about": "Acerca de",
+      "resources": "Recursos",
+      "needHelp": "¿Necesitas ayuda?",
+      "emailSupport": "Soporte por email",
+      "whatsapp": "Chatea por WhatsApp",
+      "builtWith": "Hecho para negocios en crecimiento."
     },
     "floatingWhatsapp": {
       "tooltip": "Chatea con nosotros en WhatsApp",
       "aria": "Chatear por WhatsApp"
+    },
+    "ps": {
+      "problemTitle": "¿Sigues gestionando tu negocio manualmente?",
+      "solutionTitle": "InventoryFlow te da control y claridad.",
+      "p1": "Pérdidas de inventario",
+      "p2": "Caos en Excel",
+      "p3": "Errores de empleados",
+      "p4": "Sin visibilidad operativa",
+      "p5": "Procesos manuales lentos",
+      "s1": "Seguimiento de inventario en tiempo real",
+      "s2": "Alertas inteligentes",
+      "s3": "Responsabilidad de empleados",
+      "s4": "Registros de auditoría",
+      "s5": "Control operativo rápido"
+    },
+    "feat": {
+      "realtime": {
+        "title": "Inventario en tiempo real",
+        "desc": "Rastrea el stock al instante y reduce pérdidas."
+      },
+      "employee": {
+        "title": "Control de empleados",
+        "desc": "Sabe quién cambió productos o inventario."
+      },
+      "alerts": {
+        "title": "Alertas inteligentes",
+        "desc": "Resuelve problemas de inventario antes de que cuesten dinero."
+      },
+      "mobile": {
+        "title": "Acceso móvil",
+        "desc": "Gestiona tu negocio desde cualquier lugar."
+      },
+      "insights": {
+        "title": "Análisis del negocio",
+        "desc": "Toma decisiones operativas más inteligentes con analíticas claras."
+      }
+    },
+    "why": {
+      "title": "Por qué los negocios eligen InventoryFlow",
+      "fast": "Configuración rápida",
+      "nosetup": "Sin configuración complicada",
+      "mobile": "Compatible con móvil",
+      "realtime": "Seguimiento de inventario en tiempo real",
+      "real": "Diseñado para negocios reales",
+      "cloud": "Plataforma moderna en la nube",
+      "bilingual": "Plataforma bilingüe (Inglés y Español)"
+    },
+    "finalCta": {
+      "title": "Toma el control de tu negocio hoy.",
+      "subtitle": "InventoryFlow te ayuda a organizar inventario, empleados y operaciones más rápido — sin sistemas complicados.",
+      "cta": "Iniciar tu prueba de 7 días",
+      "b1": "Todos los módulos incluidos",
+      "b2": "Tarjeta requerida",
+      "b3": "Configuración rápida"
     }
   },
   "auth": {
@@ -1443,127 +1648,5 @@
     "reason": "Motivo (opcional)",
     "purging": "Purgando…",
     "purgePermanently": "Purgar permanentemente"
-  },
-  "onboarding": {
-    "welcome": {
-      "title": "Bienvenido a InventoryFlow 👋",
-      "subtitle": "Vamos a configurar tu espacio de trabajo.",
-      "intro": "Son 4 pasos rápidos para dejar tu inventario listo. Puedes saltar cualquier paso y volver después.",
-      "feat1": "Controla productos, stock y movimientos en tiempo real",
-      "feat2": "Datos de ejemplo opcionales para explorar la plataforma",
-      "feat3": "Invita a tu equipo con permisos adecuados",
-      "feat4": "Obtén tus primeros resultados en menos de 10 minutos"
-    },
-    "wizard": {
-      "title": "Configuración rápida",
-      "stepLabel": "Paso {{step}} de {{total}}"
-    },
-    "actions": {
-      "start": "Comenzar configuración",
-      "skip": "Saltar por ahora",
-      "finish": "Finalizar"
-    },
-    "business": {
-      "title": "Cuéntanos sobre tu negocio",
-      "subtitle": "Esto nos ayuda a personalizar tu experiencia.",
-      "businessType": "Tipo de negocio",
-      "productVolume": "Cantidad aproximada de productos",
-      "employees": "Cantidad de empleados",
-      "locations": "Cantidad de ubicaciones",
-      "language": "Idioma preferido",
-      "selectPlaceholder": "Selecciona una opción",
-      "types": {
-        "retail": "Tienda minorista",
-        "wholesale": "Mayorista / distribución",
-        "ecommerce": "E-commerce",
-        "warehouse": "Almacén / 3PL",
-        "manufacturing": "Manufactura",
-        "food_beverage": "Alimentos y bebidas",
-        "services": "Servicios",
-        "other": "Otro"
-      },
-      "vol": {
-        "lt50": "Menos de 50",
-        "50_500": "50 – 500",
-        "500_5000": "500 – 5.000",
-        "gt5000": "Más de 5.000"
-      },
-      "size": {
-        "solo": "Solo yo",
-        "s2_5": "2 – 5",
-        "s6_25": "6 – 25",
-        "s26_100": "26 – 100",
-        "s100p": "100+"
-      }
-    },
-    "demo": {
-      "title": "¿Quieres datos de ejemplo para explorar?",
-      "subtitle": "Crearemos productos, un proveedor, un cliente, una ubicación y movimientos de demo para que no empieces con el panel vacío.",
-      "yes": "Sí, instalar datos de ejemplo",
-      "yesDesc": "Ideal para explorar al inicio. Puedes borrarlos cuando quieras.",
-      "no": "No, empezar vacío",
-      "noDesc": "Agregaré mis propios productos directamente.",
-      "installed": "Datos de ejemplo instalados"
-    },
-    "import": {
-      "title": "Importa tus productos",
-      "subtitle": "Sube un archivo Excel o CSV — o salta este paso y agrega productos después.",
-      "helperTitle": "Trae tu inventario actual",
-      "helperBody": "Soportamos Excel (.xlsx) y CSV. Dentro del importador encontrarás una plantilla descargable.",
-      "openImporter": "Abrir importador de productos",
-      "skipHint": "Puedes saltar este paso e importar productos desde la página de Productos más adelante."
-    },
-    "invite": {
-      "title": "Invita a tu equipo",
-      "subtitle": "Agrega gerentes o empleados. Recibirán un correo para crear su contraseña.",
-      "addRow": "Agregar otro miembro",
-      "skipHint": "Puedes invitar a tu equipo más adelante desde Usuarios y Roles.",
-      "roles": { "manager": "Gerente", "employee": "Empleado" },
-      "success": "Se enviaron {{count}} invitación(es)",
-      "partial": "{{count}} invitación(es) fallaron"
-    },
-    "success": {
-      "title": "Tu espacio está listo 🚀",
-      "subtitle": "Todo listo. Empieza a gestionar tu inventario.",
-      "goDashboard": "Ir al Panel",
-      "watchDemo": "Ver demo rápida",
-      "whatsapp": "Chatear por WhatsApp"
-    },
-    "help": {
-      "title": "¿Necesitas ayuda para configurar?",
-      "subtitle": "Escríbenos por WhatsApp o agenda una llamada rápida de onboarding.",
-      "whatsapp": "WhatsApp",
-      "bookDemo": "Agendar demo",
-      "needHelp": "¿Necesitas ayuda?"
-    },
-    "checklist": {
-      "title": "Primeros pasos",
-      "progress": "{{done}}/{{total}} completados",
-      "items": {
-        "created_product": "Crea tu primer producto",
-        "imported_products": "Importa productos (5+)",
-        "used_scanner": "Prueba el escáner de códigos",
-        "created_location": "Crea una ubicación",
-        "invited_employee": "Invita a un miembro"
-      }
-    },
-    "tips": {
-      "products": {
-        "title": "Productos",
-        "body": "Agrega productos manualmente, escanea códigos o importa desde Excel/CSV."
-      },
-      "scanner": {
-        "title": "Escáner de códigos",
-        "body": "Usa la cámara del teléfono o un lector USB para mover stock al instante."
-      },
-      "reports": {
-        "title": "Reportes",
-        "body": "Exporta inventario, ventas y movimientos en PDF, Excel o CSV."
-      },
-      "users": {
-        "title": "Usuarios y Roles",
-        "body": "Invita a tu equipo y define qué puede ver y hacer cada rol."
-      }
-    }
   }
 }
