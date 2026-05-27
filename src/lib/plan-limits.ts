@@ -1,4 +1,9 @@
 // Shared plan metadata (kept in sync with public.plan_limits SQL function)
+//
+// NOTE: "free" remains in the type to tolerate legacy organization rows that
+// were provisioned before the Starter/Pro-only model. The UI never offers free
+// as a choice and recommendedPlan() promotes legacy free orgs straight to
+// Starter. Growth is gated by capacity, not by hiding modules.
 export type PlanType = "free" | "starter" | "pro" | "enterprise";
 
 export type PlanLimits = {
@@ -8,13 +13,15 @@ export type PlanLimits = {
 };
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
-  free:       { max_users: 2,    max_products: 100,  max_locations: 1 },
+  // Legacy free rows are treated as Starter for limit purposes.
+  free:       { max_users: 3,    max_products: 500,  max_locations: 2 },
   starter:    { max_users: 3,    max_products: 500,  max_locations: 2 },
   pro:        { max_users: 25,   max_products: null, max_locations: 10 },
   enterprise: { max_users: null, max_products: null, max_locations: null },
 };
 
-export const PLAN_ORDER: PlanType[] = ["free", "starter", "pro", "enterprise"];
+// UI/selection order — Starter and Pro are the only sellable plans.
+export const PLAN_ORDER: PlanType[] = ["starter", "pro", "enterprise"];
 
 export type UsageKind = "users" | "products" | "locations";
 
@@ -50,23 +57,10 @@ export function fmtLimit(n: number | null | undefined): string {
 }
 
 // Recommend the next plan that increases the given resource over current.
-export function recommendedPlan(current: PlanType, kind?: UsageKind): PlanType {
-  const start = PLAN_ORDER.indexOf(current);
-  if (start === -1) return "pro";
-  const key =
-    kind === "users" ? "max_users"
-    : kind === "products" ? "max_products"
-    : kind === "locations" ? "max_locations"
-    : null;
-  if (!key) {
-    return PLAN_ORDER[Math.min(start + 1, PLAN_ORDER.length - 1)];
-  }
-  const currentLim = PLAN_LIMITS[current][key];
-  for (let i = start + 1; i < PLAN_ORDER.length; i++) {
-    const next = PLAN_ORDER[i];
-    const lim = PLAN_LIMITS[next][key];
-    if (lim == null || (currentLim != null && lim > currentLim)) return next;
-  }
+// Legacy "free" rows promote to Starter; everything else climbs the ladder.
+export function recommendedPlan(current: PlanType, _kind?: UsageKind): PlanType {
+  if (current === "free" || current === "starter") return "pro";
+  if (current === "pro") return "enterprise";
   return "enterprise";
 }
 
