@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SignupCompleteRouteImport } from './routes/signup-complete'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ServiceAgreementRouteImport } from './routes/service-agreement'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -19,6 +20,7 @@ import { Route as PaymentRequiredRouteImport } from './routes/payment-required'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -49,6 +51,11 @@ import { Route as ApiPublicHooksRunBackupRouteImport } from './routes/api/public
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupCompleteRoute = SignupCompleteRouteImport.update({
+  id: '/signup-complete',
+  path: '/signup-complete',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -94,6 +101,11 @@ const EmailConfirmedRoute = EmailConfirmedRouteImport.update({
 const DisclaimerRoute = DisclaimerRouteImport.update({
   id: '/disclaimer',
   path: '/disclaimer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangePasswordRoute = ChangePasswordRouteImport.update({
@@ -236,6 +248,7 @@ const ApiPublicHooksRunBackupRoute = ApiPublicHooksRunBackupRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/change-password': typeof ChangePasswordRoute
+  '/checkout': typeof CheckoutRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -245,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -273,6 +287,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/change-password': typeof ChangePasswordRoute
+  '/checkout': typeof CheckoutRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -282,6 +297,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -312,6 +328,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/change-password': typeof ChangePasswordRoute
+  '/checkout': typeof CheckoutRoute
   '/disclaimer': typeof DisclaimerRoute
   '/email-confirmed': typeof EmailConfirmedRoute
   '/login': typeof LoginRoute
@@ -321,6 +338,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
   '/signup': typeof SignupRoute
+  '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/_authenticated/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -351,6 +369,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/change-password'
+    | '/checkout'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -360,6 +379,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/service-agreement'
     | '/signup'
+    | '/signup-complete'
     | '/terms'
     | '/adjustments'
     | '/admin'
@@ -388,6 +408,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/change-password'
+    | '/checkout'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -397,6 +418,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/service-agreement'
     | '/signup'
+    | '/signup-complete'
     | '/terms'
     | '/adjustments'
     | '/admin'
@@ -426,6 +448,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/change-password'
+    | '/checkout'
     | '/disclaimer'
     | '/email-confirmed'
     | '/login'
@@ -435,6 +458,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/service-agreement'
     | '/signup'
+    | '/signup-complete'
     | '/terms'
     | '/_authenticated/adjustments'
     | '/_authenticated/admin'
@@ -465,6 +489,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ChangePasswordRoute: typeof ChangePasswordRoute
+  CheckoutRoute: typeof CheckoutRoute
   DisclaimerRoute: typeof DisclaimerRoute
   EmailConfirmedRoute: typeof EmailConfirmedRoute
   LoginRoute: typeof LoginRoute
@@ -474,6 +499,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ServiceAgreementRoute: typeof ServiceAgreementRoute
   SignupRoute: typeof SignupRoute
+  SignupCompleteRoute: typeof SignupCompleteRoute
   TermsRoute: typeof TermsRoute
   ApiPublicHooksRunBackupRoute: typeof ApiPublicHooksRunBackupRoute
   ApiPublicHooksStripeRoute: typeof ApiPublicHooksStripeRoute
@@ -486,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup-complete': {
+      id: '/signup-complete'
+      path: '/signup-complete'
+      fullPath: '/signup-complete'
+      preLoaderRoute: typeof SignupCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -549,6 +582,13 @@ declare module '@tanstack/react-router' {
       path: '/disclaimer'
       fullPath: '/disclaimer'
       preLoaderRoute: typeof DisclaimerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/change-password': {
@@ -792,6 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ChangePasswordRoute: ChangePasswordRoute,
+  CheckoutRoute: CheckoutRoute,
   DisclaimerRoute: DisclaimerRoute,
   EmailConfirmedRoute: EmailConfirmedRoute,
   LoginRoute: LoginRoute,
@@ -801,6 +842,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ServiceAgreementRoute: ServiceAgreementRoute,
   SignupRoute: SignupRoute,
+  SignupCompleteRoute: SignupCompleteRoute,
   TermsRoute: TermsRoute,
   ApiPublicHooksRunBackupRoute: ApiPublicHooksRunBackupRoute,
   ApiPublicHooksStripeRoute: ApiPublicHooksStripeRoute,
@@ -808,13 +850,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -11,6 +11,8 @@ import {
   type BillingPlan,
 } from "./stripe.server";
 
+const TRIAL_DAYS = 7;
+
 async function loadOwnerOrg(userId: string) {
   const { data: profile, error: pErr } = await supabaseAdmin
     .from("profiles")
@@ -73,7 +75,7 @@ export const getBillingStatus = createServerFn({ method: "GET" })
     }
 
     return {
-      plan: (org.plan_type as any) ?? "free",
+      plan: (org.plan_type as any) ?? "starter",
       subscription_status: (org.subscription_status as string) ?? "active",
       current_period_end: (org.current_period_end as string | null) ?? null,
       grace_period_ends_at: (org.grace_period_ends_at as string | null) ?? null,
@@ -105,30 +107,16 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       console.error("[billing.checkout] loadOwnerOrg failed", { message: e?.message });
       throw new Error(e?.message ?? "Could not load organization");
     }
-    console.info("[billing.checkout] org loaded", {
-      organization_id: org.id,
-      setup_fee_paid: !!org.setup_fee_paid,
-      pending_plan: (org as any).pending_plan ?? null,
-      subscription_status: (org as any).subscription_status,
-    });
 
-    // Validate required Stripe price IDs up front for a clearer error.
     let recurringPriceId: string;
     try {
       recurringPriceId = priceIdForPlan(data.plan as BillingPlan);
     } catch (e: any) {
-      console.error("[billing.checkout] missing recurring price", { plan: data.plan });
       throw new Error("Billing is not fully configured. Please contact support.");
     }
 
     const stripe = getStripe();
-    let customerId: string;
-    try {
-      customerId = await ensureStripeCustomer(org.id, profile.email);
-    } catch (e: any) {
-      console.error("[billing.checkout] ensureStripeCustomer failed", { message: e?.message });
-      throw new Error("Could not create Stripe customer. Please contact support.");
-    }
+    const customerId = await ensureStripeCustomer(org.id, profile.email);
 
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
@@ -136,79 +124,184 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const lineItems: Array<{ price: string; quantity: number }> = [
       { price: recurringPriceId, quantity: 1 },
     ];
-    let includesSetupFee = false;
+    let includesOnboarding = false;
     if (!(org as any).setup_fee_paid) {
       const setupPrice = setupPriceIdForPlan(data.plan as BillingPlan);
       if (setupPrice) {
         lineItems.push({ price: setupPrice, quantity: 1 });
-        includesSetupFee = true;
-      } else {
-        console.warn("[billing.checkout] no setup price configured for plan", { plan: data.plan });
+        includesOnboarding = true;
       }
     }
 
-    try {
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        customer: customerId,
-        line_items: lineItems,
-        success_url: `${base}/settings?billing=success`,
-        cancel_url: `${base}/payment-required?billing=cancelled`,
-        allow_promotion_codes: true,
-        automatic_tax: { enabled: true },
-        customer_update: { address: "auto", name: "auto" },
-        subscription_data: {
-          metadata: { organization_id: org.id, selected_plan: data.plan },
-        },
-        metadata: {
-          organization_id: org.id,
-          selected_plan: data.plan,
-          includes_setup_fee: includesSetupFee ? "true" : "false",
-        },
-      });
-      const url = session.url ?? null;
-      console.info("[billing.checkout] session created", {
-        organization_id: org.id,
-        plan: data.plan,
-        session_id: session.id,
-        has_url: !!url,
-        includes_setup_fee: includesSetupFee,
-      });
-      if (!url) throw new Error("Stripe did not return a checkout URL");
-      return { url };
-    } catch (e: any) {
-      console.error("[billing.checkout] stripe.checkout.sessions.create failed", {
-        organization_id: org.id,
-        plan: data.plan,
-        message: e?.message,
-        code: e?.code,
-        type: e?.type,
-      });
-      throw new Error(e?.message ?? "Could not start Stripe Checkout");
+    // Starter still offers a 7-day trial for upgrades from a never-trialed org.
+    const subscriptionData: any = {
+      metadata: { organization_id: org.id, selected_plan: data.plan },
+    };
+    if (data.plan === "starter" && !org.has_used_trial) {
+      subscriptionData.trial_period_days = TRIAL_DAYS;
     }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: lineItems,
+      success_url: `${base}/settings?billing=success`,
+      cancel_url: `${base}/payment-required?billing=cancelled`,
+      allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      billing_address_collection: "required",
+      customer_update: { address: "auto", name: "auto" },
+      subscription_data: subscriptionData,
+      metadata: {
+        organization_id: org.id,
+        selected_plan: data.plan,
+        includes_onboarding: includesOnboarding ? "true" : "false",
+      },
+    });
+    if (!session.url) throw new Error("Stripe did not return a checkout URL");
+    return { url: session.url };
   });
 
 export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ url: string }> => {
-    const { profile, org } = await loadOwnerOrg(context.userId);
-    void profile;
-    // Do NOT auto-create a Stripe customer here. The Billing Portal is for
-    // existing customers (invoice history, payment method, cancel). If the org
-    // has never checked out, there's no customer to manage.
+    const { org } = await loadOwnerOrg(context.userId);
     if (!org.stripe_customer_id) {
       throw new Error("No billing account found.");
     }
-    const customerId = org.stripe_customer_id;
-
     const stripe = getStripe();
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
+      customer: org.stripe_customer_id,
       return_url: `${base}/settings`,
     });
     return { url: session.url };
   });
 
+// ---------------------------------------------------------------------------
+// Payment-first signup: anonymous Stripe Checkout that provisions the
+// organization + user only after a successful payment / trial start.
+// ---------------------------------------------------------------------------
+
+const SignupCheckoutSchema = z.object({
+  plan: z.enum(["starter", "pro"]),
+  email: z.string().email().max(254),
+});
+
+export const createSignupCheckoutSession = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SignupCheckoutSchema.parse(input))
+  .handler(async ({ data }): Promise<{ url: string }> => {
+    const stripe = getStripe();
+    const email = data.email.trim().toLowerCase();
+
+    // Don't allow re-signup for an email that already has an account.
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .eq("email", email)
+      .maybeSingle();
+    if (existing) {
+      throw new Error("An account with this email already exists. Please sign in instead.");
+    }
+
+    let recurringPriceId: string;
+    try {
+      recurringPriceId = priceIdForPlan(data.plan as BillingPlan);
+    } catch {
+      throw new Error("Billing is not fully configured. Please contact support.");
+    }
+
+    // Always include the one-time Onboarding Process line item for new signups.
+    const lineItems: Array<{ price: string; quantity: number }> = [
+      { price: recurringPriceId, quantity: 1 },
+    ];
+    const onboardingPrice = setupPriceIdForPlan(data.plan as BillingPlan);
+    if (onboardingPrice) lineItems.push({ price: onboardingPrice, quantity: 1 });
+
+    // Create a Stripe Customer up-front so the email/billing data is reusable.
+    const customer = await stripe.customers.create({
+      email,
+      metadata: { signup_email: email, selected_plan: data.plan },
+    });
+
+    const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
+    const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
+
+    const subscriptionData: any = {
+      metadata: {
+        signup: "true",
+        signup_email: email,
+        selected_plan: data.plan,
+      },
+    };
+    if (data.plan === "starter") {
+      subscriptionData.trial_period_days = TRIAL_DAYS;
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customer.id,
+      line_items: lineItems,
+      success_url: `${base}/signup-complete?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/?checkout=cancelled`,
+      allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      billing_address_collection: "required",
+      customer_update: { address: "auto", name: "auto" },
+      subscription_data: subscriptionData,
+      metadata: {
+        signup: "true",
+        signup_email: email,
+        selected_plan: data.plan,
+        includes_onboarding: onboardingPrice ? "true" : "false",
+      },
+    });
+
+    // Reserve a signup-session row so /signup-complete can poll for status.
+    await supabaseAdmin.from("signup_sessions" as never).insert({
+      session_id: session.id,
+      email,
+      plan: data.plan,
+      status: "pending",
+    } as never);
+
+    if (!session.url) throw new Error("Stripe did not return a checkout URL");
+    return { url: session.url };
+  });
+
+const SignupStatusSchema = z.object({
+  session_id: z.string().min(10).max(200),
+});
+
+export type SignupStatus =
+  | { status: "pending"; email: string }
+  | { status: "ready"; email: string; temp_password: string | null }
+  | { status: "missing" };
+
+// Poll endpoint for /signup-complete. The Stripe checkout session id is
+// long and unguessable, so it acts as the bearer token for this one-time
+// handoff. The temp password is returned at most once (cleared after read).
+export const getSignupSession = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => SignupStatusSchema.parse(input))
+  .handler(async ({ data }): Promise<SignupStatus> => {
+    const { data: row } = await supabaseAdmin
+      .from("signup_sessions" as never)
+      .select("session_id, email, status, temp_password, consumed_at")
+      .eq("session_id", data.session_id)
+      .maybeSingle();
+    if (!row) return { status: "missing" } as SignupStatus;
+    const r = row as any;
+    if (r.status !== "ready") {
+      return { status: "pending", email: r.email };
+    }
+    const tempPassword: string | null = r.consumed_at ? null : (r.temp_password ?? null);
+    if (tempPassword) {
+      await supabaseAdmin
+        .from("signup_sessions" as never)
+        .update({ temp_password: null, consumed_at: new Date().toISOString() } as never)
+        .eq("session_id", data.session_id);
+    }
+    return { status: "ready", email: r.email, temp_password: tempPassword };
+  });
