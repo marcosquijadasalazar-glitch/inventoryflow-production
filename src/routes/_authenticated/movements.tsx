@@ -99,8 +99,19 @@ function MovementsPage() {
   const [productId, setProductId] = useState<string>("");
   const [type, setType] = useState<MovementType>("add");
   const [quantity, setQuantity] = useState<string>("1");
+  const [adjustReason, setAdjustReason] = useState<string>("physical_count");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const selectedProduct = useMemo(
+    () => products.data?.find((p) => p.id === productId) ?? null,
+    [products.data, productId],
+  );
+  const currentStock = selectedProduct?.stock ?? 0;
+  const adjustDiff =
+    type === "adjustment" && quantity !== ""
+      ? (parseInt(quantity, 10) || 0) - currentStock
+      : 0;
 
   // Filters
   const [search, setSearch] = useState("");
