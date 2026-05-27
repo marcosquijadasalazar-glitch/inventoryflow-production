@@ -253,6 +253,10 @@ function Dashboard() {
         <OperationsWidgets />
       </ErrorBoundary>
 
+      <ErrorBoundary name="InsightsSummary">
+        <InsightsSummaryCard />
+      </ErrorBoundary>
+
       {usageQ.data && <UsageSummaryCard usage={usageQ.data} />}
 
 
