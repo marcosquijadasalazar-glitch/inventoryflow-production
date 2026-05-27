@@ -67,7 +67,7 @@ import { ScannerStatusPill } from "@/components/ScannerStatusPill";
 import { ScannerAnalyticsPanel } from "@/components/ScannerAnalyticsPanel";
 import { FrequentTodayStrip } from "@/components/FrequentTodayStrip";
 import { LabelPrintDialog } from "@/components/LabelPrintDialog";
-import { installAutoSync } from "@/lib/scan-queue";
+import { installAutoSync, submitMovement } from "@/lib/scan-queue";
 import { Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
