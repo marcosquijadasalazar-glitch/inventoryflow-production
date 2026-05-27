@@ -453,12 +453,11 @@ function LookupMode() {
                     {product.barcode ? ` · ${product.barcode}` : ""}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted-foreground">
-                    {product.location && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {product.location}
-                      </span>
-                    )}
+                    <LocationPath
+                      nodeId={(product as any).bin_id}
+                      fallback={product.location}
+                      hideEmpty
+                    />
                     {lastActivity && (
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3 w-3" />
