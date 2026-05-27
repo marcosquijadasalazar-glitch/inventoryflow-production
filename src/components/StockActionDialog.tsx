@@ -51,8 +51,11 @@ export function StockActionDialog({
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [qty, setQty] = useState("1");
+  const [qty, setQty] = useState(
+    mode === "adjust" && product ? String(product.stock) : "1",
+  );
   const [reason, setReason] = useState<string>("damaged");
+  const [adjustReason, setAdjustReason] = useState<string>("physical_count");
   const [note, setNote] = useState("");
   const [toNodeId, setToNodeId] = useState<string>("");
   const [saving, setSaving] = useState(false);
