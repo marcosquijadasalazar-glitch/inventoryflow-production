@@ -233,7 +233,24 @@ async function markSetupFeePaidIfPresent(
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const orgId = session.metadata?.organization_id;
+  // Payment-first signup: provision org + auth user before anything else.
+  if (session.metadata?.signup === "true") {
+    try {
+      await provisionSignupFromSession(session);
+    } catch (err) {
+      console.error("[stripe webhook] signup provisioning failed", err);
+    }
+  }
+
+  const orgId = session.metadata?.organization_id
+    ?? (await (async () => {
+      // For signup flow we just created the org; look it up by customer.
+      const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+      if (!customerId) return null;
+      const { data } = await supabaseAdmin
+        .from("organizations").select("id").eq("stripe_customer_id", customerId).maybeSingle();
+      return data?.id ?? null;
+    })());
   if (!orgId) return;
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
   const basePatch: Record<string, unknown> = { pending_plan: null };
