@@ -408,7 +408,7 @@ function StepDemo({ wantDemo, setWantDemo, loading }: { wantDemo: boolean | null
   );
 }
 
-function StepImport() {
+function StepImport({ onOpenImporter }: { onOpenImporter: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="space-y-4">
@@ -421,7 +421,9 @@ function StepImport() {
         <p className="text-sm font-medium">{t("onboarding.import.helperTitle")}</p>
         <p className="text-xs text-muted-foreground mt-1 mb-3">{t("onboarding.import.helperBody")}</p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/products">{t("onboarding.import.openImporter")}</Link>
+          <Link to="/products" search={{ import: 1 } as any} onClick={onOpenImporter}>
+            {t("onboarding.import.openImporter")}
+          </Link>
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t("onboarding.import.skipHint")}</p>
