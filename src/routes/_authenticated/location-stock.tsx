@@ -58,6 +58,7 @@ import { StockActionDialog } from "@/components/StockActionDialog";
 import { LocationNodeDialog } from "@/components/LocationNodeDialog";
 import { LocationNodeActions } from "@/components/LocationNodeActions";
 import { ImportLocationsDialog } from "@/components/ImportLocationsDialog";
+import { LocationPath } from "@/components/LocationPath";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { usePermissions } from "@/lib/use-permissions";
 import { cn } from "@/lib/utils";
@@ -334,35 +335,78 @@ function LocationStockPage() {
 
   const stockRows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return products
-      .map((p) => ({
-        p,
-        qty: nodeStock[p.id] ?? 0,
-        lastMove: lastMovesQ.data?.get(p.id) ?? null,
-        status: statusFor(p),
-      }))
-      .filter(({ p, qty, status }) => {
-        if ((qty ?? 0) <= 0 && selectedNodeId) return false;
-        if (q) {
-          if (
-            !(
-              p.name?.toLowerCase().includes(q) ||
-              p.sku?.toLowerCase().includes(q) ||
-              p.barcode?.toLowerCase().includes(q) ||
-              p.category?.toLowerCase().includes(q)
-            )
-          )
-            return false;
+    const perLoc = perLocQ.data ?? {};
+    const descendantIds = selectedNodeId
+      ? getDescendantIds(nodes, selectedNodeId)
+      : [];
+
+    // Expand each product into one row per descendant node that holds stock,
+    // so products stored in multiple bins/aisles appear as separate rows
+    // (each with its own hierarchy path). When a product has zero per-node
+    // stock under the selection, fall back to a single aggregated row.
+    const rows: Array<{
+      key: string;
+      p: (typeof products)[number];
+      qty: number;
+      nodeId: string | null;
+      lastMove: string | null;
+      status: ReturnType<typeof statusFor>;
+    }> = [];
+
+    for (const p of products) {
+      const status = statusFor(p);
+      const lastMove = lastMovesQ.data?.get(p.id) ?? null;
+
+      if (selectedNodeId) {
+        const perNode: Array<{ nodeId: string; qty: number }> = [];
+        for (const id of descendantIds) {
+          const qty = perLoc[id]?.[p.id] ?? 0;
+          if (qty > 0) perNode.push({ nodeId: id, qty });
         }
-        if (categoryFilter !== "__all" && p.category !== categoryFilter)
+        if (perNode.length === 0) continue;
+        for (const { nodeId, qty } of perNode) {
+          rows.push({
+            key: `${p.id}::${nodeId}`,
+            p,
+            qty,
+            nodeId,
+            lastMove,
+            status,
+          });
+        }
+      } else {
+        rows.push({
+          key: p.id,
+          p,
+          qty: p.stock ?? 0,
+          nodeId: (p as any).bin_id ?? null,
+          lastMove,
+          status,
+        });
+      }
+    }
+
+    return rows.filter(({ p, status }) => {
+      if (q) {
+        if (
+          !(
+            p.name?.toLowerCase().includes(q) ||
+            p.sku?.toLowerCase().includes(q) ||
+            p.barcode?.toLowerCase().includes(q) ||
+            p.category?.toLowerCase().includes(q)
+          )
+        )
           return false;
-        if (stockFilter === "low" && status === "in_stock") return false;
-        if (stockFilter === "critical" && status !== "critical") return false;
-        if (stockFilter === "in" && status !== "in_stock") return false;
-        if (lowOnly && status === "in_stock") return false;
-        return true;
-      });
-  }, [products, nodeStock, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId]);
+      }
+      if (categoryFilter !== "__all" && p.category !== categoryFilter)
+        return false;
+      if (stockFilter === "low" && status === "in_stock") return false;
+      if (stockFilter === "critical" && status !== "critical") return false;
+      if (stockFilter === "in" && status !== "in_stock") return false;
+      if (lowOnly && status === "in_stock") return false;
+      return true;
+    });
+  }, [products, perLocQ.data, nodes, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * perPage;
@@ -864,6 +908,7 @@ function LocationStockPage() {
                     <TableHead>{t("products.sku", "SKU")}</TableHead>
                     <TableHead>{t("products.barcode", "Barcode")}</TableHead>
                     <TableHead>{t("products.category", "Category")}</TableHead>
+                    <TableHead>{t("ls.stored_in", "Stored in")}</TableHead>
                     <TableHead>{t("sa.quantity", "Quantity")}</TableHead>
                     <TableHead>{t("ls.last_move", "Last Movement")}</TableHead>
                     <TableHead>{t("ls.status", "Status")}</TableHead>
@@ -873,28 +918,28 @@ function LocationStockPage() {
                 <TableBody>
                   {!selectedNodeId ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-10 text-sm">
                         <ScanLine className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
                         {t("ls.pick_location", "Select a location, aisle, or bin to view its stock.")}
                       </TableCell>
                     </TableRow>
                   ) : productsQ.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                      <TableCell colSpan={9} className="text-sm text-muted-foreground">
                         {t("common.loading", "Loading…")}
                       </TableCell>
                     </TableRow>
                   ) : pagedRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-10 text-sm">
                         {t("common.noResults", "No results")}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    pagedRows.map(({ p, qty, lastMove, status }) => {
+                    pagedRows.map(({ key, p, qty, nodeId: rowNodeId, lastMove, status }) => {
                       const meta = STATUS_META[status];
                       return (
-                        <TableRow key={p.id}>
+                        <TableRow key={key}>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground shrink-0">
@@ -908,6 +953,14 @@ function LocationStockPage() {
                             {p.barcode ?? "—"}
                           </TableCell>
                           <TableCell className="text-xs">{p.category ?? "—"}</TableCell>
+                          <TableCell>
+                            <LocationPath
+                              nodeId={rowNodeId}
+                              fallback={(p as any).location}
+                              nodes={nodes}
+                              showIcon={false}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="inline-flex items-center gap-2">
                               <span className={cn("h-4 w-1 rounded-sm", meta.bar)} />

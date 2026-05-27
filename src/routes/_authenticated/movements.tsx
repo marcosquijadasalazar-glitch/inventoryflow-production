@@ -38,6 +38,8 @@ import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
 import type { MovementWithProduct } from "@/lib/inventory";
 import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
+import { LocationPath } from "@/components/LocationPath";
+import { listAllNodes } from "@/lib/location-tree";
 import { ScanFieldButton } from "@/components/ScanFieldButton";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -95,6 +97,7 @@ function MovementsPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
   const settings = useQuery({ queryKey: ["settings"], queryFn: getCompanySettings });
+  const nodesQ = useQuery({ queryKey: ["location-nodes-all"], queryFn: listAllNodes, staleTime: 60_000 });
 
   const [productId, setProductId] = useState<string>("");
   const [type, setType] = useState<MovementType>("add");
@@ -804,6 +807,13 @@ function MovementsPage() {
                           })}
                           {cleanNote ? ` · ${cleanNote}` : ""}
                         </p>
+                        <LocationPath
+                          nodeId={(m.products as any)?.bin_id}
+                          fallback={m.products?.location}
+                          nodes={nodesQ.data ?? []}
+                          hideEmpty
+                          className="mt-0.5"
+                        />
                       </div>
                     </div>
                     <Badge
