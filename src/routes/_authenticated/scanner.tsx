@@ -1090,6 +1090,7 @@ function QuickActionSheet({
   const { t } = useTranslation();
   const [qty, setQty] = useState("1");
   const [reason, setReason] = useState("");
+  const [adjustReason, setAdjustReason] = useState("physical_count");
   const [locationId, setLocationId] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
@@ -1102,9 +1103,15 @@ function QuickActionSheet({
     if (action && product) {
       setQty(action === "adjustment" ? String(product.stock) : "1");
       setReason("");
+      setAdjustReason("physical_count");
       setLocationId("");
     }
   }, [action, product]);
+
+  const currentStock = product?.stock ?? 0;
+  const parsedQty = parseInt(qty, 10);
+  const adjustDiff =
+    action === "adjustment" && !isNaN(parsedQty) ? parsedQty - currentStock : 0;
 
   const open = !!action && !!product;
   const title =
