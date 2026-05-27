@@ -8,7 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Camera, CameraOff, Scan, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  Scan,
+  AlertCircle,
+  Loader2,
+  Flashlight,
+  FlashlightOff,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 
