@@ -630,19 +630,33 @@ function BatchMode({
   }[mode];
 
   const handleScan = async (code: string) => {
-    // Duplicate-scan throttle (1s)
+    // Per-code dedupe window (2.5s) — robust against burst reads
     const now = Date.now();
-    if (
-      lastScanRef.current &&
-      lastScanRef.current.code === code &&
-      now - lastScanRef.current.ts < 1000
-    ) {
+    const prevTs = dedupeRef.current.get(code);
+    if (prevTs && now - prevTs < 2500) {
+      toast.message(t("scanner.duplicateIgnored"));
       return;
     }
-    lastScanRef.current = { code, ts: now };
+    dedupeRef.current.set(code, now);
+    // Trim old entries to keep map small
+    if (dedupeRef.current.size > 200) {
+      for (const [k, ts] of dedupeRef.current) {
+        if (now - ts > 60_000) dedupeRef.current.delete(k);
+      }
+    }
 
     try {
-      const product = await lookupByBarcode(code);
+      const qr = parseQrPayload(code);
+      let product: Product | null = null;
+      if (qr?.kind === "unsupported") {
+        toast.warning(t("scanner.qrUnsupported"));
+        return;
+      }
+      if (qr?.kind === "product") {
+        product = await lookupById(qr.id);
+      } else {
+        product = await lookupByBarcode(code);
+      }
       if (!product) {
         setPendingBarcode(code);
         toast.warning(t("scanner.productNotFound"));
@@ -656,13 +670,13 @@ function BatchMode({
         return;
       }
       setItems((prev) => {
-        const idx = prev.findIndex((i) => i.product.id === product.id);
+        const idx = prev.findIndex((i) => i.product.id === product!.id);
         if (idx >= 0) {
           const next = [...prev];
           next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
           return next;
         }
-        return [...prev, { product, quantity: 1 }];
+        return [...prev, { product: product!, quantity: 1 }];
       });
       playBeep();
       vibrate();
