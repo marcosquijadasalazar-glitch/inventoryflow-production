@@ -83,7 +83,6 @@ function LocationStockPage() {
   const nodes = nodesQ.data ?? [];
   const breadcrumb = getBreadcrumb(nodes, currentId);
   const currentNode = breadcrumb[breadcrumb.length - 1] ?? null;
-  const currentLevel: NodeLevel | "root" = currentNode?.node_level ?? "root";
   const childLevel: NodeLevel | null = currentNode
     ? NEXT_LEVEL[currentNode.node_level]
     : "location";
