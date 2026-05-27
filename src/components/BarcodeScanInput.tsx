@@ -164,6 +164,15 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
       else if (cams[0]) setDeviceId(cams[0].deviceId);
     });
 
+    // Detect torch/flashlight capability
+    try {
+      const track = stream.getVideoTracks()[0];
+      const caps = (track?.getCapabilities?.() as any) ?? {};
+      setTorchSupported(!!caps.torch);
+    } catch {
+      setTorchSupported(false);
+    }
+
     try {
       const reader = new BrowserMultiFormatReader();
       readerRef.current = reader;
