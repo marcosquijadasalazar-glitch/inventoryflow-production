@@ -58,6 +58,7 @@ import { StockActionDialog } from "@/components/StockActionDialog";
 import { LocationNodeDialog } from "@/components/LocationNodeDialog";
 import { LocationNodeActions } from "@/components/LocationNodeActions";
 import { ImportLocationsDialog } from "@/components/ImportLocationsDialog";
+import { LocationPath } from "@/components/LocationPath";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { usePermissions } from "@/lib/use-permissions";
 import { cn } from "@/lib/utils";
