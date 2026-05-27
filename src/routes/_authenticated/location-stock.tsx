@@ -917,20 +917,20 @@ function LocationStockPage() {
                 <TableBody>
                   {!selectedNodeId ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-10 text-sm">
                         <ScanLine className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
                         {t("ls.pick_location", "Select a location, aisle, or bin to view its stock.")}
                       </TableCell>
                     </TableRow>
                   ) : productsQ.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                      <TableCell colSpan={9} className="text-sm text-muted-foreground">
                         {t("common.loading", "Loading…")}
                       </TableCell>
                     </TableRow>
                   ) : pagedRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-10 text-sm">
                         {t("common.noResults", "No results")}
                       </TableCell>
                     </TableRow>
