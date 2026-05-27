@@ -1,0 +1,1 @@
+export { createMiddleware } from "@tanstack/start-client-core";

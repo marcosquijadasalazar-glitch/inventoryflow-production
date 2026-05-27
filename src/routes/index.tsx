@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/lib/auth";
+import { logPublicSecurityEvent } from "@/lib/security.functions";
 import {
   ArrowRight,
   Check,
@@ -49,6 +51,9 @@ const BRAND = "#0066FF";
 const BRAND_DARK = "#0052CC";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    checkout: search.checkout === "cancelled" ? "cancelled" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "InventoryFlow — Inventory & Operations Platform for Growing Businesses" },
@@ -81,6 +86,18 @@ function LandingRoute() {
 }
 
 function LandingPage() {
+  const { checkout } = Route.useSearch();
+  const logPublicEvent = useServerFn(logPublicSecurityEvent);
+  useEffect(() => {
+    if (checkout !== "cancelled") return;
+    void logPublicEvent({
+      data: {
+        action: "checkout_abandoned",
+        status: "info",
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      },
+    }).catch(() => {});
+  }, [checkout, logPublicEvent]);
   return (
     <div className="min-h-screen bg-[#F6F8FC] text-slate-900 antialiased">
       <SiteHeader />
@@ -209,7 +226,9 @@ function SiteHeader() {
             className="h-9 px-4 text-white shadow-sm rounded-lg"
             style={{ backgroundColor: BRAND }}
           >
-            <Link to="/signup">{t("landing.nav.startTrial", "Start 7-Day Trial")}</Link>
+            <Link to="/checkout" search={{ plan: "starter" }}>
+              {t("landing.nav.startTrial", "Start 7-Day Trial")}
+            </Link>
           </Button>
         </div>
       </div>
@@ -265,7 +284,7 @@ function Hero() {
                 className="h-12 px-5 text-white shadow-md rounded-xl"
                 style={{ backgroundColor: BRAND }}
               >
-                <Link to="/signup">
+                <Link to="/checkout" search={{ plan: "starter" }}>
                   <Rocket className="h-4 w-4" />
                   <span className="flex flex-col items-start leading-tight">
                     <span className="text-sm font-semibold">
@@ -607,7 +626,7 @@ function PricingAndWhy() {
         t("landing.pricing.starter.f4", "2 locations"),
       ],
       cta: t("landing.pricing.startStarter", "Start 7-Day Trial"),
-      ctaTo: "/signup?plan=starter",
+      ctaTo: "/checkout?plan=starter",
       primary: true,
     },
     {
@@ -625,7 +644,7 @@ function PricingAndWhy() {
         t("landing.pricing.pro.f4", "Multi-location support (10)"),
       ],
       cta: t("landing.pricing.upgradeToPro", "Upgrade to Pro"),
-      ctaTo: "/signup?plan=pro",
+      ctaTo: "/checkout?plan=pro",
       primary: false,
     },
   ];
@@ -785,7 +804,7 @@ function FinalCTA() {
                 size="lg"
                 className="h-12 px-6 rounded-xl bg-white text-slate-900 hover:bg-slate-100 shadow-md"
               >
-                <Link to="/signup">
+                <Link to="/checkout" search={{ plan: "starter" }}>
                   {t("landing.finalCta.cta", "Start Your 7-Day Trial")}
                   <ArrowRight className="h-4 w-4" />
                 </Link>

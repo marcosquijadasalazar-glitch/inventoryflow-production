@@ -1,41 +1,29 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { notifyAdminOfSignup } from "@/lib/signup-notify.functions";
-import { createCheckoutSession } from "@/lib/billing.functions";
-import { bootstrapOrgForSignup } from "@/lib/signup-bootstrap.functions";
 import { useAuth } from "@/lib/auth";
+import { logPublicSecurityEvent } from "@/lib/security.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield, User, Building2, Phone, Briefcase } from "lucide-react";
+import { Boxes, AlertCircle, Mail, Lock, Sparkles, Activity, Shield } from "lucide-react";
 import { toast } from "sonner";
 
-type Mode = "signin" | "signup";
-type SelectedPlan = "free" | "starter" | "pro";
-
-const PLAN_KEY = "if_selected_plan";
-const PLAN_META_KEY = "if_signup_meta";
-
-export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode?: Mode; selectedPlan?: SelectedPlan }) {
+export function AuthCard() {
   const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [businessType, setBusinessType] = useState("");
-  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signupSuccess, setSignupSuccess] = useState(false);
   const [resetCooldown, setResetCooldown] = useState(0);
   const [resetBusy, setResetBusy] = useState(false);
+  const logPublicEvent = useServerFn(logPublicSecurityEvent);
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -92,6 +80,14 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
       } else {
         toast.success(t("auth.resetSent"));
         startCooldown(30);
+        void logPublicEvent({
+          data: {
+            email: email.trim().toLowerCase(),
+            action: "password_reset_requested",
+            status: "success",
+            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+          },
+        }).catch(() => {});
       }
     } catch (e: any) {
       setError(e?.message ?? "Failed to send reset email");
@@ -100,94 +96,11 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
     }
   };
 
-  // Persist the selected plan + signup metadata across the auth round-trip
-  // (Google OAuth navigates away; email signup needs it after session ready).
   useEffect(() => {
-    if (selectedPlan && typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(PLAN_KEY, selectedPlan);
-      } catch {}
-    }
-  }, [selectedPlan]);
-
-  const readStoredPlan = (): SelectedPlan | null => {
-    if (typeof window === "undefined") return null;
-    try {
-      const v = sessionStorage.getItem(PLAN_KEY);
-      return v === "free" || v === "starter" || v === "pro" ? v : null;
-    } catch {
-      return null;
-    }
-  };
-  const readStoredMeta = (): { companyName?: string; businessType?: string; phone?: string; fullName?: string } => {
-    if (typeof window === "undefined") return {};
-    try {
-      const raw = sessionStorage.getItem(PLAN_META_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  };
-  const clearStored = () => {
-    if (typeof window === "undefined") return;
-    try {
-      sessionStorage.removeItem(PLAN_KEY);
-      sessionStorage.removeItem(PLAN_META_KEY);
-    } catch {}
-  };
-
-  const goPostAuth = async () => {
-    const plan = selectedPlan ?? readStoredPlan() ?? "free";
-    const meta = readStoredMeta();
-    const effectiveCompany = (companyName || meta.companyName || "").trim();
-    console.info("[signup] post-auth", { plan, hasCompany: !!effectiveCompany });
-
-    if (!effectiveCompany) {
-      // No company info captured (e.g. Google OAuth without onboarding form yet).
-      // Send to dashboard; the onboarding wizard will collect it.
-      clearStored();
+    if (!authLoading && session) {
       navigate({ to: "/dashboard", replace: true });
-      return;
     }
-
-    try {
-      const result = await bootstrapOrgForSignup({
-        data: {
-          plan,
-          companyName: effectiveCompany,
-          businessType: (businessType || meta.businessType || "").trim() || null,
-          phone: (phone || meta.phone || "").trim() || null,
-          fullName: (fullName || meta.fullName || "").trim() || null,
-        },
-      });
-      console.info("[signup] bootstrap", result);
-
-      if (result.needsCheckout && (plan === "starter" || plan === "pro")) {
-        try {
-          const { url } = await createCheckoutSession({ data: { plan } });
-          console.info("[signup] redirecting to Stripe checkout");
-          clearStored();
-          window.location.href = url;
-          return;
-        } catch (e: any) {
-          console.warn("[signup] checkout failed", e?.message);
-          toast.error(e?.message ?? "Could not start checkout. You can retry from Settings → Billing.");
-        }
-      }
-    } catch (e: any) {
-      console.warn("[signup] bootstrap failed", e?.message);
-      toast.error(e?.message ?? "Could not finish setting up your workspace.");
-    }
-    clearStored();
-    navigate({ to: "/dashboard", replace: true });
-  };
-
-  useEffect(() => {
-    if (!authLoading && session && !signupSuccess) {
-      void goPostAuth();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, session, signupSuccess]);
+  }, [authLoading, navigate, session]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -198,89 +111,18 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
     }
     setBusy(true);
     try {
-      if (mode === "signup") {
-        if (!fullName.trim() || !companyName.trim()) {
-          setError("Full name and company name are required.");
-          setBusy(false);
-          return;
-        }
-        const { data, error: err } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/email-confirmed`,
-            data: {
-              full_name: fullName.trim(),
-              company_name: companyName.trim(),
-              business_type: businessType.trim() || null,
-              phone: phone.trim() || null,
-            },
-          },
-        });
-        if (err) throw err;
-        // Fire-and-forget admin notification — must never block signup.
-        void notifyAdminOfSignup({
-          data: {
-            fullName: fullName.trim(),
-            companyName: companyName.trim(),
-            businessType: businessType.trim(),
-            phone: phone.trim(),
-            email: email.trim(),
-          },
-        }).catch((e) => console.warn("[signup-notify] failed:", e?.message ?? e));
-
-        // Safe diagnostic log (no PII beyond presence flags).
-        console.info("[signup] response", {
-          hasUser: !!data.user,
-          hasSession: !!data.session,
-          emailConfirmed: !!data.user?.email_confirmed_at,
-          identitiesCount: data.user?.identities?.length ?? 0,
-        });
-
-        // Clear any stale session before deciding next step.
-        if (!data.session) {
-          try { await supabase.auth.signOut({ scope: "local" } as any); } catch {}
-        }
-
-        // 1) Session returned → confirmation disabled. Go straight in.
-        if (data.session) {
-          toast.success("Account created. Welcome!");
-          await goPostAuth();
-        } else if (data.user?.email_confirmed_at) {
-          // 2) Already confirmed (auto-confirm) but no session → sign in now.
-          const { data: signInData, error: signInErr } =
-            await supabase.auth.signInWithPassword({ email, password });
-          if (signInErr || !signInData.session) {
-            console.warn("[signup] auto sign-in failed", signInErr?.message);
-            toast.success("Account created. Please sign in to continue.");
-            navigate({ to: "/login", replace: true });
-          } else {
-            toast.success("Account created. Welcome!");
-            await goPostAuth();
-          }
-        } else if (data.user) {
-          // 3) No session, not confirmed → try auto sign-in. If it works,
-          // confirmation is not actually required; otherwise show the
-          // "check your email" screen for the standard confirmation flow.
-          const { data: signInData } =
-            await supabase.auth.signInWithPassword({ email, password });
-          if (signInData?.session) {
-            toast.success("Account created. Welcome!");
-            await goPostAuth();
-          } else {
-            setSignupSuccess(true);
-            toast.success("Account created. Check your email to verify your account.");
-          }
-        } else {
-          toast.success("Account created. Please sign in to continue.");
-          navigate({ to: "/login", replace: true });
-        }
-      } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
-        toast.success("Welcome back");
-      }
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) throw err;
+      toast.success("Welcome back");
     } catch (e: any) {
+      void logPublicEvent({
+        data: {
+          email: email.trim().toLowerCase(),
+          action: "sign_in_failed",
+          status: "failed",
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        },
+      }).catch(() => {});
       setError(e?.message ?? "Authentication failed");
     } finally {
       setBusy(false);
@@ -295,6 +137,14 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
         redirect_uri: `${window.location.origin}/dashboard`,
       });
       if (result.error) {
+        void logPublicEvent({
+          data: {
+            email: email.trim().toLowerCase() || null,
+            action: "sign_in_failed",
+            status: "failed",
+            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+          },
+        }).catch(() => {});
         setError((result.error as any)?.message ?? "Google sign-in failed");
       }
     } catch (e: any) {
@@ -365,27 +215,11 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
           </Link>
 
           <div className="space-y-1.5 mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {mode === "signin" ? "Welcome back" : "Create your account"}
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
             <p className="text-sm text-muted-foreground">
-              {mode === "signin"
-                ? "Sign in to manage your inventory."
-                : "Start tracking your warehouse in minutes."}
+              Sign in to manage your inventory.
             </p>
           </div>
-
-          {signupSuccess && (
-            <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
-              <p className="font-medium text-foreground">Account created.</p>
-              <p className="mt-1 text-muted-foreground">
-                Check your email to verify your account. After verification, your account will be reviewed by an administrator.
-              </p>
-              <Link to="/login" className="mt-3 inline-block text-primary font-medium hover:underline">
-                Back to Login
-              </Link>
-            </div>
-          )}
 
           <Button type="button" variant="outline" className="w-full h-11 shadow-soft" onClick={google} disabled={googleBusy || busy}>
             <GoogleIcon />
@@ -402,42 +236,6 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
           </div>
 
           <form onSubmit={submit} className="space-y-4">
-            {mode === "signup" && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fullName">Full name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="fullName" autoComplete="name" placeholder="Jane Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-11" required />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="companyName">Company name</Label>
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="companyName" autoComplete="organization" placeholder="Acme Inc." value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="pl-9 h-11" required />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="businessType">Business type</Label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="businessType" placeholder="Warehouse, retail…" value={businessType} onChange={(e) => setBusinessType(e.target.value)} className="pl-9 h-11" />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Phone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="phone" type="tel" autoComplete="tel" placeholder="+1 555 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-9 h-11" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -448,24 +246,22 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {mode === "signin" && (
-                  <button
-                    type="button"
-                    onClick={sendPasswordReset}
-                    disabled={resetCooldown > 0 || resetBusy}
-                    className="text-xs font-medium text-primary hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
-                  >
-                    {resetCooldown > 0
-                      ? t("auth.resetWait", { seconds: resetCooldown })
-                      : resetBusy
-                      ? t("auth.resetSending")
-                      : t("auth.forgotPassword")}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={sendPasswordReset}
+                  disabled={resetCooldown > 0 || resetBusy}
+                  className="text-xs font-medium text-primary hover:underline disabled:opacity-50 disabled:no-underline disabled:cursor-not-allowed"
+                >
+                  {resetCooldown > 0
+                    ? t("auth.resetWait", { seconds: resetCooldown })
+                    : resetBusy
+                    ? t("auth.resetSending")
+                    : t("auth.forgotPassword")}
+                </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="password" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9 h-11" minLength={6} required />
+                <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9 h-11" minLength={6} required />
               </div>
             </div>
 
@@ -480,32 +276,19 @@ export function AuthCard({ initialMode = "signin", selectedPlan }: { initialMode
               {busy ? (
                 <>
                   <span className="h-3.5 w-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                  {mode === "signin" ? "Signing in…" : "Creating account…"}
+                  Signing in…
                 </>
-              ) : mode === "signin" ? (
-                "Sign in"
               ) : (
-                "Create account"
+                "Sign in"
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? (
-              <>
-                New to InventoryFlow?{" "}
-                <Link to="/signup" onClick={() => setMode("signup")} className="font-medium text-primary hover:underline">
-                  Create an account
-                </Link>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <Link to="/login" onClick={() => setMode("signin")} className="font-medium text-primary hover:underline">
-                  Sign in
-                </Link>
-              </>
-            )}
+            New to InventoryFlow?{" "}
+            <Link to="/checkout" search={{ plan: "starter" }} className="font-medium text-primary hover:underline">
+              Start 7-day trial
+            </Link>
           </p>
 
           <p className="mt-8 text-center text-[11px] text-muted-foreground">

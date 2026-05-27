@@ -23,6 +23,7 @@ import {
   Truck,
   SlidersHorizontal,
   Lock,
+  Activity,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -102,6 +103,9 @@ function useNavItems(): NavEntry[] {
   const role = profile.data?.role;
   if ((role === "owner" || role === "manager") && (role === "owner" || perms.can("manage_users"))) {
     visible.push({ to: "/users", label: t("orgUsers.navLabel", "Users & Roles"), icon: Users, module: null, permission: null });
+  }
+  if (role === "owner" || role === "manager" || role === "super_admin") {
+    visible.push({ to: "/security-activity", label: "Security Activity", icon: Activity, module: null, permission: null });
   }
   if (role === "owner" || role === "manager") {
     visible.push({ to: "/permissions", label: t("permissions.navLabel", "Roles & Permissions"), icon: ShieldCheck, module: null, permission: null });

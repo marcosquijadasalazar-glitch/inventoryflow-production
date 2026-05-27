@@ -29,6 +29,7 @@ import {
   orgListUsers, orgInviteUser, orgUpdateUser, orgSetUserStatus,
   orgDeleteUser, orgResetUserPassword, orgImportUsers, orgListAudit,
 } from "@/lib/org-users.functions";
+import { getPresenceSnapshot } from "@/lib/security.functions";
 import { purgeUserSecure } from "@/lib/delete.functions";
 import { PurgeConfirmDialog } from "@/components/PurgeConfirmDialog";
 import { ImportDialog } from "@/components/ImportDialog";
@@ -83,6 +84,7 @@ function UsersPage() {
   const profile = useProfile();
   const qc = useQueryClient();
   const fetchList = useServerFn(orgListUsers);
+  const fetchPresence = useServerFn(getPresenceSnapshot);
 
   const role = profile.data?.role;
   const canAccess = role === "owner" || role === "manager" || role === "super_admin";
@@ -91,6 +93,12 @@ function UsersPage() {
     queryKey: ["org-users", profile.data?.organization_id],
     queryFn: () => fetchList({}),
     enabled: canAccess,
+  });
+  const presenceQ = useQuery({
+    queryKey: ["org-user-presence"],
+    queryFn: () => fetchPresence({}),
+    enabled: canAccess,
+    refetchInterval: 45000,
   });
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -118,6 +126,9 @@ function UsersPage() {
   const cap = list.data?.cap ?? null;
   const used = list.data?.used ?? 0;
   const limitReached = cap != null && used >= cap;
+  const presenceMap = new Map<string, any>(
+    ((presenceQ.data?.rows ?? []) as any[]).map((r) => [r.user_id, r]),
+  );
 
   return (
     <div className="space-y-6">
@@ -179,6 +190,7 @@ function UsersPage() {
               <SectionTable
                 title={t("orgUsers.active", "Active users")}
                 users={active}
+                presenceMap={presenceMap}
                 onEdit={setEditing}
                 onDelete={setDeleting}
                 onPurge={role === "super_admin" ? setPurging : undefined}
@@ -188,6 +200,7 @@ function UsersPage() {
                 <SectionTable
                   title={t("orgUsers.suspended", "Suspended users")}
                   users={suspended}
+                  presenceMap={presenceMap}
                   onEdit={setEditing}
                   onDelete={setDeleting}
                   onPurge={role === "super_admin" ? setPurging : undefined}
@@ -198,6 +211,7 @@ function UsersPage() {
                 <SectionTable
                   title={t("orgUsers.archived", "Archived users")}
                   users={archived}
+                  presenceMap={presenceMap}
                   onEdit={setEditing}
                   onDelete={setDeleting}
                   onPurge={role === "super_admin" ? setPurging : undefined}
@@ -245,6 +259,7 @@ function UsersPage() {
           <SectionTable
             title={t("orgUsers.pending", "Pending invitations")}
             users={pending}
+            presenceMap={presenceMap}
             onEdit={setEditing}
             onDelete={setDeleting}
             onPurge={role === "super_admin" ? setPurging : undefined}
@@ -445,10 +460,11 @@ function AuditTab() {
 }
 
 function SectionTable({
-  title, users, onEdit, onDelete, onPurge, onChanged, hint,
+  title, users, presenceMap, onEdit, onDelete, onPurge, onChanged, hint,
 }: {
   title: string;
   users: UserRow[];
+  presenceMap: Map<string, any>;
   onEdit: (u: UserRow) => void;
   onDelete: (u: UserRow) => void;
   onPurge?: (u: UserRow) => void;
@@ -474,6 +490,14 @@ function SectionTable({
       toast.success(t("orgUsers.resetSent", "Password reset email sent"));
     } catch (e) { toast.error((e as Error).message); }
   };
+  const formatLastActive = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    const ms = Date.now() - new Date(iso).getTime();
+    if (ms < 60000) return "Active now";
+    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ago`;
+    if (ms < 86400000) return `${Math.floor(ms / 3600000)}h ago`;
+    return "Yesterday";
+  };
 
   return (
     <Card>
@@ -489,7 +513,9 @@ function SectionTable({
               <th className="py-2 pr-4 font-medium">{t("orgUsers.col.email", "Email")}</th>
               <th className="py-2 pr-4 font-medium">{t("orgUsers.col.role", "Role")}</th>
               <th className="py-2 pr-4 font-medium">{t("orgUsers.col.status", "Status")}</th>
+              <th className="py-2 pr-4 font-medium">Online</th>
               <th className="py-2 pr-4 font-medium">{t("orgUsers.col.lastLogin", "Last login")}</th>
+              <th className="py-2 pr-4 font-medium">Last active</th>
               <th className="py-2 pr-4 font-medium w-12" />
             </tr>
           </thead>
@@ -498,6 +524,8 @@ function SectionTable({
               const isSelf = u.user_id === profile.data?.user_id;
               const isOwner = u.role === "owner";
               const statusBadge = u.archived_at ? "archived" : u.suspended_at ? "suspended" : u.is_active ? "active" : "inactive";
+              const p = presenceMap.get(u.user_id);
+              const isOnline = !!p?.is_online && Date.now() - new Date(p.last_seen_at).getTime() <= 120000;
               return (
                 <tr key={u.user_id} className="border-b last:border-0">
                   <td className="py-2 pr-4">
@@ -513,7 +541,11 @@ function SectionTable({
                       {t(`orgUsers.status.${statusBadge}`, statusBadge)}
                     </Badge>
                   </td>
+                  <td className="py-2 pr-4">
+                    <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
+                  </td>
                   <td className="py-2 pr-4 text-muted-foreground">{formatDate(u.last_sign_in_at)}</td>
+                  <td className="py-2 pr-4 text-muted-foreground">{formatLastActive(p?.last_seen_at)}</td>
                   <td className="py-2 pr-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -573,7 +605,7 @@ function SectionTable({
             })}
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
+                <td colSpan={8} className="py-6 text-center text-sm text-muted-foreground">
                   {t("orgUsers.empty", "No users in this section.")}
                 </td>
               </tr>

@@ -8,6 +8,7 @@ import {
 } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createNotification } from "@/lib/notifications.functions";
+import { logSecurityEventServer } from "@/lib/security.functions";
 
 const GRACE_PERIOD_DAYS = 3;
 
@@ -252,6 +253,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       return data?.id ?? null;
     })());
   if (!orgId) return;
+  await logSecurityEventServer({
+    organization_id: orgId,
+    email: (session.customer_details?.email ?? session.metadata?.signup_email ?? null)?.toLowerCase?.() ?? null,
+    action: "checkout_completed",
+    status: "success",
+  });
   const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
   const basePatch: Record<string, unknown> = { pending_plan: null };
   if (customerId) basePatch.stripe_customer_id = customerId;

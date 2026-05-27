@@ -10,6 +10,7 @@ import {
   setupPriceIdForPlan,
   type BillingPlan,
 } from "./stripe.server";
+import { logSecurityEventServer } from "./security.functions";
 
 const TRIAL_DAYS = 7;
 
@@ -196,6 +197,11 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ url: string }> => {
     const stripe = getStripe();
     const email = data.email.trim().toLowerCase();
+    await logSecurityEventServer({
+      email,
+      action: "signup_started",
+      status: "info",
+    });
 
     // Don't allow re-signup for an email that already has an account.
     const { data: existing } = await supabaseAdmin
@@ -259,6 +265,11 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
         selected_plan: data.plan,
         includes_onboarding: onboardingPrice ? "true" : "false",
       },
+    });
+    await logSecurityEventServer({
+      email,
+      action: "checkout_started",
+      status: "success",
     });
 
     // Reserve a signup-session row so /signup-complete can poll for status.

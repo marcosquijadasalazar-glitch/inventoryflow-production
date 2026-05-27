@@ -5,7 +5,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 export const Route = createFileRoute("/login")({
   component: () => (
     <ErrorBoundary name="LoginPage" context={{ route: "/login" }}>
-      <AuthCard initialMode="signin" />
+      <AuthCard />
     </ErrorBoundary>
   ),
 });
