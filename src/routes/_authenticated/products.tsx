@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -121,6 +121,9 @@ const PRODUCTS_IMPORT_SCHEMA: ImportSchema = {
 
 export const Route = createFileRoute("/_authenticated/products")({
   component: ProductsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    import: search.import === 1 || search.import === "1" ? 1 : undefined,
+  }),
 });
 
 type SortKey =
@@ -215,6 +218,14 @@ function ProductsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
   const runImport = useServerFn(importProducts);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (search.import === 1) {
+      setImportOpen(true);
+      navigate({ search: { import: undefined } as any, replace: true });
+    }
+  }, [search.import, navigate]);
 
 
   const [selected, setSelected] = useState<Set<string>>(new Set());

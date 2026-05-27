@@ -214,7 +214,7 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
           {step === 2 && (
             <StepDemo wantDemo={wantDemo} setWantDemo={setWantDemo} loading={demoMut.isPending} />
           )}
-          {step === 3 && <StepImport />}
+          {step === 3 && <StepImport onOpenImporter={() => { setOpen(false); onClose(); }} />}
           {step === 4 && <StepInvite invites={invites} setInvites={setInvites} />}
         </div>
 
@@ -408,7 +408,7 @@ function StepDemo({ wantDemo, setWantDemo, loading }: { wantDemo: boolean | null
   );
 }
 
-function StepImport() {
+function StepImport({ onOpenImporter }: { onOpenImporter: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="space-y-4">
@@ -421,7 +421,9 @@ function StepImport() {
         <p className="text-sm font-medium">{t("onboarding.import.helperTitle")}</p>
         <p className="text-xs text-muted-foreground mt-1 mb-3">{t("onboarding.import.helperBody")}</p>
         <Button asChild variant="outline" size="sm">
-          <Link to="/products">{t("onboarding.import.openImporter")}</Link>
+          <Link to="/products" search={{ import: 1 } as any} onClick={onOpenImporter}>
+            {t("onboarding.import.openImporter")}
+          </Link>
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t("onboarding.import.skipHint")}</p>
