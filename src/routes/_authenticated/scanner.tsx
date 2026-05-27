@@ -63,6 +63,12 @@ import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { cn } from "@/lib/utils";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { ScannerStatusPill } from "@/components/ScannerStatusPill";
+import { ScannerAnalyticsPanel } from "@/components/ScannerAnalyticsPanel";
+import { FrequentTodayStrip } from "@/components/FrequentTodayStrip";
+import { LabelPrintDialog } from "@/components/LabelPrintDialog";
+import { installAutoSync } from "@/lib/scan-queue";
+import { Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   component: ScannerPage,
@@ -163,6 +169,7 @@ async function lookupByBarcode(code: string): Promise<Product | null> {
 function ScannerPage() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ScanMode>("lookup");
+  useEffect(() => { installAutoSync(); }, []);
   const { data: locations = [] } = useQuery({
     queryKey: ["locations-active"],
     queryFn: () => listLocations(),
@@ -177,14 +184,17 @@ function ScannerPage() {
   return (
     <div className="space-y-6">
       <FirstTimeTooltip storageKey="scanner" i18nKey="onboarding.tips.scanner" />
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <ScanLine className="h-6 w-6 text-primary" />
-          {t("scanner.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("scanner.subtitle")}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <ScanLine className="h-6 w-6 text-primary" />
+            {t("scanner.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("scanner.subtitle")}
+          </p>
+        </div>
+        <ScannerStatusPill />
       </header>
 
       <ModeTabs
@@ -195,18 +205,10 @@ function ScannerPage() {
 
       {mode === "lookup" && <LookupMode />}
       {mode === "count" && (
-        <BatchMode
-          mode="count"
-          locations={locations}
-          canSave={canCount}
-        />
+        <BatchMode mode="count" locations={locations} canSave={canCount} />
       )}
       {mode === "receive" && (
-        <BatchMode
-          mode="receive"
-          locations={locations}
-          canSave={canReceive}
-        />
+        <BatchMode mode="receive" locations={locations} canSave={canReceive} />
       )}
       {mode === "transfer" &&
         (transferDisabled ? (
@@ -216,15 +218,11 @@ function ScannerPage() {
             </CardContent>
           </Card>
         ) : (
-          <BatchMode
-            mode="transfer"
-            locations={locations}
-            canSave={canTransfer}
-          />
+          <BatchMode mode="transfer" locations={locations} canSave={canTransfer} />
         ))}
 
       <ScanHistoryPanel />
-
+      <ScannerAnalyticsPanel />
       <InsightsPanel />
     </div>
   );
@@ -285,12 +283,14 @@ function ModeTabs({
 function LookupMode() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { can } = usePermissions();
   const [scanned, setScanned] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [actionOpen, setActionOpen] = useState<Action | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const scanRegionRef = useRef<HTMLDivElement>(null);
 
   const handleScan = async (code: string) => {

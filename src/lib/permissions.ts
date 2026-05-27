@@ -20,6 +20,7 @@ export const ALL_PERMISSIONS = [
   "manage_transfer_orders",
   "manage_internal_use",
   "use_barcode_scanner",
+  "print_labels",
   "manage_alerts",
   "manage_locations",
   "manage_users",
@@ -61,6 +62,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<ManageableRole, AppPermission[]> =
     "manage_transfer_orders",
     "manage_internal_use",
     "use_barcode_scanner",
+    "print_labels",
     "manage_alerts",
     "manage_locations",
   ],
@@ -100,6 +102,7 @@ export const PERMISSION_GROUPS: { key: string; perms: AppPermission[] }[] = [
       "adjust_stock",
       "view_transaction_history",
       "use_barcode_scanner",
+      "print_labels",
     ],
   },
   {
