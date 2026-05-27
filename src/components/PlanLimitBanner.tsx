@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Sparkles, Mail } from "lucide-react";
+import { Sparkles, Mail, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fmtLimit, limitFor, type OrgUsage, type UsageKind } from "@/lib/plan-limits";
 import { useUpgradeModal, PlanBadge, TrialBadge } from "@/components/UpgradeDialog";
@@ -19,12 +19,12 @@ export function PlanLimitBanner({
   const used = usage.used[kind];
   if (used < limit) return null;
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
-      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+      <TrendingUp className="h-4 w-4 text-primary shrink-0" />
       <div className="flex-1">
         <p className="font-medium">
-          {t("plan.limitHeadline", {
-            defaultValue: "You reached the maximum {{kind}} for {{plan}} ({{used}}/{{max}} used).",
+          {t("plan.growthHeadline", {
+            defaultValue: "Congratulations 🎉 Your business is growing — you've reached the {{plan}} {{kind}} capacity ({{used}}/{{max}}).",
             kind: t(`plan.kinds.${kind}`),
             plan: t(`plan.tiers.${usage.plan}`, usage.plan),
             used,
@@ -32,7 +32,7 @@ export function PlanLimitBanner({
           })}
         </p>
         <p className="text-xs text-muted-foreground">
-          {t("plan.upgradePrompt", "Upgrade your plan to continue.")}
+          {t("plan.growthPrompt", "Upgrade to Pro to continue scaling your operations.")}
         </p>
       </div>
       <Button size="sm" variant="default" onClick={() => open({ reason: kind })}>
