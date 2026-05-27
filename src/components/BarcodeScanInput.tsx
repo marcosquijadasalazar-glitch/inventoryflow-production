@@ -8,7 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Camera, CameraOff, Scan, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  Scan,
+  AlertCircle,
+  Loader2,
+  Flashlight,
+  FlashlightOff,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 
@@ -25,6 +33,8 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string>("");
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,8 +65,22 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraOn(false);
     setStarting(false);
+    setTorchOn(false);
+    setTorchSupported(false);
     startingRef.current = false;
   }, []);
+
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      const next = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: next } as any] });
+      setTorchOn(next);
+    } catch (e) {
+      console.warn("[scanner] torch toggle failed", e);
+    }
+  };
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
@@ -139,6 +163,15 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
       if (active) setDeviceId(active);
       else if (cams[0]) setDeviceId(cams[0].deviceId);
     });
+
+    // Detect torch/flashlight capability
+    try {
+      const track = stream.getVideoTracks()[0];
+      const caps = (track?.getCapabilities?.() as any) ?? {};
+      setTorchSupported(!!caps.torch);
+    } catch {
+      setTorchSupported(false);
+    }
 
     try {
       const reader = new BrowserMultiFormatReader();
@@ -251,6 +284,34 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
             playsInline
             muted
           />
+          {/* Scanning frame overlay */}
+          {cameraOn && !starting && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="relative w-3/4 h-1/2 max-w-[320px]">
+                <span className="absolute -top-px -left-px h-6 w-6 border-t-2 border-l-2 border-primary rounded-tl-md" />
+                <span className="absolute -top-px -right-px h-6 w-6 border-t-2 border-r-2 border-primary rounded-tr-md" />
+                <span className="absolute -bottom-px -left-px h-6 w-6 border-b-2 border-l-2 border-primary rounded-bl-md" />
+                <span className="absolute -bottom-px -right-px h-6 w-6 border-b-2 border-r-2 border-primary rounded-br-md" />
+                <span className="absolute left-0 right-0 top-1/2 h-px bg-primary/70 animate-pulse" />
+              </div>
+            </div>
+          )}
+          {/* Torch toggle */}
+          {cameraOn && torchSupported && (
+            <button
+              type="button"
+              onClick={toggleTorch}
+              className="absolute top-2 right-2 h-9 w-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur"
+              aria-label={t("scanner.torch")}
+              title={t("scanner.torch")}
+            >
+              {torchOn ? (
+                <FlashlightOff className="h-4 w-4" />
+              ) : (
+                <Flashlight className="h-4 w-4" />
+              )}
+            </button>
+          )}
           {starting && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm">
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
