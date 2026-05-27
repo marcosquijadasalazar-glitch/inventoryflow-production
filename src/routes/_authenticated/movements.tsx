@@ -113,6 +113,17 @@ function MovementsPage() {
       ? (parseInt(quantity, 10) || 0) - currentStock
       : 0;
 
+  // Prefill quantity with current stock when switching to adjustment, so the input
+  // represents the NEW absolute quantity (not a delta).
+  useEffect(() => {
+    if (type === "adjustment" && selectedProduct) {
+      setQuantity(String(selectedProduct.stock));
+    } else if (type !== "adjustment") {
+      setQuantity("1");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, productId]);
+
   // Filters
   const [search, setSearch] = useState("");
   const [fType, setFType] = useState<"__all" | MovementType>("__all");
