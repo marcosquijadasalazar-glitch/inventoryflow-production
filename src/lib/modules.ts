@@ -63,9 +63,12 @@ export const PRESET_NAMES = ["free", "starter", "pro", "enterprise", "custom"] a
 export type PresetName = (typeof PRESET_NAMES)[number];
 export type PlanPresetName = Exclude<PresetName, "custom">;
 
-const FREE: ModuleKey[] = ["dashboard", "products", "movements", "scanner", "alerts", "settings", "users"];
-const STARTER: ModuleKey[] = [...FREE, "history", "purchase_orders", "sales_orders", "exports"];
-const PRO_PRESET: ModuleKey[] = [...STARTER, "transfer_orders", "internal_use", "location_stock", "reports"];
+// Under the current pricing model, monetization is by capacity (users,
+// products, locations) — NOT by feature locks. All paid plans get every
+// module. The "free" preset is kept only for historical/legacy orgs.
+const FREE: ModuleKey[] = [...MODULE_KEYS];
+const STARTER: ModuleKey[] = [...MODULE_KEYS];
+const PRO_PRESET: ModuleKey[] = [...MODULE_KEYS];
 
 function toMap(enabled: ModuleKey[]): ModuleMap {
   const map = {} as ModuleMap;
@@ -122,22 +125,25 @@ export function moduleForPath(pathname: string): ModuleKey | null {
 // are shown but rendered as locked; clicking opens the Upgrade dialog.
 import type { PlanType } from "./plan-limits";
 
+// All modules are included in every paid plan (Starter and Pro). Growth is
+// gated by capacity limits, not feature locks. Keep this map at "starter"
+// so no module renders as locked for Starter users.
 export const MODULE_MIN_PLAN: Record<ModuleKey, PlanType> = {
-  dashboard: "free",
-  products: "free",
-  movements: "free",
-  scanner: "free",
-  alerts: "free",
-  settings: "free",
-  users: "free",
+  dashboard: "starter",
+  products: "starter",
+  movements: "starter",
+  scanner: "starter",
+  alerts: "starter",
+  settings: "starter",
+  users: "starter",
   purchase_orders: "starter",
   sales_orders: "starter",
   history: "starter",
-  transfer_orders: "pro",
-  internal_use: "pro",
-  location_stock: "pro",
-  reports: "pro",
-  exports: "pro",
+  transfer_orders: "starter",
+  internal_use: "starter",
+  location_stock: "starter",
+  reports: "starter",
+  exports: "starter",
 };
 
 const PLAN_RANK: Record<PlanType, number> = {
