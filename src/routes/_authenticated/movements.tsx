@@ -157,16 +157,30 @@ function MovementsPage() {
     if (!productId) return toast.error("Select a product");
     const q = parseInt(quantity, 10);
     if (isNaN(q) || q < 0) return toast.error("Enter a valid quantity");
+    if (type !== "adjustment" && q <= 0)
+      return toast.error("Enter a valid quantity");
+    if (type === "adjustment" && q === currentStock) {
+      toast.info(t("movements.noChange", "New quantity matches current stock"));
+      return;
+    }
     setSaving(true);
     try {
+      const finalNote =
+        type === "adjustment"
+          ? `[${adjustReason}] ${note || ""}`.trim()
+          : note || null;
       await createMovement({
         product_id: productId,
         type,
         quantity: q,
-        note: note || null,
+        note: finalNote,
       });
-      toast.success(t("scanner.saveMovement"));
-      setQuantity("1");
+      toast.success(
+        type === "adjustment"
+          ? t("movements.adjustedTo", "Stock set to {{qty}}", { qty: q })
+          : t("scanner.saveMovement"),
+      );
+      setQuantity(type === "adjustment" ? String(q) : "1");
       setNote("");
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["products"] });
