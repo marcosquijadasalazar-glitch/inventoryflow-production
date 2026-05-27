@@ -290,23 +290,41 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
         </Button>
       </form>
 
-      {devices.length > 1 && cameraOn && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {t("scanner.cameraSource")}
-          </span>
-          <Select value={deviceId} onValueChange={switchCamera}>
-            <SelectTrigger className="h-8 w-[220px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {devices.map((d, i) => (
-                <SelectItem key={d.deviceId} value={d.deviceId}>
-                  {d.label || `${t("scanner.camera")} ${i + 1}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {cameraOn && (
+        <div className="flex flex-wrap items-center gap-3">
+          {devices.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {t("scanner.cameraSource")}
+              </span>
+              <Select value={deviceId} onValueChange={switchCamera}>
+                <SelectTrigger className="h-8 w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.map((d, i) => (
+                    <SelectItem key={d.deviceId} value={d.deviceId}>
+                      {d.label || `${t("scanner.camera")} ${i + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 accent-primary"
+              checked={handsFree}
+              onChange={(e) => setHandsFree(e.target.checked)}
+            />
+            <span>{t("scanner.handsFree")}</span>
+          </label>
+          {handsFree && (
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">
+              {t("scanner.handsFreeHint")}
+            </span>
+          )}
         </div>
       )}
 
