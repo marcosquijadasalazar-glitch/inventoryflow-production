@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, Lock, KeyRound } from "lucide-react";
 import { clearMustChangePassword } from "@/lib/org-users.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/change-password")({
   component: ChangePasswordPage,
