@@ -914,7 +914,12 @@
     "httpsRequired": "La cámara requiere una conexión segura (HTTPS).",
     "notSupported": "Este navegador no soporta cámara.",
     "troubleshoot": "Otorga permiso de cámara y usa HTTPS. También puedes escribir o usar un lector USB.",
-    "usbHint": "Tip: los lectores USB escriben el código automáticamente — sólo enfoca el campo de arriba."
+    "usbHint": "Tip: los lectores USB escriben el código automáticamente — sólo enfoca el campo de arriba.",
+    "viewProduct": "Ver producto",
+    "newQuantity": "Nueva cantidad",
+    "locationOptional": "Ubicación (opcional)",
+    "selectLocation": "Selecciona una ubicación",
+    "torch": "Linterna"
   },
   "movements": {
     "title": "Movimientos de inventario",

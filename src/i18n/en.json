@@ -914,7 +914,12 @@
     "httpsRequired": "Camera requires a secure (HTTPS) connection.",
     "notSupported": "Camera is not supported on this browser.",
     "troubleshoot": "Allow camera permission and use HTTPS. You can also type or use a USB scanner.",
-    "usbHint": "Tip: USB barcode scanners type the code automatically — just focus the field above."
+    "usbHint": "Tip: USB barcode scanners type the code automatically — just focus the field above.",
+    "viewProduct": "View product",
+    "newQuantity": "New quantity",
+    "locationOptional": "Location (optional)",
+    "selectLocation": "Select a location",
+    "torch": "Toggle flashlight"
   },
   "movements": {
     "title": "Inventory Movements",
