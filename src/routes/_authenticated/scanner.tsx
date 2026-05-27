@@ -169,6 +169,7 @@ async function lookupByBarcode(code: string): Promise<Product | null> {
 function ScannerPage() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ScanMode>("lookup");
+  useEffect(() => { installAutoSync(); }, []);
   const { data: locations = [] } = useQuery({
     queryKey: ["locations-active"],
     queryFn: () => listLocations(),
@@ -183,14 +184,17 @@ function ScannerPage() {
   return (
     <div className="space-y-6">
       <FirstTimeTooltip storageKey="scanner" i18nKey="onboarding.tips.scanner" />
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <ScanLine className="h-6 w-6 text-primary" />
-          {t("scanner.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("scanner.subtitle")}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <ScanLine className="h-6 w-6 text-primary" />
+            {t("scanner.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("scanner.subtitle")}
+          </p>
+        </div>
+        <ScannerStatusPill />
       </header>
 
       <ModeTabs
@@ -201,18 +205,10 @@ function ScannerPage() {
 
       {mode === "lookup" && <LookupMode />}
       {mode === "count" && (
-        <BatchMode
-          mode="count"
-          locations={locations}
-          canSave={canCount}
-        />
+        <BatchMode mode="count" locations={locations} canSave={canCount} />
       )}
       {mode === "receive" && (
-        <BatchMode
-          mode="receive"
-          locations={locations}
-          canSave={canReceive}
-        />
+        <BatchMode mode="receive" locations={locations} canSave={canReceive} />
       )}
       {mode === "transfer" &&
         (transferDisabled ? (
@@ -222,15 +218,11 @@ function ScannerPage() {
             </CardContent>
           </Card>
         ) : (
-          <BatchMode
-            mode="transfer"
-            locations={locations}
-            canSave={canTransfer}
-          />
+          <BatchMode mode="transfer" locations={locations} canSave={canTransfer} />
         ))}
 
       <ScanHistoryPanel />
-
+      <ScannerAnalyticsPanel />
       <InsightsPanel />
     </div>
   );
