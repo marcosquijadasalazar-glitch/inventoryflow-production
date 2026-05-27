@@ -8,6 +8,7 @@ import {
   listAllNodes,
   getChildren,
   getDescendantIds,
+  getBreadcrumb,
   type LocationNode,
 } from "@/lib/location-tree";
 import { Card, CardContent } from "@/components/ui/card";
