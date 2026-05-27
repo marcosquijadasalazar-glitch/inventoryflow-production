@@ -71,7 +71,9 @@ export function StockActionDialog({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = parseInt(qty, 10);
-    if (isNaN(q) || q <= 0)
+    if (isNaN(q) || q < 0)
+      return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
+    if (mode !== "adjust" && q <= 0)
       return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
     setSaving(true);
     try {
@@ -94,13 +96,20 @@ export function StockActionDialog({
         });
         toast.success(t("sa.removed", "Stock removed"));
       } else if (mode === "adjust") {
+        if (q === product.stock) {
+          toast.info(t("sa.no_change", "Quantity unchanged"));
+          setSaving(false);
+          return;
+        }
         await createMovement({
           product_id: product.id,
           type: "adjustment",
           quantity: q,
-          note: note || null,
+          note: `[${adjustReason}] ${note || ""}`.trim(),
         });
-        toast.success(t("sa.adjusted", "Stock adjusted"));
+        toast.success(
+          t("sa.adjusted_to", "Stock set to {{qty}}", { qty: q }),
+        );
       } else if (mode === "move") {
         if (!toNodeId)
           throw new Error(t("sa.select_dest", "Select a destination"));
