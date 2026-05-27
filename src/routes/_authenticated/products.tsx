@@ -99,6 +99,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { ImportDialog } from "@/components/ImportDialog";
 import type { ImportSchema } from "@/lib/import-utils";
 import { importProducts } from "@/lib/products-import.functions";
+import { listLocations } from "@/lib/locations";
+import { Label } from "@/components/ui/label";
+import { useNavigate } from "@tanstack/react-router";
+
 
 const PRODUCTS_IMPORT_SCHEMA: ImportSchema = {
   entity: "products",
@@ -217,15 +221,47 @@ function ProductsPage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [importOpen, setImportOpen] = useState(false);
   const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
+  const [importLocation, setImportLocation] = useState<string>("");
   const runImport = useServerFn(importProducts);
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const routerNavigate = useNavigate();
+
+  const orgLocationsQ = useQuery({
+    queryKey: ["org-locations-active"],
+    queryFn: () => listLocations({ includeInactive: false }),
+  });
+  const orgLocations = orgLocationsQ.data ?? [];
+
+  const tryOpenImport = () => {
+    if (orgLocationsQ.isLoading) return;
+    if (orgLocations.length === 0) {
+      toast.error(t("importer.needLocation.title", "Create a location first"), {
+        description: t(
+          "importer.needLocation.body",
+          "Products need a location before they can be imported.",
+        ),
+        action: {
+          label: t("importer.needLocation.cta", "Create Location"),
+          onClick: () => routerNavigate({ to: "/locations" }),
+        },
+      });
+      return;
+    }
+    if (!importLocation && orgLocations.length >= 1) {
+      setImportLocation(orgLocations[0].name);
+    }
+    setImportOpen(true);
+  };
+
   useEffect(() => {
     if (search.import === 1) {
-      setImportOpen(true);
+      tryOpenImport();
       navigate({ search: { import: undefined } as any, replace: true });
     }
-  }, [search.import, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.import, orgLocationsQ.isLoading, orgLocations.length]);
+
 
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -506,9 +542,10 @@ function ProductsPage() {
             selectedRows={(data ?? []).filter((p) => selected.has(p.id))}
             columns={exportColumns}
           />
-          <Button variant="outline" onClick={() => setImportOpen(true)} disabled={productsAtLimit}>
+          <Button variant="outline" onClick={tryOpenImport} disabled={productsAtLimit}>
             <Upload className="h-4 w-4" /> {t("importer.button", "Import")}
           </Button>
+
           <Button variant="outline" onClick={() => setScanOpen(true)}>
             <ScanLine className="h-4 w-4" /> {t("common.scanBarcode")}
           </Button>
@@ -1049,28 +1086,58 @@ function ProductsPage() {
         schema={PRODUCTS_IMPORT_SCHEMA}
         title={t("products.importTitle", "Import products")}
         extraControls={
-          <label className="inline-flex items-center gap-2 text-xs">
-            <Checkbox
-              checked={autoCreateSuppliers}
-              onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
-            />
-            <span>
-              {t(
-                "products.importAutoCreateSuppliers",
-                "Auto-create missing suppliers",
-              )}
-            </span>
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs">
+                {t("importer.assignLocation", "Assign to location")}
+              </Label>
+              <Select
+                value={importLocation}
+                onValueChange={setImportLocation}
+                disabled={orgLocations.length <= 1}
+              >
+                <SelectTrigger className="h-8 w-56 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgLocations.map((l) => (
+                    <SelectItem key={l.id} value={l.name}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="inline-flex items-center gap-2 text-xs">
+              <Checkbox
+                checked={autoCreateSuppliers}
+                onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
+              />
+              <span>
+                {t(
+                  "products.importAutoCreateSuppliers",
+                  "Auto-create missing suppliers",
+                )}
+              </span>
+            </label>
+          </div>
         }
-        onImport={async (rows) =>
-          runImport({
+        onImport={async (rows) => {
+          const validNames = new Set(orgLocations.map((l) => l.name.toLowerCase()));
+          const normalized = rows.map((r) => {
+            const provided = (r.location ?? "").trim();
+            const useProvided = provided && validNames.has(provided.toLowerCase());
+            return { ...r, location: useProvided ? provided : importLocation };
+          });
+          return runImport({
             data: {
-              rows,
+              rows: normalized,
               auto_create_categories: true,
               auto_create_suppliers: autoCreateSuppliers,
             },
-          })
-        }
+          });
+        }}
+
         onDone={refresh}
       />
 

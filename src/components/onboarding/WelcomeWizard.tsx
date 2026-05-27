@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listLocations } from "@/lib/locations";
+
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -410,6 +412,11 @@ function StepDemo({ wantDemo, setWantDemo, loading }: { wantDemo: boolean | null
 
 function StepImport({ onOpenImporter }: { onOpenImporter: () => void }) {
   const { t } = useTranslation();
+  const locQ = useQuery({
+    queryKey: ["org-locations-active"],
+    queryFn: () => listLocations({ includeInactive: false }),
+  });
+  const hasLocation = (locQ.data?.length ?? 0) > 0;
   return (
     <div className="space-y-4">
       <div>
@@ -418,18 +425,40 @@ function StepImport({ onOpenImporter }: { onOpenImporter: () => void }) {
       </div>
       <div className="rounded-lg border border-dashed border-border bg-surface p-5 text-center">
         <Upload className="h-8 w-8 text-primary mx-auto mb-2" />
-        <p className="text-sm font-medium">{t("onboarding.import.helperTitle")}</p>
-        <p className="text-xs text-muted-foreground mt-1 mb-3">{t("onboarding.import.helperBody")}</p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/products" search={{ import: 1 } as any} onClick={onOpenImporter}>
-            {t("onboarding.import.openImporter")}
-          </Link>
-        </Button>
+        {hasLocation ? (
+          <>
+            <p className="text-sm font-medium">{t("onboarding.import.helperTitle")}</p>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">{t("onboarding.import.helperBody")}</p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/products" search={{ import: 1 } as any} onClick={onOpenImporter}>
+                {t("onboarding.import.openImporter")}
+              </Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-medium">
+              {t("importer.needLocation.title", "Create a location first")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              {t(
+                "importer.needLocation.body",
+                "Products need a location before they can be imported.",
+              )}
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/locations" onClick={onOpenImporter}>
+                {t("importer.needLocation.cta", "Create Location")}
+              </Link>
+            </Button>
+          </>
+        )}
       </div>
       <p className="text-xs text-muted-foreground">{t("onboarding.import.skipHint")}</p>
     </div>
   );
 }
+
 
 function StepInvite({
   invites,
