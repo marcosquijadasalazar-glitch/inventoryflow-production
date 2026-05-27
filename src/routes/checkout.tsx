@@ -3,8 +3,6 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createSignupCheckoutSession } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,21 +25,18 @@ export const Route = createFileRoute("/checkout")({
 function CheckoutPage() {
   const { plan = "starter" } = Route.useSearch();
   const start = useServerFn(createSignupCheckoutSession);
-  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
 
   const isStarter = plan === "starter";
   const heading = isStarter ? "Start your 7-day free trial" : "Get Pro";
   const sub = isStarter
-    ? "Card required. You won't be charged for the subscription during your trial."
-    : "Instant activation after payment.";
+    ? "Your billing email and payment method will be collected securely by Stripe."
+    : "Your billing email and payment method will be collected securely by Stripe.";
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
+  const startPayment = async () => {
     setBusy(true);
     try {
-      const { url } = await start({ data: { plan, email: email.trim().toLowerCase() } });
+      const { url } = await start({ data: { plan } });
       window.location.href = url;
     } catch (err: any) {
       toast.error(err?.message ?? "Could not start checkout");
@@ -59,37 +54,27 @@ function CheckoutPage() {
           <span className="text-sm font-semibold">InventoryFlow</span>
         </div>
       </header>
+
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             {isStarter ? "Starter Plan" : "Pro Plan"}
           </p>
+
           <h1 className="mt-1 text-2xl font-semibold">{heading}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
 
-          <form className="mt-6 space-y-4" onSubmit={submit}>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                autoFocus
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={busy || !email}>
+          <div className="mt-6 space-y-4">
+            <Button onClick={startPayment} className="w-full" disabled={busy}>
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isStarter ? "Continue to Stripe Checkout" : "Continue to payment"}
+              Continue to secure Stripe Checkout
             </Button>
+
             <p className="text-xs text-muted-foreground flex items-start gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-              You'll set your company details, password, and inventory after payment.
-              Onboarding Process fee is charged once.
+              Stripe will collect your billing email securely. Your InventoryFlow account is created only after checkout is confirmed.
             </p>
-          </form>
+          </div>
 
           <p className="mt-6 text-xs text-center text-muted-foreground">
             Already have an account?{" "}
