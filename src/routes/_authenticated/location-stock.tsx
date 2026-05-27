@@ -352,31 +352,38 @@ function LocationStockPage() {
         </div>
       )}
 
-      {/* Empty hierarchy hint */}
-      {!currentNode && children.length === 0 && (
+      {/* Empty hierarchy hint — shown whenever the current level has no children and we're not at a bin */}
+      {currentNode?.node_level !== "bin" && children.length === 0 && (
         <Card className="border-dashed border-border">
           <CardContent className="py-10 text-center space-y-3">
             <Boxes className="h-8 w-8 mx-auto text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              {t("ls.empty_root", "No locations yet. Create your first one to get started.")}
+              {!currentNode
+                ? t("ls.empty_root", "No locations yet. Create your first one to get started.")
+                : childLevel
+                  ? t("ls.empty_child", {
+                      defaultValue: "No {{label}} here yet. Create one to keep drilling down.",
+                      label: t(`ln.levels.${childLevel}`, LEVEL_LABEL[childLevel]).toLowerCase(),
+                    })
+                  : t("ls.empty_leaf", "Nothing here yet.")}
             </p>
-            {canCreateLoc && (
-              <Button onClick={() => setCreateLevel("location")}>
-                <Plus className="h-4 w-4" /> {t("ln.new_location", "New Location")}
+            {canCreateLoc && childLevel && (
+              <Button onClick={() => setCreateLevel(childLevel)}>
+                <Plus className="h-4 w-4" />{" "}
+                {t(`ln.new_${childLevel}`, `New ${LEVEL_LABEL[childLevel]}`)}
               </Button>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Stock table */}
+      {/* Stock table — only when drilled into a bin */}
+      {currentNode?.node_level === "bin" && (
       <Card className="border-border shadow-soft">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
-            {currentNode
-              ? contextLabel
-              : t("ls.all_products", "All products")}
+            {contextLabel}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -542,6 +549,8 @@ function LocationStockPage() {
           )}
         </CardContent>
       </Card>
+      )}
+
 
       {/* Dialogs */}
       <StockActionDialog
