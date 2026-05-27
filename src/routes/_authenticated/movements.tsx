@@ -97,6 +97,7 @@ function MovementsPage() {
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
   const settings = useQuery({ queryKey: ["settings"], queryFn: getCompanySettings });
+  const nodesQ = useQuery({ queryKey: ["location-nodes-all"], queryFn: listAllNodes, staleTime: 60_000 });
 
   const [productId, setProductId] = useState<string>("");
   const [type, setType] = useState<MovementType>("add");
