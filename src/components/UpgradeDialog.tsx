@@ -150,41 +150,41 @@ export function UpgradeDialog({
   }, [t]);
 
   const headline = (() => {
-    if (!usage) return t("plan.upgradeTitle", "Upgrade your plan");
+    if (!usage) return t("plan.upgradeTitle", "Ready to scale? Upgrade your plan");
     if (reason === "feature") {
-      return t("plan.featureLockedTitle", {
-        defaultValue: "{{feature}} is not available on {{plan}}",
-        feature: featureLabel ?? t("plan.thisFeature", "This feature"),
+      return t("plan.featureGrowthTitle", {
+        defaultValue: "Unlock {{feature}} by upgrading from {{plan}}",
+        feature: featureLabel ?? t("plan.thisFeature", "this capability"),
         plan: t(`plan.tiers.${plan}`, plan),
       });
     }
     if (reason) {
       const lim = limitFor(usage, reason);
       const used = usage.used[reason];
-      return t("plan.limitHeadline", {
-        defaultValue: "You reached the maximum {{kind}} for {{plan}} ({{used}}/{{max}} used).",
+      return t("plan.growthHeadline", {
+        defaultValue: "Congratulations 🎉 Your business is growing — you've reached the {{plan}} {{kind}} capacity ({{used}}/{{max}}).",
         kind: t(`plan.kinds.${reason}`),
         plan: t(`plan.tiers.${plan}`, plan),
         used,
         max: fmtLimit(lim),
       });
     }
-    return t("plan.upgradeTitle", "Upgrade your plan");
+    return t("plan.upgradeTitle", "Ready to scale? Upgrade your plan");
   })();
 
   const subline = isEnterprise
     ? t("plan.alreadyEnterprise", "You're on our top plan. Contact sales for custom needs.")
-    : t("plan.upgradeRecommendation", {
-        defaultValue: "Upgrade to {{plan}} for {{benefit}}.",
+    : t("plan.growthRecommendation", {
+        defaultValue: "Upgrade to {{plan}} to continue scaling — {{benefit}}.",
         plan: t(`plan.tiers.${target}`, target),
         benefit:
           reason === "users"
-            ? t("plan.benefits.users", "more team members")
+            ? t("plan.benefits.users", "invite more team members")
             : reason === "products"
-            ? t("plan.benefits.products", "more products")
+            ? t("plan.benefits.products", "grow your catalog")
             : reason === "locations"
-            ? t("plan.benefits.locations", "more locations")
-            : t("plan.benefits.generic", "higher limits and more features"),
+            ? t("plan.benefits.locations", "expand to more locations")
+            : t("plan.benefits.generic", "unlock more capacity for your operations"),
       });
 
   return (
@@ -325,7 +325,7 @@ function UsageRow({
         {lim == null
           ? t("plan.unlimited", "Unlimited on your plan")
           : remaining === 0
-          ? t("plan.noneRemaining", "No more available — upgrade to add more")
+          ? t("plan.atCapacity", "At capacity — upgrade to Pro to keep growing")
           : t("plan.remaining", { count: remaining ?? 0, defaultValue: "{{count}} remaining" })}
       </p>
     </div>

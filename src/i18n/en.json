@@ -130,7 +130,7 @@
     "title": "Payment required",
     "body": "Complete your payment to activate your {{plan}} plan.",
     "perMonth": "/month",
-    "setupFee": "One-time setup fee",
+    "setupFee": "One-time Onboarding Process",
     "taxNote": "Tax calculated at checkout.",
     "continueCheckout": "Continue to Checkout",
     "redirecting": "Redirecting to checkout…",
@@ -160,7 +160,7 @@
       "ctaPrimary": "Start Free Trial",
       "ctaDemo": "Book Demo",
       "ctaWhatsapp": "Chat on WhatsApp",
-      "fineprint": "No credit card required · Cancel anytime",
+      "fineprint": "7-day free trial · Card required · Cancel anytime",
       "badges": {
         "mobile": "Mobile friendly",
         "multilocation": "Multi-location",
@@ -172,48 +172,32 @@
     "pricing": {
       "eyebrow": "Pricing",
       "title": "Simple, transparent pricing for growing operations.",
-      "subtitle": "Start with a 7-day free trial. Upgrade when you're ready to scale.",
+      "subtitle": "Start your 7-day free trial on Starter. Upgrade to Pro when your business outgrows it.",
       "perMonth": "/month",
-      "setupFee": "Setup fee",
       "usersLabel": "Users",
       "productsLabel": "Products",
       "locationsLabel": "Locations",
+      "capacityLabel": "Capacity",
+      "includedLabel": "All modules included",
       "mostPopular": "Most Popular",
       "contactSales": "Contact Sales",
-      "startTrial": "Start Free Trial",
-      "startStarter": "Get Started",
+      "startStarter": "Start 7-Day Free Trial",
       "upgradeToPro": "Upgrade to Pro",
       "choosePlan": "Choose Plan",
-      "trialNote": "One-time onboarding/implementation fee charged only once · 7-day free trial on the Free plan · 30-Day Satisfaction Guarantee · Cancel anytime",
-      "freeTrialBanner": "Free 7-Day Trial",
-      "noCardRequired": "No credit card required",
-      "noTrialPaid": "No free trial • Instant activation after payment",
-      "setupFeeOnce": "Setup charged only once",
-      "implementationOnce": "Implementation charged only once",
+      "trialNote": "7-day free trial on Starter · One-time Onboarding Process · 30-Day Satisfaction Guarantee · Cancel anytime",
+      "starterTrial": "7-day free trial",
+      "starterCard": "Card required",
+      "proGrowth": "For growing businesses",
+      "enterpriseLine": "Need Enterprise? ",
       "satisfactionGuarantee": "30-Day Satisfaction Guarantee",
       "modulesLabel": "Included modules",
       "limitsLabel": "Plan limits",
       "recurringModel": "Recurring SaaS — cancel anytime",
       "plans": {
-        "trial": {
-          "name": "Free Trial",
-          "price": "Free",
-          "period": "7 days",
-          "tagline": "Try Pro features for 7 days. No permanent free plan.",
-          "features": [
-            "Full Pro feature access",
-            "Up to 2 users",
-            "Up to 100 products",
-            "1 location",
-            "InventoryFlow branding",
-            "Guided onboarding",
-            "Cancel anytime"
-          ]
-        },
         "starter": {
           "name": "Starter",
           "price": "$14.99",
-          "setupFee": "+ $19 one-time onboarding",
+          "onboarding": "+ $19 one-time Onboarding Process",
           "tagline": "For small businesses getting organized.",
           "features": [
             "Dashboard",
@@ -222,8 +206,10 @@
             "Barcode scanner",
             "Low-stock alerts",
             "Sales & purchase orders",
+            "Transfer orders",
+            "Reports & analytics",
             "Transaction history",
-            "Basic CSV exports",
+            "CSV / PDF / XLSX exports",
             "Up to 3 users",
             "Up to 500 products",
             "Up to 2 locations"
@@ -232,16 +218,13 @@
         "pro": {
           "name": "Pro",
           "price": "$79",
-          "setupFee": "+ $79 guided implementation",
-          "tagline": "For growing operations that need control.",
+          "onboarding": "+ $79 guided Onboarding Process",
+          "tagline": "For growing operations that need more capacity.",
           "features": [
             "Everything in Starter",
-            "Transfer orders",
-            "Internal use tracking",
-            "Reports & analytics",
-            "Full exports (CSV, PDF, XLSX)",
             "Multi-location inventory",
             "Approval workflows",
+            "Priority support",
             "Up to 25 users",
             "Unlimited products",
             "Up to 10 locations"
@@ -598,7 +581,7 @@
         },
         {
           "q": "Is there a free trial?",
-          "a": "Yes — a full-featured 7-day free trial, no credit card required. Cancel anytime."
+          "a": "Yes — Starter includes a full-featured 7-day free trial. A card is required to start, but you won't be charged until the trial ends. Cancel anytime."
         },
         {
           "q": "Can I manage multiple locations?",

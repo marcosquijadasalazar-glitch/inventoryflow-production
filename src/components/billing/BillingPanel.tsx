@@ -193,7 +193,7 @@ export function BillingPanel() {
             <div className="font-medium mt-1">{fmtDate(data.current_period_end)}</div>
           </div>
           <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Setup fee</div>
+            <div className="text-xs text-muted-foreground">Onboarding Process</div>
             <div className="font-medium mt-1 flex items-center gap-1.5">
               {data.setup_fee_paid ? (
                 <>
@@ -211,7 +211,7 @@ export function BillingPanel() {
           <PlanCard
             name="Starter"
             price="$14.99/mo"
-            setupNote={data.setup_fee_paid ? "Setup fee already paid" : "+ $49 one-time setup fee"}
+            setupNote={data.setup_fee_paid ? "Onboarding Process already completed" : "+ $49 one-time Onboarding Process"}
             features={["3 users", "500 products", "2 locations", "Purchase & sales orders"]}
             current={data.plan === "starter"}
             onSelect={() => goCheckout("starter")}
@@ -221,7 +221,7 @@ export function BillingPanel() {
           <PlanCard
             name="Pro"
             price="$79/mo"
-            setupNote={data.setup_fee_paid ? "Setup fee already paid" : "+ $99 one-time setup fee"}
+            setupNote={data.setup_fee_paid ? "Onboarding Process already completed" : "+ $99 one-time Onboarding Process"}
             features={["25 users", "Unlimited products", "10 locations", "All modules + reports"]}
             current={data.plan === "pro"}
             onSelect={() => goCheckout("pro")}
