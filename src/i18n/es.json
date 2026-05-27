@@ -130,7 +130,7 @@
     "title": "Pago requerido",
     "body": "Completa tu pago para activar tu plan {{plan}}.",
     "perMonth": "/mes",
-    "setupFee": "Tarifa única de configuración",
+    "setupFee": "Proceso de incorporación único",
     "taxNote": "Los impuestos se calculan al pagar.",
     "continueCheckout": "Continuar al pago",
     "redirecting": "Redirigiendo al pago…",
