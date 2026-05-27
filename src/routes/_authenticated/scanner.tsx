@@ -395,8 +395,11 @@ function LookupMode() {
     },
   });
 
+  const canPrintLabels = can("print_labels");
+
   return (
     <>
+      <FrequentTodayStrip onPick={handleScan} />
       <Card>
         <CardContent className="pt-6">
           <BarcodeScanInput onScan={handleScan} />
