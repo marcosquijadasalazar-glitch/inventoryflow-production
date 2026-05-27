@@ -502,7 +502,20 @@ function LookupMode() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between gap-2">
+                {canPrintLabels ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLabelOpen(true)}
+                    disabled={!product.barcode && !product.sku}
+                  >
+                    <Tag className="h-4 w-4 mr-1.5" />
+                    {t("scanner.printLabel")}
+                  </Button>
+                ) : (
+                  <span />
+                )}
                 <Button variant="ghost" size="sm" onClick={resetScan}>
                   {t("scanner.scanAgain")}
                 </Button>
