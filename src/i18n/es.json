@@ -945,7 +945,45 @@
     "transferNeedsLocations": "Agrega otra ubicación para usar transferencias.",
     "sessionSaved": "Se guardaron {{count}} ítems",
     "noPermission": "No tienes permiso para guardar esta sesión.",
-    "recentScans": "Escaneos recientes"
+    "recentScans": "Escaneos recientes",
+    "frequentToday": "Frecuentes hoy",
+    "handsFree": "Manos libres",
+    "handsFreeOn": "Manos libres activo",
+    "handsFreeHint": "La cámara queda abierta. El mismo código se ignora por 2.5s.",
+    "duplicateIgnored": "Escaneo duplicado ignorado",
+    "printLabel": "Imprimir etiqueta",
+    "queuedOffline": "Guardado sin conexión — se sincronizará al volver",
+    "queuedSession": "Se guardaron {{count}} ítems sin conexión — se sincronizarán",
+    "qrUnsupported": "Código QR no soportado",
+    "qrOpenedProduct": "Producto abierto desde QR",
+    "status": {
+      "online": "En línea",
+      "offline": "Sin conexión",
+      "syncing": "Sincronizando…",
+      "pending": "{{count}} pendientes"
+    },
+    "labels": {
+      "title": "Imprimir etiqueta de código",
+      "copies": "Copias",
+      "includePrice": "Incluir precio",
+      "print": "Imprimir",
+      "downloadPdf": "Descargar PDF",
+      "noBarcode": "Sin código de barras ni SKU disponible",
+      "popupBlocked": "Popup bloqueado. Permite popups para imprimir."
+    },
+    "analytics": {
+      "title": "Analíticas del escáner",
+      "scansToday": "Escaneos hoy",
+      "receivingToday": "Recibido hoy",
+      "transfersToday": "Transferencias hoy",
+      "busiestLocation": "Ubicación más activa",
+      "topProducts": "Productos más escaneados",
+      "empty": "Aún no hay actividad del escáner."
+    },
+    "activity": {
+      "title": "Actividad reciente del escáner",
+      "empty": "Sin actividad reciente del escáner."
+    }
   },
   "insights": {
     "title": "Insights de inventario",
