@@ -720,11 +720,16 @@ function LocationStockPage() {
               const active = b.id === selectedBinId;
               const count = itemsCount(b.id);
               return (
-                <button
+                <div
                   key={b.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedBinId(b.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                  }}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 text-left border-b border-border last:border-b-0",
+                    "w-full flex items-center justify-between px-3 py-2 text-left border-b border-border last:border-b-0 cursor-pointer",
                     active ? "bg-primary/5 text-primary" : "hover:bg-muted/50",
                   )}
                 >
@@ -732,10 +737,13 @@ function LocationStockPage() {
                     <MapPin className="h-3.5 w-3.5" />
                     {b.code || b.name}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {count} {t("ls.items", "items")}
-                  </span>
-                </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {count} {t("ls.items", "items")}
+                    </span>
+                    {canCreateLoc && <LocationNodeActions node={b} allNodes={nodes} />}
+                  </div>
+                </div>
               );
             })}
           </div>
