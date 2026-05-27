@@ -337,12 +337,12 @@ function LocationStockPage() {
     return products
       .map((p) => ({
         p,
-        qty: binStock[p.id] ?? 0,
+        qty: nodeStock[p.id] ?? 0,
         lastMove: lastMovesQ.data?.get(p.id) ?? null,
         status: statusFor(p),
       }))
       .filter(({ p, qty, status }) => {
-        if ((qty ?? 0) <= 0 && selectedBinId) return false;
+        if ((qty ?? 0) <= 0 && selectedNodeId) return false;
         if (q) {
           if (
             !(
@@ -362,7 +362,7 @@ function LocationStockPage() {
         if (lowOnly && status === "in_stock") return false;
         return true;
       });
-  }, [products, binStock, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedBinId]);
+  }, [products, nodeStock, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * perPage;
