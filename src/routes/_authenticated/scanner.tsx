@@ -67,7 +67,7 @@ import { ScannerStatusPill } from "@/components/ScannerStatusPill";
 import { ScannerAnalyticsPanel } from "@/components/ScannerAnalyticsPanel";
 import { FrequentTodayStrip } from "@/components/FrequentTodayStrip";
 import { LabelPrintDialog } from "@/components/LabelPrintDialog";
-import { installAutoSync } from "@/lib/scan-queue";
+import { installAutoSync, submitMovement } from "@/lib/scan-queue";
 import { Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
@@ -164,6 +164,27 @@ async function lookupByBarcode(code: string): Promise<Product | null> {
     .maybeSingle();
   if (error) throw error;
   return (data as Product) ?? null;
+}
+
+async function lookupById(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Product) ?? null;
+}
+
+/** Parse special QR payloads. Returns null for plain barcodes. */
+function parseQrPayload(code: string): { kind: "product"; id: string } | { kind: "unsupported" } | null {
+  const trimmed = code.trim();
+  const m = trimmed.match(/^inventoryflow:\/\/product\/([a-zA-Z0-9-]+)$/);
+  if (m) return { kind: "product", id: m[1] };
+  if (/^[a-z]+:\/\//i.test(trimmed) || trimmed.startsWith("http")) {
+    return { kind: "unsupported" };
+  }
+  return null;
 }
 
 function ScannerPage() {
@@ -298,7 +319,19 @@ function LookupMode() {
     setNotFound(false);
     setProduct(null);
     try {
-      const data = await lookupByBarcode(code);
+      const qr = parseQrPayload(code);
+      let data: Product | null = null;
+      if (qr?.kind === "unsupported") {
+        toast.warning(t("scanner.qrUnsupported"));
+        setNotFound(true);
+        return;
+      }
+      if (qr?.kind === "product") {
+        data = await lookupById(qr.id);
+        if (data) toast.success(t("scanner.qrOpenedProduct"));
+      } else {
+        data = await lookupByBarcode(code);
+      }
       if (!data) {
         setNotFound(true);
         toast.warning(t("scanner.productNotFound"));
@@ -362,8 +395,11 @@ function LookupMode() {
     },
   });
 
+  const canPrintLabels = can("print_labels");
+
   return (
     <>
+      <FrequentTodayStrip onPick={handleScan} />
       <Card>
         <CardContent className="pt-6">
           <BarcodeScanInput onScan={handleScan} />
@@ -466,7 +502,20 @@ function LookupMode() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between gap-2">
+                {canPrintLabels ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLabelOpen(true)}
+                    disabled={!product.barcode && !product.sku}
+                  >
+                    <Tag className="h-4 w-4 mr-1.5" />
+                    {t("scanner.printLabel")}
+                  </Button>
+                ) : (
+                  <span />
+                )}
                 <Button variant="ghost" size="sm" onClick={resetScan}>
                   {t("scanner.scanAgain")}
                 </Button>
@@ -508,6 +557,11 @@ function LookupMode() {
         product={detailsOpen ? product : null}
         onClose={() => setDetailsOpen(false)}
       />
+
+      <LabelPrintDialog
+        product={labelOpen ? product : null}
+        onClose={() => setLabelOpen(false)}
+      />
     </>
   );
 }
@@ -534,7 +588,7 @@ function BatchMode({
   const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const lastScanRef = useRef<{ code: string; ts: number } | null>(null);
+  const dedupeRef = useRef<Map<string, number>>(new Map());
 
   // Auto-select first location when relevant
   useEffect(() => {
@@ -576,19 +630,33 @@ function BatchMode({
   }[mode];
 
   const handleScan = async (code: string) => {
-    // Duplicate-scan throttle (1s)
+    // Per-code dedupe window (2.5s) — robust against burst reads
     const now = Date.now();
-    if (
-      lastScanRef.current &&
-      lastScanRef.current.code === code &&
-      now - lastScanRef.current.ts < 1000
-    ) {
+    const prevTs = dedupeRef.current.get(code);
+    if (prevTs && now - prevTs < 2500) {
+      toast.message(t("scanner.duplicateIgnored"));
       return;
     }
-    lastScanRef.current = { code, ts: now };
+    dedupeRef.current.set(code, now);
+    // Trim old entries to keep map small
+    if (dedupeRef.current.size > 200) {
+      for (const [k, ts] of dedupeRef.current) {
+        if (now - ts > 60_000) dedupeRef.current.delete(k);
+      }
+    }
 
     try {
-      const product = await lookupByBarcode(code);
+      const qr = parseQrPayload(code);
+      let product: Product | null = null;
+      if (qr?.kind === "unsupported") {
+        toast.warning(t("scanner.qrUnsupported"));
+        return;
+      }
+      if (qr?.kind === "product") {
+        product = await lookupById(qr.id);
+      } else {
+        product = await lookupByBarcode(code);
+      }
       if (!product) {
         setPendingBarcode(code);
         toast.warning(t("scanner.productNotFound"));
@@ -602,13 +670,13 @@ function BatchMode({
         return;
       }
       setItems((prev) => {
-        const idx = prev.findIndex((i) => i.product.id === product.id);
+        const idx = prev.findIndex((i) => i.product.id === product!.id);
         if (idx >= 0) {
           const next = [...prev];
           next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
           return next;
         }
-        return [...prev, { product, quantity: 1 }];
+        return [...prev, { product: product!, quantity: 1 }];
       });
       playBeep();
       vibrate();
@@ -672,13 +740,18 @@ function BatchMode({
     try {
       const fromName = locations.find((l) => l.id === fromLocation)?.name;
       const toName = locations.find((l) => l.id === toLocation)?.name;
+      let queuedAny = false;
+      const submit = async (payload: Parameters<typeof submitMovement>[0]) => {
+        const r = await submitMovement(payload);
+        if (r.queued) queuedAny = true;
+      };
 
       for (const item of items) {
         if (mode === "count") {
           const note = `[scan] ${labels.saveNote}${
             fromName ? ` @${fromName}` : ""
           }`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "adjustment",
             quantity: item.quantity,
@@ -689,7 +762,7 @@ function BatchMode({
           const note = `[scan] ${labels.saveNote}${
             fromName ? ` @${fromName}` : ""
           }${refPart}`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "add",
             quantity: item.quantity,
@@ -697,13 +770,13 @@ function BatchMode({
           });
         } else if (mode === "transfer") {
           const note = `[scan] ${labels.saveNote} ${fromName} → ${toName}`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "remove",
             quantity: item.quantity,
             note,
           });
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "add",
             quantity: item.quantity,
@@ -712,12 +785,17 @@ function BatchMode({
         }
       }
 
-      toast.success(t("scanner.sessionSaved", { count: items.length }));
+      if (queuedAny) {
+        toast.success(t("scanner.queuedSession", { count: items.length }));
+      } else {
+        toast.success(t("scanner.sessionSaved", { count: items.length }));
+      }
       setItems([]);
       setReference("");
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["history"] });
+
     } catch (e: any) {
       toast.error(e.message);
     } finally {

@@ -945,7 +945,45 @@
     "transferNeedsLocations": "Add another location to use transfers.",
     "sessionSaved": "Saved {{count}} items",
     "noPermission": "You don't have permission to save this session.",
-    "recentScans": "Recent scans"
+    "recentScans": "Recent scans",
+    "frequentToday": "Frequent today",
+    "handsFree": "Hands-free",
+    "handsFreeOn": "Hands-free on",
+    "handsFreeHint": "Camera stays open. Same code ignored for 2.5s.",
+    "duplicateIgnored": "Duplicate scan ignored",
+    "printLabel": "Print label",
+    "queuedOffline": "Saved offline — will sync when online",
+    "queuedSession": "Saved {{count}} items offline — will sync when online",
+    "qrUnsupported": "Unsupported QR code",
+    "qrOpenedProduct": "Opened product from QR",
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "syncing": "Syncing…",
+      "pending": "{{count}} pending"
+    },
+    "labels": {
+      "title": "Print barcode label",
+      "copies": "Copies",
+      "includePrice": "Include price",
+      "print": "Print",
+      "downloadPdf": "Download PDF",
+      "noBarcode": "No barcode or SKU available",
+      "popupBlocked": "Popup blocked. Allow popups to print."
+    },
+    "analytics": {
+      "title": "Scanner analytics",
+      "scansToday": "Scans today",
+      "receivingToday": "Received today",
+      "transfersToday": "Transfers today",
+      "busiestLocation": "Busiest location",
+      "topProducts": "Top scanned products",
+      "empty": "No scanner activity yet."
+    },
+    "activity": {
+      "title": "Recent scanner activity",
+      "empty": "No recent scanner activity."
+    }
   },
   "insights": {
     "title": "Inventory insights",

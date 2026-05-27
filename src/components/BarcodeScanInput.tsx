@@ -25,6 +25,28 @@ type Props = {
   autoFocus?: boolean;
 };
 
+function feedback() {
+  try {
+    navigator.vibrate?.(35);
+  } catch {}
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.16);
+    setTimeout(() => ctx.close().catch(() => {}), 250);
+  } catch {}
+}
+
 export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
   const { t } = useTranslation();
   const [value, setValue] = useState("");
@@ -35,6 +57,12 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
   const [deviceId, setDeviceId] = useState<string>("");
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [handsFree, setHandsFree] = useState(false);
+  const handsFreeRef = useRef(false);
+  useEffect(() => {
+    handsFreeRef.current = handsFree;
+  }, [handsFree]);
+  const lastDecodeRef = useRef<{ code: string; ts: number } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -177,9 +205,15 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
       const reader = new BrowserMultiFormatReader();
       readerRef.current = reader;
       const controls = await reader.decodeFromVideoElement(video, (result) => {
-        if (result) {
-          const code = result.getText();
-          onScan(code);
+        if (!result) return;
+        const code = result.getText();
+        const now = Date.now();
+        const last = lastDecodeRef.current;
+        if (last && last.code === code && now - last.ts < 2500) return;
+        lastDecodeRef.current = { code, ts: now };
+        feedback();
+        onScan(code);
+        if (!handsFreeRef.current) {
           stopCamera();
         }
       });
@@ -256,23 +290,41 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
         </Button>
       </form>
 
-      {devices.length > 1 && cameraOn && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {t("scanner.cameraSource")}
-          </span>
-          <Select value={deviceId} onValueChange={switchCamera}>
-            <SelectTrigger className="h-8 w-[220px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {devices.map((d, i) => (
-                <SelectItem key={d.deviceId} value={d.deviceId}>
-                  {d.label || `${t("scanner.camera")} ${i + 1}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {cameraOn && (
+        <div className="flex flex-wrap items-center gap-3">
+          {devices.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {t("scanner.cameraSource")}
+              </span>
+              <Select value={deviceId} onValueChange={switchCamera}>
+                <SelectTrigger className="h-8 w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.map((d, i) => (
+                    <SelectItem key={d.deviceId} value={d.deviceId}>
+                      {d.label || `${t("scanner.camera")} ${i + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 accent-primary"
+              checked={handsFree}
+              onChange={(e) => setHandsFree(e.target.checked)}
+            />
+            <span>{t("scanner.handsFree")}</span>
+          </label>
+          {handsFree && (
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">
+              {t("scanner.handsFreeHint")}
+            </span>
+          )}
         </div>
       )}
 
@@ -295,6 +347,11 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
                 <span className="absolute left-0 right-0 top-1/2 h-px bg-primary/70 animate-pulse" />
               </div>
             </div>
+          )}
+          {cameraOn && handsFree && (
+            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-medium rounded-full bg-primary/90 text-primary-foreground px-2 py-0.5 backdrop-blur">
+              {t("scanner.handsFreeOn")}
+            </span>
           )}
           {/* Torch toggle */}
           {cameraOn && torchSupported && (
