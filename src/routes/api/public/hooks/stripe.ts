@@ -31,12 +31,15 @@ async function updateOrgFromSubscription(sub: Stripe.Subscription) {
   }
 
   const upd = subscriptionToOrgUpdate(sub);
+  const isTrialing = sub.status === "trialing";
   const patch: Record<string, unknown> = {
     stripe_subscription_id: upd.stripe_subscription_id,
     stripe_price_id: upd.stripe_price_id,
     subscription_status: upd.subscription_status,
     current_period_end: upd.current_period_end,
+    is_trialing: isTrialing,
   };
+  if (isTrialing) patch.has_used_trial = true;
   // Prefer recurring price → plan mapping, fall back to checkout metadata.
   const plan = upd.plan ?? selectedPlan;
   if (plan) patch.plan_type = plan;
@@ -45,9 +48,11 @@ async function updateOrgFromSubscription(sub: Stripe.Subscription) {
     patch.grace_period_ends_at = null;
   }
   if (sub.status === "canceled") {
-    patch.plan_type = "free";
+    // Keep the org on Starter (no more Free plan); flag as cancelled.
+    patch.plan_type = "starter";
     patch.stripe_subscription_id = null;
     patch.stripe_price_id = null;
+    patch.is_trialing = false;
   }
 
   const { error } = await supabaseAdmin
@@ -55,6 +60,105 @@ async function updateOrgFromSubscription(sub: Stripe.Subscription) {
     .update(patch as any)
     .eq("id", orgId);
   if (error) console.error("[stripe webhook] update failed", error);
+}
+
+// Generate a cryptographically secure temporary password.
+function generateTempPassword(length = 14): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*";
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < length; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out;
+}
+
+// Provision an org + owner user for a successful payment-first signup.
+async function provisionSignupFromSession(session: Stripe.Checkout.Session) {
+  const email = (session.metadata?.signup_email ?? session.customer_details?.email ?? "")
+    .trim().toLowerCase();
+  const plan = (session.metadata?.selected_plan as BillingPlan | undefined) ?? "starter";
+  if (!email) {
+    console.error("[stripe webhook] signup checkout missing email", session.id);
+    return;
+  }
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  if (!customerId) {
+    console.error("[stripe webhook] signup checkout missing customer", session.id);
+    return;
+  }
+
+  // Idempotency: if signup_sessions is already ready, do nothing.
+  const { data: existing } = await supabaseAdmin
+    .from("signup_sessions" as never)
+    .select("status, user_id, organization_id")
+    .eq("session_id", session.id)
+    .maybeSingle();
+  if (existing && (existing as any).status === "ready") return;
+
+  // Create the organization first so handle_new_user trigger can link via meta.
+  const subId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null;
+  const isStarter = plan === "starter";
+  const { data: org, error: oErr } = await supabaseAdmin
+    .from("organizations")
+    .insert({
+      company_name: email.split("@")[0],
+      plan_type: plan,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subId,
+      subscription_status: isStarter ? "trialing" : "active",
+      is_trialing: isStarter,
+      has_used_trial: isStarter,
+    } as any)
+    .select("id")
+    .single();
+  if (oErr || !org) {
+    console.error("[stripe webhook] org provision failed", oErr);
+    return;
+  }
+
+  // Create the auth user via admin client. The handle_new_user() trigger
+  // creates the matching profile row from user_metadata.
+  const tempPassword = generateTempPassword();
+  const { data: created, error: uErr } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: {
+      role: "owner",
+      organization_id: org.id,
+      full_name: session.customer_details?.name ?? null,
+    },
+  });
+  if (uErr || !created.user) {
+    console.error("[stripe webhook] createUser failed", uErr);
+    return;
+  }
+
+  // Force the profile to owner/active with must_change_password.
+  await supabaseAdmin
+    .from("profiles")
+    .update({
+      role: "owner",
+      organization_id: org.id,
+      account_status: "active" as any,
+      must_change_password: true,
+      trial_ends_at: null,
+    } as any)
+    .eq("user_id", created.user.id);
+
+  // Hand off the temp password to the browser polling /signup-complete.
+  await supabaseAdmin
+    .from("signup_sessions" as never)
+    .update({
+      status: "ready",
+      user_id: created.user.id,
+      organization_id: org.id,
+      temp_password: tempPassword,
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq("session_id", session.id);
+
+  console.info("[stripe webhook] signup provisioned", { orgId: org.id, plan });
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
