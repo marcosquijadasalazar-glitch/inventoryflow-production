@@ -740,13 +740,18 @@ function BatchMode({
     try {
       const fromName = locations.find((l) => l.id === fromLocation)?.name;
       const toName = locations.find((l) => l.id === toLocation)?.name;
+      let queuedAny = false;
+      const submit = async (payload: Parameters<typeof submitMovement>[0]) => {
+        const r = await submitMovement(payload);
+        if (r.queued) queuedAny = true;
+      };
 
       for (const item of items) {
         if (mode === "count") {
           const note = `[scan] ${labels.saveNote}${
             fromName ? ` @${fromName}` : ""
           }`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "adjustment",
             quantity: item.quantity,
@@ -757,7 +762,7 @@ function BatchMode({
           const note = `[scan] ${labels.saveNote}${
             fromName ? ` @${fromName}` : ""
           }${refPart}`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "add",
             quantity: item.quantity,
@@ -765,13 +770,13 @@ function BatchMode({
           });
         } else if (mode === "transfer") {
           const note = `[scan] ${labels.saveNote} ${fromName} → ${toName}`;
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "remove",
             quantity: item.quantity,
             note,
           });
-          await createMovement({
+          await submit({
             product_id: item.product.id,
             type: "add",
             quantity: item.quantity,
@@ -780,12 +785,17 @@ function BatchMode({
         }
       }
 
-      toast.success(t("scanner.sessionSaved", { count: items.length }));
+      if (queuedAny) {
+        toast.success(t("scanner.queuedSession", { count: items.length }));
+      } else {
+        toast.success(t("scanner.sessionSaved", { count: items.length }));
+      }
       setItems([]);
       setReference("");
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["history"] });
+
     } catch (e: any) {
       toast.error(e.message);
     } finally {
