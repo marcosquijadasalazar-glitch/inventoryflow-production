@@ -60,6 +60,17 @@ export function StockActionDialog({
   const [toNodeId, setToNodeId] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (mode === "adjust" && product) {
+      setQty(String(product.stock));
+      setAdjustReason("physical_count");
+      setNote("");
+    } else if (mode) {
+      setQty("1");
+      setNote("");
+    }
+  }, [mode, product?.id, product?.stock]);
+
   const nodesQ = useQuery({
     queryKey: ["location-nodes-all"],
     queryFn: listAllNodes,
