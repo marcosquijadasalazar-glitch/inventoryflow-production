@@ -205,9 +205,15 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
       const reader = new BrowserMultiFormatReader();
       readerRef.current = reader;
       const controls = await reader.decodeFromVideoElement(video, (result) => {
-        if (result) {
-          const code = result.getText();
-          onScan(code);
+        if (!result) return;
+        const code = result.getText();
+        const now = Date.now();
+        const last = lastDecodeRef.current;
+        if (last && last.code === code && now - last.ts < 2500) return;
+        lastDecodeRef.current = { code, ts: now };
+        feedback();
+        onScan(code);
+        if (!handsFreeRef.current) {
           stopCamera();
         }
       });
