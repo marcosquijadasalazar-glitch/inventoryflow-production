@@ -187,8 +187,18 @@ function TransferOrdersPage() {
                   {transfers.data.map((tr) => (
                     <TableRow key={tr.id}>
                       <TableCell className="font-mono text-xs">{tr.transfer_number}</TableCell>
-                      <TableCell>{tr.from_location ?? "—"}</TableCell>
-                      <TableCell>{tr.to_location ?? "—"}</TableCell>
+                      <TableCell>
+                        <LocationPath
+                          nodeId={(tr as any).from_location_id}
+                          fallback={tr.from_location}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <LocationPath
+                          nodeId={(tr as any).to_location_id}
+                          fallback={tr.to_location}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={STATUS_COLORS[tr.status]}>
                           {t(`tr.statuses.${tr.status}`, tr.status)}
