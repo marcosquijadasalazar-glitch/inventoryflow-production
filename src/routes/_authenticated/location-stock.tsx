@@ -167,28 +167,39 @@ function LocationStockPage() {
     return nodes.filter((n) => ids.includes(n.id) && n.node_level === "bin");
   }, [nodes, selectedAisleId]);
 
-  // Auto-select first available items
+  // Default to first location only; never auto-drill into aisle/bin so stock
+  // assigned at the selected depth stays visible.
   useEffect(() => {
     if (!selectedLocationId && locations.length > 0) {
       setSelectedLocationId(locations[0].id);
     }
   }, [locations, selectedLocationId]);
+
   useEffect(() => {
-    setSelectedAisleId(aisles[0]?.id ?? null);
-  }, [selectedLocationId]); // eslint-disable-line
-  useEffect(() => {
-    if (aisles.length > 0 && !aisles.find((a) => a.id === selectedAisleId)) {
-      setSelectedAisleId(aisles[0].id);
+    if (!selectedLocationId) {
+      if (selectedAisleId) setSelectedAisleId(null);
+      if (selectedBinId) setSelectedBinId(null);
+      return;
     }
-  }, [aisles, selectedAisleId]);
-  useEffect(() => {
-    setSelectedBinId(bins[0]?.id ?? null);
-  }, [selectedAisleId]); // eslint-disable-line
-  useEffect(() => {
-    if (bins.length > 0 && !bins.find((b) => b.id === selectedBinId)) {
-      setSelectedBinId(bins[0].id);
+    const locDescendants = new Set(getDescendantIds(nodes, selectedLocationId));
+    if (selectedAisleId && !locDescendants.has(selectedAisleId)) {
+      setSelectedAisleId(null);
+      setSelectedBinId(null);
+    } else if (selectedBinId && !locDescendants.has(selectedBinId)) {
+      setSelectedBinId(null);
     }
-  }, [bins, selectedBinId]);
+  }, [selectedLocationId, nodes, selectedAisleId, selectedBinId]);
+
+  useEffect(() => {
+    if (!selectedAisleId) {
+      if (selectedBinId) setSelectedBinId(null);
+      return;
+    }
+    const aisleDescendants = new Set(getDescendantIds(nodes, selectedAisleId));
+    if (selectedBinId && !aisleDescendants.has(selectedBinId)) {
+      setSelectedBinId(null);
+    }
+  }, [selectedAisleId, nodes, selectedBinId]);
 
   // ── Per-location stock (kept identical math to prior version) ──────────
   const perLocQ = useQuery({
@@ -363,7 +374,20 @@ function LocationStockPage() {
           const qty = perLoc[id]?.[p.id] ?? 0;
           if (qty > 0) perNode.push({ nodeId: id, qty });
         }
-        if (perNode.length === 0) continue;
+        if (perNode.length === 0) {
+          const aggQty = nodeStock[p.id] ?? 0;
+          if (aggQty > 0) {
+            rows.push({
+              key: `${p.id}::${selectedNodeId}`,
+              p,
+              qty: aggQty,
+              nodeId: selectedNodeId,
+              lastMove,
+              status,
+            });
+          }
+          continue;
+        }
         for (const { nodeId, qty } of perNode) {
           rows.push({
             key: `${p.id}::${nodeId}`,
@@ -406,7 +430,7 @@ function LocationStockPage() {
       if (lowOnly && status === "in_stock") return false;
       return true;
     });
-  }, [products, perLocQ.data, nodes, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId]);
+  }, [products, perLocQ.data, nodes, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId, nodeStock]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * perPage;
@@ -427,6 +451,17 @@ function LocationStockPage() {
         (b.code ?? "").toLowerCase().includes(q),
     );
   }, [bins, binSearch]);
+
+  const aisleHasDirectStock = useMemo(() => {
+    if (!selectedAisleId) return false;
+    const perLoc = perLocQ.data ?? {};
+    const sm = perLoc[selectedAisleId];
+    if (!sm) return false;
+    return Object.values(sm).some((qty) => (qty ?? 0) > 0);
+  }, [perLocQ.data, selectedAisleId]);
+
+  const showBinsEmptyHint =
+    binsFiltered.length === 0 && !aisleHasDirectStock;
 
   const canCreateLoc = perms.can("manage_locations");
   const canAdjust = perms.can("adjust_stock");
@@ -500,7 +535,11 @@ function LocationStockPage() {
               <div className="min-w-0 flex-1">
               <Select
                 value={selectedLocationId ?? ""}
-                onValueChange={(v) => setSelectedLocationId(v)}
+                onValueChange={(v) => {
+                  setSelectedLocationId(v);
+                  setSelectedAisleId(null);
+                  setSelectedBinId(null);
+                }}
               >
                 <SelectTrigger className="h-auto py-2 border-0 shadow-none bg-transparent focus:ring-0">
                   <div className="flex items-center gap-3 min-w-0 text-left">
@@ -612,9 +651,15 @@ function LocationStockPage() {
                   key={a.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedAisleId(a.id)}
+                  onClick={() => {
+                    setSelectedAisleId(a.id);
+                    setSelectedBinId(null);
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") setSelectedAisleId(a.id);
+                    if (e.key === "Enter" || e.key === " ") {
+                      setSelectedAisleId(a.id);
+                      setSelectedBinId(null);
+                    }
                   }}
                   className={cn(
                     "snap-start text-left shrink-0 w-[200px] rounded-lg border bg-card p-3 transition-all hover:shadow-soft cursor-pointer",
@@ -723,7 +768,7 @@ function LocationStockPage() {
             )}
           </div>
         </div>
-        {binsFiltered.length === 0 ? (
+        {showBinsEmptyHint ? (
           <EmptyHint
             label={t("ls.no_bins", "No bins in this aisle yet.")}
             cta={
@@ -746,9 +791,12 @@ function LocationStockPage() {
                   key={b.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedBinId(b.id)}
+                  onClick={() =>
+                    setSelectedBinId((prev) => (prev === b.id ? null : b.id))
+                  }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                    if (e.key === "Enter" || e.key === " ")
+                      setSelectedBinId((prev) => (prev === b.id ? null : b.id));
                   }}
                   className={cn(
                     "snap-start shrink-0 inline-flex items-center gap-2 rounded-full border pl-3.5 pr-1.5 h-10 transition-all hover:shadow-soft cursor-pointer",
@@ -793,9 +841,12 @@ function LocationStockPage() {
                   key={b.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedBinId(b.id)}
+                  onClick={() =>
+                    setSelectedBinId((prev) => (prev === b.id ? null : b.id))
+                  }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") setSelectedBinId(b.id);
+                    if (e.key === "Enter" || e.key === " ")
+                      setSelectedBinId((prev) => (prev === b.id ? null : b.id));
                   }}
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2 text-left border-b border-border last:border-b-0 cursor-pointer",
