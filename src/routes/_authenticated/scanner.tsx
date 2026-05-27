@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { createMovement, type Product } from "@/lib/inventory";
-import { listLocations } from "@/lib/locations";
+import { listLocations, type Location } from "@/lib/locations";
+import { usePermissions } from "@/lib/use-permissions";
 import { BarcodeScanInput } from "@/components/BarcodeScanInput";
 import { ProductForm } from "@/components/ProductForm";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
@@ -40,17 +51,40 @@ import {
   MapPin,
   Clock,
   Package,
+  Search,
+  ClipboardList,
+  PackagePlus,
+  ArrowLeftRight,
+  Trash2,
+  Save,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   component: ScannerPage,
 });
 
 type Action = "add" | "remove" | "adjustment";
+type ScanMode = "lookup" | "count" | "receive" | "transfer";
 
-// Subtle success beep using WebAudio (no asset required)
+type SessionItem = {
+  product: Product;
+  quantity: number;
+};
+
+type HistoryEntry = {
+  productName: string;
+  barcode: string;
+  mode: ScanMode;
+  ts: number;
+};
+
+const HISTORY_KEY = "scanner-history-v1";
+const HISTORY_MAX = 10;
+
 function playBeep() {
   try {
     const Ctx =
@@ -95,7 +129,157 @@ function formatRelative(iso: string | null | undefined) {
   return d.toLocaleDateString();
 }
 
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as HistoryEntry[];
+  } catch {
+    return [];
+  }
+}
+
+function pushHistory(entry: HistoryEntry) {
+  try {
+    const list = [entry, ...loadHistory()].slice(0, HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    window.dispatchEvent(new Event("scanner-history-changed"));
+  } catch {
+    /* ignore */
+  }
+}
+
+async function lookupByBarcode(code: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("barcode", code)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Product) ?? null;
+}
+
 function ScannerPage() {
+  const { t } = useTranslation();
+  const [mode, setMode] = useState<ScanMode>("lookup");
+  const { data: locations = [] } = useQuery({
+    queryKey: ["locations-active"],
+    queryFn: () => listLocations(),
+  });
+  const { can } = usePermissions();
+  const canCount = can("adjust_stock");
+  const canReceive = can("create_movements") || can("adjust_stock");
+  const canTransfer = can("manage_transfer_orders") || can("create_movements");
+
+  const transferDisabled = locations.length < 2;
+
+  return (
+    <div className="space-y-6">
+      <FirstTimeTooltip storageKey="scanner" i18nKey="onboarding.tips.scanner" />
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <ScanLine className="h-6 w-6 text-primary" />
+          {t("scanner.title")}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t("scanner.subtitle")}
+        </p>
+      </header>
+
+      <ModeTabs
+        mode={mode}
+        onChange={setMode}
+        transferDisabled={transferDisabled}
+      />
+
+      {mode === "lookup" && <LookupMode />}
+      {mode === "count" && (
+        <BatchMode
+          mode="count"
+          locations={locations}
+          canSave={canCount}
+        />
+      )}
+      {mode === "receive" && (
+        <BatchMode
+          mode="receive"
+          locations={locations}
+          canSave={canReceive}
+        />
+      )}
+      {mode === "transfer" &&
+        (transferDisabled ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              {t("scanner.transferNeedsLocations")}
+            </CardContent>
+          </Card>
+        ) : (
+          <BatchMode
+            mode="transfer"
+            locations={locations}
+            canSave={canTransfer}
+          />
+        ))}
+
+      <ScanHistoryPanel />
+    </div>
+  );
+}
+
+function ModeTabs({
+  mode,
+  onChange,
+  transferDisabled,
+}: {
+  mode: ScanMode;
+  onChange: (m: ScanMode) => void;
+  transferDisabled: boolean;
+}) {
+  const { t } = useTranslation();
+  const tabs: { id: ScanMode; label: string; icon: any; disabled?: boolean }[] = [
+    { id: "lookup", label: t("scanner.modes.lookup"), icon: Search },
+    { id: "count", label: t("scanner.modes.count"), icon: ClipboardList },
+    { id: "receive", label: t("scanner.modes.receive"), icon: PackagePlus },
+    {
+      id: "transfer",
+      label: t("scanner.modes.transfer"),
+      icon: ArrowLeftRight,
+      disabled: transferDisabled,
+    },
+  ];
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-lg bg-muted/40 p-1">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const active = mode === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            disabled={tab.disabled}
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              "rounded-md px-3 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors",
+              active
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+              tab.disabled && "opacity-50 cursor-not-allowed",
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            <span className="truncate">{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* =========================================================================
+ * LOOKUP MODE (Phase 1 behavior — unchanged)
+ * ========================================================================= */
+function LookupMode() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [scanned, setScanned] = useState<string | null>(null);
@@ -110,31 +294,38 @@ function ScannerPage() {
     setScanned(code);
     setNotFound(false);
     setProduct(null);
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("barcode", code)
-      .maybeSingle();
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (!data) {
-      setNotFound(true);
-      toast.warning(t("scanner.productNotFound"));
-      return;
-    }
-    setProduct(data as Product);
-    playBeep();
-    vibrate();
-    toast.success(t("scanner.productFound"));
-    // Scroll into view on mobile
-    setTimeout(() => {
-      scanRegionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+    try {
+      const data = await lookupByBarcode(code);
+      if (!data) {
+        setNotFound(true);
+        toast.warning(t("scanner.productNotFound"));
+        pushHistory({
+          productName: t("scanner.productNotFound"),
+          barcode: code,
+          mode: "lookup",
+          ts: Date.now(),
+        });
+        return;
+      }
+      setProduct(data);
+      playBeep();
+      vibrate();
+      toast.success(t("scanner.productFound"));
+      pushHistory({
+        productName: data.name,
+        barcode: code,
+        mode: "lookup",
+        ts: Date.now(),
       });
-    }, 50);
+      setTimeout(() => {
+        scanRegionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 50);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
 
   const refreshProduct = async () => {
@@ -153,7 +344,6 @@ function ScannerPage() {
     setNotFound(false);
   };
 
-  // Last activity for found product
   const { data: lastActivity } = useQuery({
     queryKey: ["scanner-last-activity", product?.id],
     enabled: !!product?.id,
@@ -170,18 +360,7 @@ function ScannerPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <FirstTimeTooltip storageKey="scanner" i18nKey="onboarding.tips.scanner" />
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <ScanLine className="h-6 w-6 text-primary" />
-          {t("scanner.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("scanner.subtitle")}
-        </p>
-      </header>
-
+    <>
       <Card>
         <CardContent className="pt-6">
           <BarcodeScanInput onScan={handleScan} />
@@ -221,7 +400,6 @@ function ScannerPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Compact product summary */}
               <div className="flex gap-3 rounded-lg border border-border bg-surface-muted/40 p-3 sm:p-4">
                 <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-md bg-muted flex items-center justify-center shrink-0">
                   <Package className="h-6 w-6 text-muted-foreground" />
@@ -262,7 +440,6 @@ function ScannerPage() {
                 </div>
               </div>
 
-              {/* Quick action grid — mobile-first, 2 cols on phone, 4 on sm+ */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <QuickActionButton
                   icon={Plus}
@@ -296,7 +473,6 @@ function ScannerPage() {
         )}
       </div>
 
-      {/* Quick action sheet */}
       <QuickActionSheet
         action={actionOpen}
         product={product}
@@ -329,10 +505,475 @@ function ScannerPage() {
         product={detailsOpen ? product : null}
         onClose={() => setDetailsOpen(false)}
       />
+    </>
+  );
+}
+
+/* =========================================================================
+ * BATCH MODE — shared for count / receive / transfer
+ * ========================================================================= */
+function BatchMode({
+  mode,
+  locations,
+  canSave,
+}: {
+  mode: "count" | "receive" | "transfer";
+  locations: Location[];
+  canSave: boolean;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [items, setItems] = useState<SessionItem[]>([]);
+  const [fromLocation, setFromLocation] = useState<string>("");
+  const [toLocation, setToLocation] = useState<string>("");
+  const [reference, setReference] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const lastScanRef = useRef<{ code: string; ts: number } | null>(null);
+
+  // Auto-select first location when relevant
+  useEffect(() => {
+    if (locations.length > 0 && !fromLocation) {
+      setFromLocation(locations[0].id);
+    }
+  }, [locations, fromLocation]);
+
+  const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  const labels = {
+    count: {
+      title: t("scanner.modes.count"),
+      saveNote: "Inventory count via barcode scanner",
+      saveLabel: t("scanner.saveCount"),
+      empty: t("scanner.emptyCount"),
+      locationLabel: t("scanner.location"),
+      needsLocation: true,
+      needsTwoLocations: false,
+    },
+    receive: {
+      title: t("scanner.modes.receive"),
+      saveNote: "Receiving via barcode scanner",
+      saveLabel: t("scanner.saveReceiving"),
+      empty: t("scanner.emptyReceiving"),
+      locationLabel: t("scanner.location"),
+      needsLocation: true,
+      needsTwoLocations: false,
+    },
+    transfer: {
+      title: t("scanner.modes.transfer"),
+      saveNote: "Transfer via barcode scanner",
+      saveLabel: t("scanner.saveTransfer"),
+      empty: t("scanner.emptyTransfer"),
+      locationLabel: t("scanner.fromLocation"),
+      needsLocation: true,
+      needsTwoLocations: true,
+    },
+  }[mode];
+
+  const handleScan = async (code: string) => {
+    // Duplicate-scan throttle (1s)
+    const now = Date.now();
+    if (
+      lastScanRef.current &&
+      lastScanRef.current.code === code &&
+      now - lastScanRef.current.ts < 1000
+    ) {
+      return;
+    }
+    lastScanRef.current = { code, ts: now };
+
+    try {
+      const product = await lookupByBarcode(code);
+      if (!product) {
+        setPendingBarcode(code);
+        toast.warning(t("scanner.productNotFound"));
+        setCreateOpen(true);
+        pushHistory({
+          productName: t("scanner.productNotFound"),
+          barcode: code,
+          mode,
+          ts: now,
+        });
+        return;
+      }
+      setItems((prev) => {
+        const idx = prev.findIndex((i) => i.product.id === product.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
+          return next;
+        }
+        return [...prev, { product, quantity: 1 }];
+      });
+      playBeep();
+      vibrate();
+      pushHistory({
+        productName: product.name,
+        barcode: code,
+        mode,
+        ts: now,
+      });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const updateQty = (id: string, qty: number) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.product.id === id
+          ? { ...i, quantity: Math.max(mode === "count" ? 0 : 1, qty) }
+          : i,
+      ),
+    );
+  };
+
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.product.id !== id));
+  };
+
+  const clearAll = () => {
+    setItems([]);
+    setReference("");
+    setClearOpen(false);
+  };
+
+  const askClear = () => {
+    if (items.length === 0) return;
+    setClearOpen(true);
+  };
+
+  const save = async () => {
+    if (!canSave) {
+      toast.error(t("scanner.noPermission"));
+      return;
+    }
+    if (items.length === 0) {
+      toast.error(labels.empty);
+      return;
+    }
+    if (mode === "transfer") {
+      if (!fromLocation || !toLocation) {
+        toast.error(t("scanner.selectBothLocations"));
+        return;
+      }
+      if (fromLocation === toLocation) {
+        toast.error(t("scanner.sameLocationError"));
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const fromName = locations.find((l) => l.id === fromLocation)?.name;
+      const toName = locations.find((l) => l.id === toLocation)?.name;
+
+      for (const item of items) {
+        if (mode === "count") {
+          const note = `[scan] ${labels.saveNote}${
+            fromName ? ` @${fromName}` : ""
+          }`;
+          await createMovement({
+            product_id: item.product.id,
+            type: "adjustment",
+            quantity: item.quantity,
+            note,
+          });
+        } else if (mode === "receive") {
+          const refPart = reference ? ` | ref:${reference}` : "";
+          const note = `[scan] ${labels.saveNote}${
+            fromName ? ` @${fromName}` : ""
+          }${refPart}`;
+          await createMovement({
+            product_id: item.product.id,
+            type: "add",
+            quantity: item.quantity,
+            note,
+          });
+        } else if (mode === "transfer") {
+          const note = `[scan] ${labels.saveNote} ${fromName} → ${toName}`;
+          await createMovement({
+            product_id: item.product.id,
+            type: "remove",
+            quantity: item.quantity,
+            note,
+          });
+          await createMovement({
+            product_id: item.product.id,
+            type: "add",
+            quantity: item.quantity,
+            note,
+          });
+        }
+      }
+
+      toast.success(t("scanner.sessionSaved", { count: items.length }));
+      setItems([]);
+      setReference("");
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["movements"] });
+      qc.invalidateQueries({ queryKey: ["history"] });
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Location selector */}
+      {locations.length > 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <div className={cn("grid gap-3", mode === "transfer" && "sm:grid-cols-2")}>
+              <div className="space-y-1.5">
+                <Label>{labels.locationLabel}</Label>
+                <Select value={fromLocation} onValueChange={setFromLocation}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={t("scanner.selectLocation")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {mode === "transfer" && (
+                <div className="space-y-1.5">
+                  <Label>{t("scanner.toLocation")}</Label>
+                  <Select value={toLocation} onValueChange={setToLocation}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder={t("scanner.selectLocation")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations
+                        .filter((l) => l.id !== fromLocation)
+                        .map((l) => (
+                          <SelectItem key={l.id} value={l.id}>
+                            {l.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            {mode === "receive" && (
+              <div className="space-y-1.5">
+                <Label>
+                  {t("scanner.supplierReference")} ({t("common.optional")})
+                </Label>
+                <Input
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder=""
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="pt-6">
+          <BarcodeScanInput onScan={handleScan} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">
+            {t("scanner.sessionItems")}{" "}
+            <span className="text-muted-foreground font-normal">
+              ({items.length} · {totalUnits} {t("scanner.units")})
+            </span>
+          </CardTitle>
+          {items.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={askClear}>
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {t("scanner.clearSession")}
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {items.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              {labels.empty}
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {items.map((item) => (
+                <li
+                  key={item.product.id}
+                  className="py-3 flex items-center gap-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
+                      {item.product.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono truncate">
+                      {item.product.sku}
+                      {item.product.barcode ? ` · ${item.product.barcode}` : ""}
+                    </div>
+                    {mode !== "count" && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {t("scanner.currentStock")}: {item.product.stock}
+                      </div>
+                    )}
+                  </div>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min={mode === "count" ? 0 : 1}
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateQty(item.product.id, parseInt(e.target.value, 10) || 0)
+                    }
+                    className="w-20 h-10 text-center"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeItem(item.product.id)}
+                    aria-label={t("common.remove")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="sticky bottom-2 z-10">
+        <Button
+          onClick={save}
+          disabled={saving || items.length === 0 || !canSave}
+          className="w-full h-12 text-base shadow-lg"
+        >
+          <Save className="h-5 w-5 mr-2" />
+          {saving ? t("common.loading") : labels.saveLabel}
+        </Button>
+        {!canSave && (
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            {t("scanner.noPermission")}
+          </p>
+        )}
+      </div>
+
+      <ProductForm
+        open={createOpen}
+        onOpenChange={(v) => {
+          setCreateOpen(v);
+          if (!v) setPendingBarcode(null);
+        }}
+        product={
+          pendingBarcode
+            ? ({ barcode: pendingBarcode } as unknown as Product)
+            : null
+        }
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["products"] });
+          if (pendingBarcode) {
+            const code = pendingBarcode;
+            setPendingBarcode(null);
+            // Re-scan to add the new product into the session
+            setTimeout(() => handleScan(code), 200);
+          }
+        }}
+      />
+
+      <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("scanner.clearSession")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("scanner.clearConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAll}>
+              {t("scanner.clearSession")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
+/* =========================================================================
+ * SCAN HISTORY
+ * ========================================================================= */
+function ScanHistoryPanel() {
+  const { t } = useTranslation();
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    const refresh = () => setEntries(loadHistory());
+    refresh();
+    window.addEventListener("scanner-history-changed", refresh);
+    return () => window.removeEventListener("scanner-history-changed", refresh);
+  }, []);
+
+  const modeLabel = useMemo(
+    () => ({
+      lookup: t("scanner.modes.lookup"),
+      count: t("scanner.modes.count"),
+      receive: t("scanner.modes.receive"),
+      transfer: t("scanner.modes.transfer"),
+    }),
+    [t],
+  );
+
+  if (entries.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <History className="h-4 w-4 text-muted-foreground" />
+          {t("scanner.recentScans")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y divide-border text-sm">
+          {entries.map((e, i) => (
+            <li
+              key={`${e.ts}-${i}`}
+              className="py-2 flex items-center gap-3"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{e.productName}</div>
+                <div className="text-xs text-muted-foreground font-mono truncate">
+                  {e.barcode}
+                </div>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                {modeLabel[e.mode]}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {formatRelative(new Date(e.ts).toISOString())}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* =========================================================================
+ * Shared sub-components (Lookup quick actions)
+ * ========================================================================= */
 function QuickActionButton({
   icon: Icon,
   label,
@@ -376,7 +1017,6 @@ function QuickActionSheet({
     queryFn: () => listLocations(),
   });
 
-  // Reset when opening
   useEffect(() => {
     if (action && product) {
       setQty(action === "adjustment" ? String(product.stock) : "1");
@@ -405,11 +1045,7 @@ function QuickActionSheet({
     try {
       const locName =
         locationId && locations.find((l) => l.id === locationId)?.name;
-      const noteParts = [
-        "[scan]",
-        locName ? `@${locName}` : "",
-        reason,
-      ]
+      const noteParts = ["[scan]", locName ? `@${locName}` : "", reason]
         .filter(Boolean)
         .join(" ");
       await createMovement({
