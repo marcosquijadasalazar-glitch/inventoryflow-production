@@ -319,7 +319,19 @@ function LookupMode() {
     setNotFound(false);
     setProduct(null);
     try {
-      const data = await lookupByBarcode(code);
+      const qr = parseQrPayload(code);
+      let data: Product | null = null;
+      if (qr?.kind === "unsupported") {
+        toast.warning(t("scanner.qrUnsupported"));
+        setNotFound(true);
+        return;
+      }
+      if (qr?.kind === "product") {
+        data = await lookupById(qr.id);
+        if (data) toast.success(t("scanner.qrOpenedProduct"));
+      } else {
+        data = await lookupByBarcode(code);
+      }
       if (!data) {
         setNotFound(true);
         toast.warning(t("scanner.productNotFound"));
