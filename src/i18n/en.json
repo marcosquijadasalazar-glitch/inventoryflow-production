@@ -113,10 +113,129 @@
     "statusLabel": "Status"
   },
   "onboarding": {
-    "verifiedTitle": "Email verified successfully.",
-    "verifiedPending": "Your account is pending approval.",
-    "verifiedReview": "An administrator will review your access shortly.",
-    "backToLogin": "Back to Login"
+    "welcome": {
+      "title": "Welcome to InventoryFlow 👋",
+      "subtitle": "Let's set up your workspace.",
+      "intro": "We'll take 4 quick steps to get your inventory ready. You can skip anything and come back later.",
+      "feat1": "Track products, stock and movements in real time",
+      "feat2": "Optional sample data so you can explore right away",
+      "feat3": "Invite your team with the right permissions",
+      "feat4": "Get to your first insights in under 10 minutes"
+    },
+    "wizard": {
+      "title": "Quick Setup",
+      "stepLabel": "Step {{step}} of {{total}}"
+    },
+    "actions": {
+      "start": "Start Setup",
+      "skip": "Skip for now",
+      "finish": "Finish"
+    },
+    "business": {
+      "title": "Tell us about your business",
+      "subtitle": "This helps us tailor the experience for you.",
+      "businessType": "Business type",
+      "productVolume": "Approximate number of products",
+      "employees": "Number of employees",
+      "locations": "Number of locations",
+      "language": "Preferred language",
+      "selectPlaceholder": "Select an option",
+      "types": {
+        "retail": "Retail store",
+        "wholesale": "Wholesale / distribution",
+        "ecommerce": "E-commerce",
+        "warehouse": "Warehouse / 3PL",
+        "manufacturing": "Manufacturing",
+        "food_beverage": "Food & beverage",
+        "services": "Services",
+        "other": "Other"
+      },
+      "vol": {
+        "lt50": "Fewer than 50",
+        "50_500": "50 – 500",
+        "500_5000": "500 – 5,000",
+        "gt5000": "More than 5,000"
+      },
+      "size": {
+        "solo": "Just me",
+        "s2_5": "2 – 5",
+        "s6_25": "6 – 25",
+        "s26_100": "26 – 100",
+        "s100p": "100+"
+      }
+    },
+    "demo": {
+      "title": "Want sample data to explore?",
+      "subtitle": "We'll create demo products, a supplier, a customer, a location and a few movements so you don't start with an empty dashboard.",
+      "yes": "Yes, install demo data",
+      "yesDesc": "Best for first-time exploring. You can delete it anytime.",
+      "no": "No, start empty",
+      "noDesc": "I'll add my own products right away.",
+      "installed": "Demo data installed"
+    },
+    "import": {
+      "title": "Import your products",
+      "subtitle": "Upload an Excel or CSV file — or skip and add products later.",
+      "helperTitle": "Bring your existing inventory",
+      "helperBody": "We support Excel (.xlsx) and CSV. A downloadable template is available inside the importer.",
+      "openImporter": "Open product importer",
+      "skipHint": "You can skip this step and import products from the Products page later."
+    },
+    "invite": {
+      "title": "Invite your team",
+      "subtitle": "Add managers or employees. They'll receive an email to set their password.",
+      "addRow": "Add another teammate",
+      "skipHint": "You can invite your team later from Users & Roles.",
+      "roles": {
+        "manager": "Manager",
+        "employee": "Employee"
+      },
+      "success": "Sent {{count}} invite(s)",
+      "partial": "{{count}} invite(s) failed"
+    },
+    "success": {
+      "title": "Your workspace is ready 🚀",
+      "subtitle": "You're all set. Jump in to start managing your inventory.",
+      "goDashboard": "Go to Dashboard",
+      "watchDemo": "Watch Quick Demo",
+      "whatsapp": "Chat on WhatsApp"
+    },
+    "help": {
+      "title": "Need help setting up?",
+      "subtitle": "Chat with us on WhatsApp or schedule a quick onboarding call.",
+      "whatsapp": "WhatsApp",
+      "bookDemo": "Book Demo",
+      "needHelp": "Need help?"
+    },
+    "checklist": {
+      "title": "Getting Started",
+      "progress": "{{done}}/{{total}} completed",
+      "items": {
+        "created_product": "Create your first product",
+        "imported_products": "Import products (5+)",
+        "used_scanner": "Try the barcode scanner",
+        "created_location": "Create a location",
+        "invited_employee": "Invite a teammate"
+      }
+    },
+    "tips": {
+      "products": {
+        "title": "Products",
+        "body": "Add products manually, scan barcodes, or import from Excel/CSV."
+      },
+      "scanner": {
+        "title": "Barcode Scanner",
+        "body": "Use your phone camera or a USB scanner to add/remove stock fast."
+      },
+      "reports": {
+        "title": "Reports",
+        "body": "Export inventory, sales and movements as PDF, Excel or CSV."
+      },
+      "users": {
+        "title": "Users & Roles",
+        "body": "Invite teammates and control what each role can see and do."
+      }
+    }
   },
   "pending": {
     "title": "Your account is pending approval.",
@@ -150,7 +269,12 @@
       "how": "How it works",
       "who": "Who it's for",
       "login": "Login",
-      "startTrial": "Start Free Trial"
+      "startTrial": "Start Free Trial",
+      "resources": "Resources",
+      "helpCenter": "Help Center",
+      "setupGuides": "Setup Guides",
+      "contactSupport": "Contact Support",
+      "demo": "Demo"
     },
     "hero": {
       "titleA": "Stop losing inventory.",
@@ -167,7 +291,13 @@
         "bilingual": "EN / ES",
         "secure": "Secure",
         "cloud": "Cloud based"
-      }
+      },
+      "eyebrow": "All-in-one Inventory & Operations Platform",
+      "bullet1": "All modules included",
+      "bullet2": "Card required",
+      "bullet3": "Fast onboarding",
+      "ctaPrimarySub": "All modules included",
+      "ctaDemoSub": "See it in action"
     },
     "pricing": {
       "eyebrow": "Pricing",
@@ -328,6 +458,20 @@
             "enterprise": "yes"
           }
         ]
+      },
+      "billedMonthly": "Billed monthly",
+      "cardRequired": "Card required",
+      "starter": {
+        "f1": "All modules included",
+        "f2": "Up to 3 users",
+        "f3": "Up to 500 products",
+        "f4": "2 locations"
+      },
+      "pro": {
+        "f1": "All modules included",
+        "f2": "Up to 25 users",
+        "f3": "Unlimited products",
+        "f4": "Multi-location support (10)"
       }
     },
     "recurring": {
@@ -612,7 +756,7 @@
       "yearlyNote": "Yearly billing launches with Stripe. Contact sales for early-access pricing."
     },
     "footer": {
-      "tagline": "Smart bilingual inventory management for growing businesses. Built by SamVic Technologies.",
+      "tagline": "Control your inventory. Grow your business.",
       "product": "Product",
       "contact": "Contact",
       "legal": "Legal",
@@ -626,11 +770,72 @@
       "disclaimer": "Disclaimer",
       "serviceAgreement": "Service Agreement",
       "copyright": "© {{year}} SamVic Technologies. All rights reserved.",
-      "builtFor": "Built for growing businesses · Bilingual EN / ES"
+      "builtFor": "Built for growing businesses · Bilingual EN / ES",
+      "company": "Company",
+      "about": "About",
+      "resources": "Resources",
+      "needHelp": "Need help?",
+      "emailSupport": "Email Support",
+      "whatsapp": "Chat on WhatsApp",
+      "builtWith": "Built for growing businesses."
     },
     "floatingWhatsapp": {
       "tooltip": "Chat with us on WhatsApp",
       "aria": "Chat on WhatsApp"
+    },
+    "ps": {
+      "problemTitle": "Still running your business manually?",
+      "solutionTitle": "InventoryFlow gives you control and clarity.",
+      "p1": "Inventory losses",
+      "p2": "Excel chaos",
+      "p3": "Employee mistakes",
+      "p4": "No operational visibility",
+      "p5": "Slow manual processes",
+      "s1": "Real-time inventory tracking",
+      "s2": "Smart alerts",
+      "s3": "Employee accountability",
+      "s4": "Audit logs",
+      "s5": "Fast operational control"
+    },
+    "feat": {
+      "realtime": {
+        "title": "Real-time Inventory",
+        "desc": "Track stock instantly and reduce losses."
+      },
+      "employee": {
+        "title": "Employee Control",
+        "desc": "Know who changed products or inventory."
+      },
+      "alerts": {
+        "title": "Smart Alerts",
+        "desc": "Fix inventory problems before they cost money."
+      },
+      "mobile": {
+        "title": "Mobile Access",
+        "desc": "Manage your business from anywhere."
+      },
+      "insights": {
+        "title": "Business Insights",
+        "desc": "Make smarter operational decisions with clear analytics."
+      }
+    },
+    "why": {
+      "title": "Why businesses choose InventoryFlow",
+      "fast": "Fast onboarding",
+      "nosetup": "No complicated setup",
+      "mobile": "Mobile friendly",
+      "realtime": "Real-time inventory tracking",
+      "real": "Designed for real businesses",
+      "cloud": "Modern cloud-based platform",
+      "bilingual": "Bilingual platform (English & Español)"
+    },
+    "finalCta": {
+      "title": "Take control of your business today.",
+      "subtitle": "InventoryFlow helps you organize inventory, employees, and operations faster — without complicated systems.",
+      "cta": "Start Your 7-Day Trial",
+      "b1": "All modules included",
+      "b2": "Card required",
+      "b3": "Quick onboarding"
     }
   },
   "auth": {
@@ -1443,127 +1648,5 @@
     "reason": "Reason (optional)",
     "purging": "Purging…",
     "purgePermanently": "Purge permanently"
-  },
-  "onboarding": {
-    "welcome": {
-      "title": "Welcome to InventoryFlow 👋",
-      "subtitle": "Let's set up your workspace.",
-      "intro": "We'll take 4 quick steps to get your inventory ready. You can skip anything and come back later.",
-      "feat1": "Track products, stock and movements in real time",
-      "feat2": "Optional sample data so you can explore right away",
-      "feat3": "Invite your team with the right permissions",
-      "feat4": "Get to your first insights in under 10 minutes"
-    },
-    "wizard": {
-      "title": "Quick Setup",
-      "stepLabel": "Step {{step}} of {{total}}"
-    },
-    "actions": {
-      "start": "Start Setup",
-      "skip": "Skip for now",
-      "finish": "Finish"
-    },
-    "business": {
-      "title": "Tell us about your business",
-      "subtitle": "This helps us tailor the experience for you.",
-      "businessType": "Business type",
-      "productVolume": "Approximate number of products",
-      "employees": "Number of employees",
-      "locations": "Number of locations",
-      "language": "Preferred language",
-      "selectPlaceholder": "Select an option",
-      "types": {
-        "retail": "Retail store",
-        "wholesale": "Wholesale / distribution",
-        "ecommerce": "E-commerce",
-        "warehouse": "Warehouse / 3PL",
-        "manufacturing": "Manufacturing",
-        "food_beverage": "Food & beverage",
-        "services": "Services",
-        "other": "Other"
-      },
-      "vol": {
-        "lt50": "Fewer than 50",
-        "50_500": "50 – 500",
-        "500_5000": "500 – 5,000",
-        "gt5000": "More than 5,000"
-      },
-      "size": {
-        "solo": "Just me",
-        "s2_5": "2 – 5",
-        "s6_25": "6 – 25",
-        "s26_100": "26 – 100",
-        "s100p": "100+"
-      }
-    },
-    "demo": {
-      "title": "Want sample data to explore?",
-      "subtitle": "We'll create demo products, a supplier, a customer, a location and a few movements so you don't start with an empty dashboard.",
-      "yes": "Yes, install demo data",
-      "yesDesc": "Best for first-time exploring. You can delete it anytime.",
-      "no": "No, start empty",
-      "noDesc": "I'll add my own products right away.",
-      "installed": "Demo data installed"
-    },
-    "import": {
-      "title": "Import your products",
-      "subtitle": "Upload an Excel or CSV file — or skip and add products later.",
-      "helperTitle": "Bring your existing inventory",
-      "helperBody": "We support Excel (.xlsx) and CSV. A downloadable template is available inside the importer.",
-      "openImporter": "Open product importer",
-      "skipHint": "You can skip this step and import products from the Products page later."
-    },
-    "invite": {
-      "title": "Invite your team",
-      "subtitle": "Add managers or employees. They'll receive an email to set their password.",
-      "addRow": "Add another teammate",
-      "skipHint": "You can invite your team later from Users & Roles.",
-      "roles": { "manager": "Manager", "employee": "Employee" },
-      "success": "Sent {{count}} invite(s)",
-      "partial": "{{count}} invite(s) failed"
-    },
-    "success": {
-      "title": "Your workspace is ready 🚀",
-      "subtitle": "You're all set. Jump in to start managing your inventory.",
-      "goDashboard": "Go to Dashboard",
-      "watchDemo": "Watch Quick Demo",
-      "whatsapp": "Chat on WhatsApp"
-    },
-    "help": {
-      "title": "Need help setting up?",
-      "subtitle": "Chat with us on WhatsApp or schedule a quick onboarding call.",
-      "whatsapp": "WhatsApp",
-      "bookDemo": "Book Demo",
-      "needHelp": "Need help?"
-    },
-    "checklist": {
-      "title": "Getting Started",
-      "progress": "{{done}}/{{total}} completed",
-      "items": {
-        "created_product": "Create your first product",
-        "imported_products": "Import products (5+)",
-        "used_scanner": "Try the barcode scanner",
-        "created_location": "Create a location",
-        "invited_employee": "Invite a teammate"
-      }
-    },
-    "tips": {
-      "products": {
-        "title": "Products",
-        "body": "Add products manually, scan barcodes, or import from Excel/CSV."
-      },
-      "scanner": {
-        "title": "Barcode Scanner",
-        "body": "Use your phone camera or a USB scanner to add/remove stock fast."
-      },
-      "reports": {
-        "title": "Reports",
-        "body": "Export inventory, sales and movements as PDF, Excel or CSV."
-      },
-      "users": {
-        "title": "Users & Roles",
-        "body": "Invite teammates and control what each role can see and do."
-      }
-    }
   }
 }
