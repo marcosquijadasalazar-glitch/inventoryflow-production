@@ -185,33 +185,18 @@ export const createPortalSession = createServerFn({ method: "POST" })
 // ---------------------------------------------------------------------------
 // Payment-first signup: anonymous Stripe Checkout that provisions the
 // organization + user only after a successful payment / trial start.
+// Stripe collects the billing email. InventoryFlow does NOT create a
+// Supabase auth user or organization until checkout.session.completed.
 // ---------------------------------------------------------------------------
 
 const SignupCheckoutSchema = z.object({
   plan: z.enum(["starter", "pro"]),
-  email: z.string().email().max(254),
 });
 
 export const createSignupCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SignupCheckoutSchema.parse(input))
   .handler(async ({ data }): Promise<{ url: string }> => {
     const stripe = getStripe();
-    const email = data.email.trim().toLowerCase();
-    await logSecurityEventServer({
-      email,
-      action: "signup_started",
-      status: "info",
-    });
-
-    // Don't allow re-signup for an email that already has an account.
-    const { data: existing } = await supabaseAdmin
-      .from("profiles")
-      .select("user_id")
-      .eq("email", email)
-      .maybeSingle();
-    if (existing) {
-      throw new Error("An account with this email already exists. Please sign in instead.");
-    }
 
     let recurringPriceId: string;
     try {
@@ -224,13 +209,19 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
     const lineItems: Array<{ price: string; quantity: number }> = [
       { price: recurringPriceId, quantity: 1 },
     ];
-    const onboardingPrice = setupPriceIdForPlan(data.plan as BillingPlan);
-    if (onboardingPrice) lineItems.push({ price: onboardingPrice, quantity: 1 });
 
-    // Create a Stripe Customer up-front so the email/billing data is reusable.
+    const onboardingPrice = setupPriceIdForPlan(data.plan as BillingPlan);
+    if (onboardingPrice) {
+      lineItems.push({ price: onboardingPrice, quantity: 1 });
+    }
+
+    // Create a Stripe Customer without email.
+    // Stripe Checkout will collect the billing email securely.
     const customer = await stripe.customers.create({
-      email,
-      metadata: { signup_email: email, selected_plan: data.plan },
+      metadata: {
+        selected_plan: data.plan,
+        signup: "true",
+      },
     });
 
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
@@ -239,10 +230,10 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
     const subscriptionData: any = {
       metadata: {
         signup: "true",
-        signup_email: email,
         selected_plan: data.plan,
       },
     };
+
     if (data.plan === "starter") {
       subscriptionData.trial_period_days = TRIAL_DAYS;
     }
@@ -261,26 +252,15 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
       subscription_data: subscriptionData,
       metadata: {
         signup: "true",
-        signup_email: email,
         selected_plan: data.plan,
         includes_onboarding: onboardingPrice ? "true" : "false",
       },
     });
-    await logSecurityEventServer({
-      email,
-      action: "checkout_started",
-      status: "success",
-    });
 
-    // Reserve a signup-session row so /signup-complete can poll for status.
-    await supabaseAdmin.from("signup_sessions" as never).insert({
-      session_id: session.id,
-      email,
-      plan: data.plan,
-      status: "pending",
-    } as never);
+    if (!session.url) {
+      throw new Error("Stripe did not return a checkout URL");
+    }
 
-    if (!session.url) throw new Error("Stripe did not return a checkout URL");
     return { url: session.url };
   });
 
@@ -304,17 +284,22 @@ export const getSignupSession = createServerFn({ method: "POST" })
       .select("session_id, email, status, temp_password, consumed_at")
       .eq("session_id", data.session_id)
       .maybeSingle();
+
     if (!row) return { status: "missing" } as SignupStatus;
+
     const r = row as any;
     if (r.status !== "ready") {
       return { status: "pending", email: r.email };
     }
+
     const tempPassword: string | null = r.consumed_at ? null : (r.temp_password ?? null);
+
     if (tempPassword) {
       await supabaseAdmin
         .from("signup_sessions" as never)
         .update({ temp_password: null, consumed_at: new Date().toISOString() } as never)
         .eq("session_id", data.session_id);
     }
+
     return { status: "ready", email: r.email, temp_password: tempPassword };
   });
