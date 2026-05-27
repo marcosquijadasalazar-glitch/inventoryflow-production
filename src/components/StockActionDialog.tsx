@@ -208,23 +208,73 @@ export function StockActionDialog({
               autoFocus
             />
             {mode === "adjust" && !isNaN(adjustDiff) && (
-              <p className="text-xs text-muted-foreground">
-                {t("sa.diff", "Difference")}:{" "}
-                <span
-                  className={
-                    adjustDiff > 0
-                      ? "text-[oklch(0.4_0.12_155)]"
-                      : adjustDiff < 0
-                        ? "text-destructive"
-                        : ""
-                  }
-                >
-                  {adjustDiff > 0 ? "+" : ""}
-                  {adjustDiff}
-                </span>
-              </p>
+              <div className="rounded-md border border-border bg-surface-muted/40 p-2.5 text-xs space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("sa.current", "Current")}
+                  </span>
+                  <span className="font-medium">{product.stock}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("sa.new_qty", "New quantity")}
+                  </span>
+                  <span className="font-medium">{isNaN(parseInt(qty, 10)) ? "—" : parseInt(qty, 10)}</span>
+                </div>
+                <div className="flex justify-between border-t border-border pt-1">
+                  <span className="text-muted-foreground">
+                    {t("sa.diff", "Difference")}
+                  </span>
+                  <span
+                    className={
+                      adjustDiff > 0
+                        ? "font-semibold text-success"
+                        : adjustDiff < 0
+                          ? "font-semibold text-destructive"
+                          : "font-medium text-muted-foreground"
+                    }
+                  >
+                    {adjustDiff > 0 ? "+" : ""}
+                    {adjustDiff}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
+
+          {mode === "adjust" && (
+            <div className="space-y-1.5">
+              <Label>{t("sa.adjust_reason", "Reason for adjustment")}</Label>
+              <Select value={adjustReason} onValueChange={setAdjustReason}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="physical_count">
+                    {t("sa.adj_reasons.physical_count", "Physical count")}
+                  </SelectItem>
+                  <SelectItem value="correction">
+                    {t("sa.adj_reasons.correction", "Inventory correction")}
+                  </SelectItem>
+                  <SelectItem value="damaged">
+                    {t("sa.adj_reasons.damaged", "Damaged items")}
+                  </SelectItem>
+                  <SelectItem value="expired">
+                    {t("sa.adj_reasons.expired", "Expired inventory")}
+                  </SelectItem>
+                  <SelectItem value="shrinkage">
+                    {t("sa.adj_reasons.shrinkage", "Shrinkage")}
+                  </SelectItem>
+                  <SelectItem value="reconciliation">
+                    {t("sa.adj_reasons.reconciliation", "Manual reconciliation")}
+                  </SelectItem>
+                  <SelectItem value="other">
+                    {t("sa.adj_reasons.other", "Other")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {mode === "remove" && (
             <div className="space-y-1.5">
