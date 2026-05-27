@@ -166,6 +166,27 @@ async function lookupByBarcode(code: string): Promise<Product | null> {
   return (data as Product) ?? null;
 }
 
+async function lookupById(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Product) ?? null;
+}
+
+/** Parse special QR payloads. Returns null for plain barcodes. */
+function parseQrPayload(code: string): { kind: "product"; id: string } | { kind: "unsupported" } | null {
+  const trimmed = code.trim();
+  const m = trimmed.match(/^inventoryflow:\/\/product\/([a-zA-Z0-9-]+)$/);
+  if (m) return { kind: "product", id: m[1] };
+  if (/^[a-z]+:\/\//i.test(trimmed) || trimmed.startsWith("http")) {
+    return { kind: "unsupported" };
+  }
+  return null;
+}
+
 function ScannerPage() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ScanMode>("lookup");
