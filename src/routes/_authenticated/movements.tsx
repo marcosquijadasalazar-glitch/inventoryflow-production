@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -99,8 +99,30 @@ function MovementsPage() {
   const [productId, setProductId] = useState<string>("");
   const [type, setType] = useState<MovementType>("add");
   const [quantity, setQuantity] = useState<string>("1");
+  const [adjustReason, setAdjustReason] = useState<string>("physical_count");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const selectedProduct = useMemo(
+    () => products.data?.find((p) => p.id === productId) ?? null,
+    [products.data, productId],
+  );
+  const currentStock = selectedProduct?.stock ?? 0;
+  const adjustDiff =
+    type === "adjustment" && quantity !== ""
+      ? (parseInt(quantity, 10) || 0) - currentStock
+      : 0;
+
+  // Prefill quantity with current stock when switching to adjustment, so the input
+  // represents the NEW absolute quantity (not a delta).
+  useEffect(() => {
+    if (type === "adjustment" && selectedProduct) {
+      setQuantity(String(selectedProduct.stock));
+    } else if (type !== "adjustment") {
+      setQuantity("1");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, productId]);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -146,16 +168,30 @@ function MovementsPage() {
     if (!productId) return toast.error("Select a product");
     const q = parseInt(quantity, 10);
     if (isNaN(q) || q < 0) return toast.error("Enter a valid quantity");
+    if (type !== "adjustment" && q <= 0)
+      return toast.error("Enter a valid quantity");
+    if (type === "adjustment" && q === currentStock) {
+      toast.info(t("movements.noChange", "New quantity matches current stock"));
+      return;
+    }
     setSaving(true);
     try {
+      const finalNote =
+        type === "adjustment"
+          ? `[${adjustReason}] ${note || ""}`.trim()
+          : note || null;
       await createMovement({
         product_id: productId,
         type,
         quantity: q,
-        note: note || null,
+        note: finalNote,
       });
-      toast.success(t("scanner.saveMovement"));
-      setQuantity("1");
+      toast.success(
+        type === "adjustment"
+          ? t("movements.adjustedTo", "Stock set to {{qty}}", { qty: q })
+          : t("scanner.saveMovement"),
+      );
+      setQuantity(type === "adjustment" ? String(q) : "1");
       setNote("");
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -374,7 +410,11 @@ function MovementsPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>{t("movements.quantity")}</Label>
+                <Label>
+                  {type === "adjustment"
+                    ? t("movements.newQuantity", "New quantity")
+                    : t("movements.quantity")}
+                </Label>
                 <Input
                   type="number"
                   min={0}
@@ -382,11 +422,73 @@ function MovementsPage() {
                   onChange={(e) => setQuantity(e.target.value)}
                   className="bg-surface"
                 />
+                {type === "adjustment" && selectedProduct && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("movements.current", "Current")}:{" "}
+                    <span className="font-medium text-foreground">
+                      {currentStock}
+                    </span>
+                    {" · "}
+                    {t("sa.diff", "Difference")}:{" "}
+                    <span
+                      className={
+                        adjustDiff > 0
+                          ? "font-semibold text-success"
+                          : adjustDiff < 0
+                            ? "font-semibold text-destructive"
+                            : "font-medium"
+                      }
+                    >
+                      {adjustDiff > 0 ? "+" : ""}
+                      {adjustDiff}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
 
+            {type === "adjustment" && (
+              <div className="space-y-1.5">
+                <Label>
+                  {t("sa.adjust_reason", "Reason for adjustment")}
+                </Label>
+                <Select value={adjustReason} onValueChange={setAdjustReason}>
+                  <SelectTrigger className="bg-surface">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="physical_count">
+                      {t("sa.adj_reasons.physical_count", "Physical count")}
+                    </SelectItem>
+                    <SelectItem value="correction">
+                      {t("sa.adj_reasons.correction", "Inventory correction")}
+                    </SelectItem>
+                    <SelectItem value="damaged">
+                      {t("sa.adj_reasons.damaged", "Damaged items")}
+                    </SelectItem>
+                    <SelectItem value="expired">
+                      {t("sa.adj_reasons.expired", "Expired inventory")}
+                    </SelectItem>
+                    <SelectItem value="shrinkage">
+                      {t("sa.adj_reasons.shrinkage", "Shrinkage")}
+                    </SelectItem>
+                    <SelectItem value="reconciliation">
+                      {t("sa.adj_reasons.reconciliation", "Manual reconciliation")}
+                    </SelectItem>
+                    <SelectItem value="other">
+                      {t("sa.adj_reasons.other", "Other")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
-              <Label>{t("movements.reasonNote")}</Label>
+              <Label>
+                {type === "adjustment"
+                  ? t("movements.notesOptional", "Notes (optional)")
+                  : t("movements.reasonNote")}
+              </Label>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
