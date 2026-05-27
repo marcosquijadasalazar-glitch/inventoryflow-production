@@ -8,6 +8,7 @@ import {
   listAllNodes,
   getChildren,
   getDescendantIds,
+  getBreadcrumb,
   type LocationNode,
 } from "@/lib/location-tree";
 import { Card, CardContent } from "@/components/ui/card";
@@ -295,11 +296,35 @@ function LocationStockPage() {
     // eslint-disable-next-line
   }, [nodes, perLocQ.data, selectedLocationId]);
 
-  // ── Stock rows for selected bin ────────────────────────────────────────
-  const binStock = useMemo(() => {
-    if (!selectedBinId) return {} as Record<string, number>;
-    return perLocQ.data?.[selectedBinId] ?? {};
-  }, [perLocQ.data, selectedBinId]);
+  // ── Deepest selected node and stock rows ─────────────────────────────
+  // Flexible hierarchy: use the deepest level the user picked. Products may
+  // be assigned at ANY level (location / sub-location / aisle / bin), so the
+  // stock table aggregates the selected node + all descendants.
+  const selectedNodeId =
+    selectedBinId ?? selectedAisleId ?? selectedLocationId ?? null;
+
+  const nodeStock = useMemo(() => {
+    if (!selectedNodeId) return {} as Record<string, number>;
+    const perLoc = perLocQ.data ?? {};
+    const ids = getDescendantIds(nodes, selectedNodeId);
+    const agg: Record<string, number> = {};
+    for (const id of ids) {
+      const m = perLoc[id];
+      if (!m) continue;
+      for (const [pid, qty] of Object.entries(m)) {
+        agg[pid] = (agg[pid] ?? 0) + (qty ?? 0);
+      }
+    }
+    return agg;
+  }, [perLocQ.data, selectedNodeId, nodes]);
+
+  const selectedNodePath = useMemo(
+    () => (selectedNodeId ? getBreadcrumb(nodes, selectedNodeId) : []),
+    [nodes, selectedNodeId],
+  );
+  const selectedNodePathLabel = selectedNodePath
+    .map((n) => n.code || n.name)
+    .join(" → ");
 
   const categoryOptions = useMemo(() => {
     const s = new Set<string>();
@@ -312,12 +337,12 @@ function LocationStockPage() {
     return products
       .map((p) => ({
         p,
-        qty: binStock[p.id] ?? 0,
+        qty: nodeStock[p.id] ?? 0,
         lastMove: lastMovesQ.data?.get(p.id) ?? null,
         status: statusFor(p),
       }))
       .filter(({ p, qty, status }) => {
-        if ((qty ?? 0) <= 0 && selectedBinId) return false;
+        if ((qty ?? 0) <= 0 && selectedNodeId) return false;
         if (q) {
           if (
             !(
@@ -337,7 +362,7 @@ function LocationStockPage() {
         if (lowOnly && status === "in_stock") return false;
         return true;
       });
-  }, [products, binStock, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedBinId]);
+  }, [products, nodeStock, lastMovesQ.data, search, categoryFilter, stockFilter, lowOnly, selectedNodeId]);
 
   const pagedRows = useMemo(() => {
     const start = (page - 1) * perPage;
@@ -750,12 +775,15 @@ function LocationStockPage() {
         )}
       </section>
 
-      {/* ── Section 4: Stock in Bin ────────────────────────────────────── */}
+      {/* ── Section 4: Stock at selected level ──────────────────────────── */}
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <SectionBadge n={4} />
           <h2 className="font-semibold truncate">
-            {t("ls.s4_stock_in", "Stock in")} {selectedBin?.code || selectedBin?.name || "—"}
+            {t("ls.s4_stored_in", "Stored in")}:{" "}
+            <span className="text-muted-foreground font-normal">
+              {selectedNodePathLabel || "—"}
+            </span>
           </h2>
         </div>
         <Card className="border-border shadow-soft">
@@ -843,11 +871,11 @@ function LocationStockPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!selectedBinId ? (
+                  {!selectedNodeId ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-10 text-sm">
                         <ScanLine className="h-5 w-5 mx-auto mb-2 text-muted-foreground/60" />
-                        {t("ls.pick_bin", "Select a bin to view its stock.")}
+                        {t("ls.pick_location", "Select a location, aisle, or bin to view its stock.")}
                       </TableCell>
                     </TableRow>
                   ) : productsQ.isLoading ? (
