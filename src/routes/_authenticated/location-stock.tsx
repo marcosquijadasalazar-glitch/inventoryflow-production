@@ -131,6 +131,7 @@ function LocationStockPage() {
     mode: "add" | "remove" | "adjust" | "move";
   } | null>(null);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const nodesQ = useQuery({ queryKey: ["location-nodes-all"], queryFn: listAllNodes });
   const productsQ = useQuery({ queryKey: ["products"], queryFn: listProducts });
