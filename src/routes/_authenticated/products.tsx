@@ -218,6 +218,14 @@ function ProductsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
   const runImport = useServerFn(importProducts);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (search.import === 1) {
+      setImportOpen(true);
+      navigate({ search: { import: undefined } as any, replace: true });
+    }
+  }, [search.import, navigate]);
 
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
