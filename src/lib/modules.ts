@@ -63,9 +63,12 @@ export const PRESET_NAMES = ["free", "starter", "pro", "enterprise", "custom"] a
 export type PresetName = (typeof PRESET_NAMES)[number];
 export type PlanPresetName = Exclude<PresetName, "custom">;
 
-const FREE: ModuleKey[] = ["dashboard", "products", "movements", "scanner", "alerts", "settings", "users"];
-const STARTER: ModuleKey[] = [...FREE, "history", "purchase_orders", "sales_orders", "exports"];
-const PRO_PRESET: ModuleKey[] = [...STARTER, "transfer_orders", "internal_use", "location_stock", "reports"];
+// Under the current pricing model, monetization is by capacity (users,
+// products, locations) — NOT by feature locks. All paid plans get every
+// module. The "free" preset is kept only for historical/legacy orgs.
+const FREE: ModuleKey[] = [...MODULE_KEYS];
+const STARTER: ModuleKey[] = [...MODULE_KEYS];
+const PRO_PRESET: ModuleKey[] = [...MODULE_KEYS];
 
 function toMap(enabled: ModuleKey[]): ModuleMap {
   const map = {} as ModuleMap;
