@@ -348,6 +348,11 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
               </div>
             </div>
           )}
+          {cameraOn && handsFree && (
+            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider font-medium rounded-full bg-primary/90 text-primary-foreground px-2 py-0.5 backdrop-blur">
+              {t("scanner.handsFreeOn")}
+            </span>
+          )}
           {/* Torch toggle */}
           {cameraOn && torchSupported && (
             <button
