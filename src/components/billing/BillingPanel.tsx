@@ -193,7 +193,7 @@ export function BillingPanel() {
             <div className="font-medium mt-1">{fmtDate(data.current_period_end)}</div>
           </div>
           <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Setup fee</div>
+            <div className="text-xs text-muted-foreground">Onboarding Process</div>
             <div className="font-medium mt-1 flex items-center gap-1.5">
               {data.setup_fee_paid ? (
                 <>
