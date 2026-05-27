@@ -50,7 +50,7 @@ export function LabelPrintDialog({
     let cancelled = false;
     (async () => {
       try {
-        const bwip = await import("bwip-js");
+        const bwip = await import("bwip-js/browser");
         if (cancelled || !canvasRef.current) return;
         bwip.toCanvas(canvasRef.current, {
           bcid: symbology,
@@ -64,7 +64,7 @@ export function LabelPrintDialog({
       } catch (e: any) {
         // Most often: invalid EAN/UPC checksum → fall back to code128
         try {
-          const bwip = await import("bwip-js");
+          const bwip = await import("bwip-js/browser");
           if (cancelled || !canvasRef.current) return;
           bwip.toCanvas(canvasRef.current, {
             bcid: "code128",
