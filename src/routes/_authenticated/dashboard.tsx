@@ -37,6 +37,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UsageSummaryCard } from "@/components/PlanLimitBanner";
 import { useOrgUsage } from "@/lib/use-org-usage";
 import { GettingStartedCard } from "@/components/onboarding/GettingStartedCard";
+import { InsightsSummaryCard } from "@/components/InsightsPanel";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
