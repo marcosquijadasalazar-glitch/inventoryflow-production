@@ -25,6 +25,28 @@ type Props = {
   autoFocus?: boolean;
 };
 
+function feedback() {
+  try {
+    navigator.vibrate?.(35);
+  } catch {}
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.16);
+    setTimeout(() => ctx.close().catch(() => {}), 250);
+  } catch {}
+}
+
 export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
   const { t } = useTranslation();
   const [value, setValue] = useState("");
@@ -35,6 +57,12 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
   const [deviceId, setDeviceId] = useState<string>("");
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [handsFree, setHandsFree] = useState(false);
+  const handsFreeRef = useRef(false);
+  useEffect(() => {
+    handsFreeRef.current = handsFree;
+  }, [handsFree]);
+  const lastDecodeRef = useRef<{ code: string; ts: number } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
