@@ -214,7 +214,7 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
           {step === 2 && (
             <StepDemo wantDemo={wantDemo} setWantDemo={setWantDemo} loading={demoMut.isPending} />
           )}
-          {step === 3 && <StepImport />}
+          {step === 3 && <StepImport onOpenImporter={() => { setOpen(false); onClose(); }} />}
           {step === 4 && <StepInvite invites={invites} setInvites={setInvites} />}
         </div>
 
