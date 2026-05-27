@@ -38,6 +38,8 @@ import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
 import type { MovementWithProduct } from "@/lib/inventory";
 import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
+import { LocationPath } from "@/components/LocationPath";
+import { listAllNodes } from "@/lib/location-tree";
 import { ScanFieldButton } from "@/components/ScanFieldButton";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
