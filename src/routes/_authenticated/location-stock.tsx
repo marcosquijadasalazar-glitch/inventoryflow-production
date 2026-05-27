@@ -775,12 +775,15 @@ function LocationStockPage() {
         )}
       </section>
 
-      {/* ── Section 4: Stock in Bin ────────────────────────────────────── */}
+      {/* ── Section 4: Stock at selected level ──────────────────────────── */}
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <SectionBadge n={4} />
           <h2 className="font-semibold truncate">
-            {t("ls.s4_stock_in", "Stock in")} {selectedBin?.code || selectedBin?.name || "—"}
+            {t("ls.s4_stored_in", "Stored in")}:{" "}
+            <span className="text-muted-foreground font-normal">
+              {selectedNodePathLabel || "—"}
+            </span>
           </h2>
         </div>
         <Card className="border-border shadow-soft">
