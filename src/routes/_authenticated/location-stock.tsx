@@ -354,7 +354,7 @@ function LocationStockPage() {
       )}
 
       {/* Empty hierarchy hint */}
-      {currentLevel === "root" && children.length === 0 && (
+      {!currentNode && children.length === 0 && (
         <Card className="border-dashed border-border">
           <CardContent className="py-10 text-center space-y-3">
             <Boxes className="h-8 w-8 mx-auto text-muted-foreground" />
