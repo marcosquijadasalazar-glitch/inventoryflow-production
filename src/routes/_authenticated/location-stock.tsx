@@ -907,6 +907,7 @@ function LocationStockPage() {
                     <TableHead>{t("products.sku", "SKU")}</TableHead>
                     <TableHead>{t("products.barcode", "Barcode")}</TableHead>
                     <TableHead>{t("products.category", "Category")}</TableHead>
+                    <TableHead>{t("ls.stored_in", "Stored in")}</TableHead>
                     <TableHead>{t("sa.quantity", "Quantity")}</TableHead>
                     <TableHead>{t("ls.last_move", "Last Movement")}</TableHead>
                     <TableHead>{t("ls.status", "Status")}</TableHead>
