@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAuth } from "@/lib/auth";
 import {
   ArrowRight,
   Check,
