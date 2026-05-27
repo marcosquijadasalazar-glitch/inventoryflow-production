@@ -1224,6 +1224,7 @@ export type Database = {
         | "manage_locations"
         | "manage_users"
         | "manage_company_settings"
+        | "print_labels"
       app_role: "super_admin" | "owner" | "manager" | "employee"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
@@ -1417,6 +1418,7 @@ export const Constants = {
         "manage_locations",
         "manage_users",
         "manage_company_settings",
+        "print_labels",
       ],
       app_role: ["super_admin", "owner", "manager", "employee"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
