@@ -557,6 +557,11 @@ function LookupMode() {
         product={detailsOpen ? product : null}
         onClose={() => setDetailsOpen(false)}
       />
+
+      <LabelPrintDialog
+        product={labelOpen ? product : null}
+        onClose={() => setLabelOpen(false)}
+      />
     </>
   );
 }
