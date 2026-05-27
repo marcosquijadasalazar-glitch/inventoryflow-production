@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { MessageCircle, Calendar } from "lucide-react";
+import { Mail, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { whatsappUrl, WHATSAPP_ONBOARDING_MESSAGE, BOOK_DEMO_URL } from "@/lib/contact";
+import { SUPPORT_EMAIL, BOOK_DEMO_URL } from "@/lib/contact";
 
 export function NeedHelpCTA({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
@@ -20,14 +20,10 @@ export function NeedHelpCTA({ compact = false }: { compact?: boolean }) {
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button
-          asChild
-          size="sm"
-          className="bg-[oklch(0.65_0.18_150)] hover:bg-[oklch(0.6_0.18_150)] text-white"
-        >
-          <a href={whatsappUrl(WHATSAPP_ONBOARDING_MESSAGE)} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="h-4 w-4" />
-            {t("onboarding.help.whatsapp")}
+        <Button asChild size="sm" variant="outline">
+          <a href={`mailto:${SUPPORT_EMAIL}`}>
+            <Mail className="h-4 w-4" />
+            {t("onboarding.help.contactSupport", "Contact Support")}
           </a>
         </Button>
         <Button asChild size="sm" variant="outline">
@@ -40,3 +36,4 @@ export function NeedHelpCTA({ compact = false }: { compact?: boolean }) {
     </div>
   );
 }
+
