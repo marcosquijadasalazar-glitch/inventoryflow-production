@@ -296,11 +296,35 @@ function LocationStockPage() {
     // eslint-disable-next-line
   }, [nodes, perLocQ.data, selectedLocationId]);
 
-  // ── Stock rows for selected bin ────────────────────────────────────────
-  const binStock = useMemo(() => {
-    if (!selectedBinId) return {} as Record<string, number>;
-    return perLocQ.data?.[selectedBinId] ?? {};
-  }, [perLocQ.data, selectedBinId]);
+  // ── Deepest selected node and stock rows ─────────────────────────────
+  // Flexible hierarchy: use the deepest level the user picked. Products may
+  // be assigned at ANY level (location / sub-location / aisle / bin), so the
+  // stock table aggregates the selected node + all descendants.
+  const selectedNodeId =
+    selectedBinId ?? selectedAisleId ?? selectedLocationId ?? null;
+
+  const nodeStock = useMemo(() => {
+    if (!selectedNodeId) return {} as Record<string, number>;
+    const perLoc = perLocQ.data ?? {};
+    const ids = getDescendantIds(nodes, selectedNodeId);
+    const agg: Record<string, number> = {};
+    for (const id of ids) {
+      const m = perLoc[id];
+      if (!m) continue;
+      for (const [pid, qty] of Object.entries(m)) {
+        agg[pid] = (agg[pid] ?? 0) + (qty ?? 0);
+      }
+    }
+    return agg;
+  }, [perLocQ.data, selectedNodeId, nodes]);
+
+  const selectedNodePath = useMemo(
+    () => (selectedNodeId ? getBreadcrumb(nodes, selectedNodeId) : []),
+    [nodes, selectedNodeId],
+  );
+  const selectedNodePathLabel = selectedNodePath
+    .map((n) => n.code || n.name)
+    .join(" → ");
 
   const categoryOptions = useMemo(() => {
     const s = new Set<string>();
