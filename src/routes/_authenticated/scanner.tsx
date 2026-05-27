@@ -588,7 +588,7 @@ function BatchMode({
   const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const lastScanRef = useRef<{ code: string; ts: number } | null>(null);
+  const dedupeRef = useRef<Map<string, number>>(new Map());
 
   // Auto-select first location when relevant
   useEffect(() => {
