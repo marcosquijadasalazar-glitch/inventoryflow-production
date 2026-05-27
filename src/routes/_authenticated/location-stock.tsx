@@ -472,6 +472,20 @@ function LocationStockPage() {
                   )}
                 </SelectContent>
               </Select>
+              </div>
+              {canCreateLoc && selectedLocation && (
+                <LocationNodeActions node={selectedLocation} allNodes={nodes} />
+              )}
+              {canCreateLoc && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCreateParent({ parentId: null, level: "location" })}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("ln.new_location", "New Location")}
+                </Button>
+              )}
             </CardContent>
           </Card>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
