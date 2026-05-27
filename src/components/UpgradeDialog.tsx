@@ -325,7 +325,7 @@ function UsageRow({
         {lim == null
           ? t("plan.unlimited", "Unlimited on your plan")
           : remaining === 0
-          ? t("plan.noneRemaining", "No more available — upgrade to add more")
+          ? t("plan.atCapacity", "At capacity — upgrade to Pro to keep growing")
           : t("plan.remaining", { count: remaining ?? 0, defaultValue: "{{count}} remaining" })}
       </p>
     </div>
