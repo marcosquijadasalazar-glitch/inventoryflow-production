@@ -208,38 +208,55 @@ export type Database = {
       locations: {
         Row: {
           address: string | null
+          code: string | null
           created_at: string
           id: string
           is_active: boolean
           name: string
+          node_level: string
           notes: string | null
           organization_id: string | null
+          parent_id: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
         Insert: {
           address?: string | null
+          code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
+          node_level?: string
           notes?: string | null
           organization_id?: string | null
+          parent_id?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
         Update: {
           address?: string | null
+          code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           name?: string
+          node_level?: string
           notes?: string | null
           organization_id?: string | null
+          parent_id?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "locations_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -433,6 +450,7 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          bin_id: string | null
           category: string | null
           cost: number
           created_at: string
@@ -449,6 +467,7 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          bin_id?: string | null
           category?: string | null
           cost?: number
           created_at?: string
@@ -465,6 +484,7 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          bin_id?: string | null
           category?: string | null
           cost?: number
           created_at?: string
@@ -480,6 +500,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "products_bin_id_fkey"
+            columns: ["bin_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_organization_id_fkey"
             columns: ["organization_id"]
