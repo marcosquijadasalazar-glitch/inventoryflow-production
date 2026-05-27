@@ -221,15 +221,47 @@ function ProductsPage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [importOpen, setImportOpen] = useState(false);
   const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
+  const [importLocation, setImportLocation] = useState<string>("");
   const runImport = useServerFn(importProducts);
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const routerNavigate = useNavigate();
+
+  const orgLocationsQ = useQuery({
+    queryKey: ["org-locations-active"],
+    queryFn: () => listLocations({ includeInactive: false }),
+  });
+  const orgLocations = orgLocationsQ.data ?? [];
+
+  const tryOpenImport = () => {
+    if (orgLocationsQ.isLoading) return;
+    if (orgLocations.length === 0) {
+      toast.error(t("importer.needLocation.title", "Create a location first"), {
+        description: t(
+          "importer.needLocation.body",
+          "Products need a location before they can be imported.",
+        ),
+        action: {
+          label: t("importer.needLocation.cta", "Create Location"),
+          onClick: () => routerNavigate({ to: "/locations" }),
+        },
+      });
+      return;
+    }
+    if (!importLocation && orgLocations.length >= 1) {
+      setImportLocation(orgLocations[0].name);
+    }
+    setImportOpen(true);
+  };
+
   useEffect(() => {
     if (search.import === 1) {
-      setImportOpen(true);
+      tryOpenImport();
       navigate({ search: { import: undefined } as any, replace: true });
     }
-  }, [search.import, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.import, orgLocationsQ.isLoading, orgLocations.length]);
+
 
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
