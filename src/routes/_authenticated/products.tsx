@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
