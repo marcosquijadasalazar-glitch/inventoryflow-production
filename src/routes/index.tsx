@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -13,29 +13,27 @@ import {
   ArrowLeftRight,
   AlertTriangle,
   LayoutDashboard,
-  ScanLine,
-  Receipt,
+  Bell,
   TrendingUp,
-  Building2,
-  Truck,
-  Store,
-  Wrench,
   Star,
-  MessageCircle,
+  Crown,
   Smartphone,
-  MapPin,
-  Globe,
-  ShieldCheck,
-  Cloud,
-  Play,
-  Mail,
-  Phone,
-  ChevronDown,
+  BarChart3,
+  Users,
   Sparkles,
-  Quote,
+  Cloud,
+  Languages,
+  Zap,
+  Rocket,
+  Calendar,
+  Mail,
+  MessageCircle,
+  ChevronDown,
+  HelpCircle,
+  BookOpen,
+  Settings,
 } from "lucide-react";
 
-// Contact / WhatsApp configuration
 const WHATSAPP_NUMBER = "16159180792";
 const WHATSAPP_MESSAGE = `Hola 👋 / Hi 👋
 
@@ -44,67 +42,31 @@ Quiero información sobre InventoryFlow y cómo puede ayudar a mi negocio.
 I would like information about InventoryFlow and how it can help my business.`;
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 const SUPPORT_EMAIL = "support@inventoryflowapp.com";
-const SALES_EMAIL = "sales@inventoryflowapp.com";
+const BOOK_DEMO_URL = "https://calendly.com/inventoryflow/onboarding";
+
+const BRAND = "#0066FF";
+const BRAND_DARK = "#0052CC";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      {
-        title:
-          "InventoryFlow — Inventory Management Software for Small Businesses & Warehouses",
-      },
+      { title: "InventoryFlow — Inventory & Operations Platform for Growing Businesses" },
       {
         name: "description",
         content:
-          "Modern bilingual inventory management software. Track products, stock movements, barcodes and multi-location operations in real time. Free 7-day trial — no credit card required.",
+          "All-in-one inventory and operations platform. Track stock, employees, products and multi-location operations in real time. 7-day free trial.",
       },
-      {
-        name: "keywords",
-        content:
-          "inventory management software, inventory app, barcode inventory system, warehouse inventory software, inventory management for small business, bilingual inventory software, stock control, multi-location inventory",
-      },
-      {
-        property: "og:title",
-        content: "InventoryFlow — Smart inventory for growing businesses",
-      },
+      { property: "og:title", content: "InventoryFlow — Inventory & Operations Platform" },
       {
         property: "og:description",
         content:
-          "Stop losing inventory. Control products, stock, orders and barcodes from one bilingual platform. Free 7-day trial.",
+          "Stop losing money to disorganized inventory and manual operations. One bilingual platform for products, stock, employees and operations.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://inventoryflowapp.com/" },
       { name: "twitter:card", content: "summary_large_image" },
-      {
-        name: "twitter:title",
-        content: "InventoryFlow — Smart inventory for growing businesses",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "Modern bilingual inventory management. Products, stock, barcodes and reports — free 7-day trial.",
-      },
     ],
     links: [{ rel: "canonical", href: "https://inventoryflowapp.com/" }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: "InventoryFlow",
-          applicationCategory: "BusinessApplication",
-          operatingSystem: "Web, iOS, Android",
-          description:
-            "Bilingual inventory management software for small businesses, warehouses and distributors.",
-          offers: {
-            "@type": "Offer",
-            price: "29",
-            priceCurrency: "USD",
-          },
-        }),
-      },
-    ],
   }),
   component: LandingRoute,
 });
@@ -119,26 +81,16 @@ function LandingRoute() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-black antialiased">
+    <div className="min-h-screen bg-[#F6F8FC] text-slate-900 antialiased">
       <SiteHeader />
-      <Hero />
-      <DashboardPreview />
-      <ProblemSolution />
-      <Features />
-      <ScreenshotsGallery />
-      <DemoVideo />
-      <HowItWorks />
-      <WhoItsFor />
-      <Testimonials />
-      <BuiltForGrowth />
-      <Pricing />
-      <CompareTable />
-      <LatamPositioning />
-      <WhatsAppCTA />
-      <FAQ />
-      <FinalCTA />
+      <main>
+        <Hero />
+        <ProblemSolution />
+        <Features />
+        <PricingAndWhy />
+        <FinalCTA />
+      </main>
       <SiteFooter />
-      <FloatingWhatsApp />
     </div>
   );
 }
@@ -147,44 +99,96 @@ function LandingPage() {
 
 function SiteHeader() {
   const { t } = useTranslation();
-  const nav = [
-    { label: t("landing.nav.features"), href: "#features" },
-    { label: t("landing.nav.pricing"), href: "#pricing" },
-    { label: t("landing.nav.how"), href: "#how" },
-    { label: t("landing.footer.faq"), href: "#faq" },
-  ];
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+  const resourcesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (resourcesRef.current && !resourcesRef.current.contains(e.target as Node)) {
+        setResourcesOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/85 backdrop-blur-md">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center">
-            <Boxes className="h-4 w-4 text-white" strokeWidth={2.25} />
+          <div
+            className="h-8 w-8 rounded-lg flex items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND_DARK})` }}
+          >
+            <BarChart3 className="h-4 w-4 text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-semibold tracking-tight text-[15px]">InventoryFlow</span>
+          <span className="font-bold tracking-tight text-[17px] text-slate-900">
+            InventoryFlow
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm text-black/70">
-          {nav.map((n) => (
-            <a key={n.href} href={n.href} className="hover:text-black transition-colors">
-              {n.label}
-            </a>
-          ))}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+          <a href="#features" className="hover:text-slate-900 transition-colors">
+            {t("landing.nav.features", "Features")}
+          </a>
+          <a href="#pricing" className="hover:text-slate-900 transition-colors">
+            {t("landing.nav.pricing", "Pricing")}
+          </a>
+          <div className="relative" ref={resourcesRef}>
+            <button
+              onClick={() => setResourcesOpen((o) => !o)}
+              className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors"
+            >
+              {t("landing.nav.resources", "Resources")}
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {resourcesOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg p-1.5">
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <HelpCircle className="h-4 w-4 text-slate-400" />
+                  {t("landing.nav.helpCenter", "Help Center")}
+                </a>
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}?subject=Setup%20Guides`}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <BookOpen className="h-4 w-4 text-slate-400" />
+                  {t("landing.nav.setupGuides", "Setup Guides")}
+                </a>
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  {t("landing.nav.contactSupport", "Contact Support")}
+                </a>
+              </div>
+            )}
+          </div>
+          <a
+            href={BOOK_DEMO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-slate-900 transition-colors"
+          >
+            {t("landing.nav.demo", "Demo")}
+          </a>
         </nav>
 
         <div className="flex items-center gap-2">
-          <div className="hidden sm:block"><LanguageSwitcher /></div>
-          <Button asChild variant="ghost" size="sm" className="h-9 text-black hover:bg-black/5">
-            <Link to="/login">{t("landing.nav.login")}</Link>
-          </Button>
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <Button
             asChild
             size="sm"
-            className="h-9 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
+            className="h-9 px-4 text-white shadow-sm rounded-lg"
+            style={{ backgroundColor: BRAND }}
           >
-            <Link to="/signup">
-              {t("landing.nav.startTrial")}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <Link to="/signup">{t("landing.nav.startTrial", "Start 7-Day Trial")}</Link>
           </Button>
         </div>
       </div>
@@ -196,204 +200,229 @@ function SiteHeader() {
 
 function Hero() {
   const { t } = useTranslation();
-  const badges = [
-    { icon: Smartphone, label: t("landing.hero.badges.mobile") },
-    { icon: MapPin, label: t("landing.hero.badges.multilocation") },
-    { icon: Globe, label: t("landing.hero.badges.bilingual") },
-    { icon: ShieldCheck, label: t("landing.hero.badges.secure") },
-    { icon: Cloud, label: t("landing.hero.badges.cloud") },
-  ];
+
   return (
     <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 pt-20 pb-12 sm:pt-28 sm:pb-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-black/70">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" />
-          {t("landing.hero.badge")}
-        </div>
-
-        <h1 className="mt-6 text-4xl sm:text-5xl lg:text-[64px] font-semibold tracking-[-0.025em] max-w-4xl mx-auto leading-[1.02] text-black">
-          {t("landing.hero.titleA")}{" "}
-          <span className="text-[#0066FF]">{t("landing.hero.titleB")}</span>
-        </h1>
-
-        <p className="mt-6 text-base sm:text-lg text-black/60 max-w-2xl mx-auto leading-relaxed">
-          {t("landing.hero.subtitle")}
-        </p>
-
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Button
-            asChild
-            size="lg"
-            className="h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
-          >
-            <Link to="/signup">
-              {t("landing.hero.ctaPrimary")}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-11 px-5 border-black/15 text-black hover:bg-black/5 bg-white"
-          >
-            <a href="#demo">{t("landing.hero.ctaDemo")}</a>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            className="h-11 px-5 bg-[#25D366] hover:bg-[#1FB855] text-white shadow-none"
-          >
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-4 w-4" />
-              {t("landing.hero.ctaWhatsapp")}
-            </a>
-          </Button>
-        </div>
-
-        <p className="mt-5 text-xs text-black/50">{t("landing.hero.fineprint")}</p>
-
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-          {badges.map((b) => (
+      {/* subtle gradient backdrop */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(1200px 600px at 10% -10%, rgba(0,102,255,0.10), transparent 60%), radial-gradient(900px 500px at 90% 10%, rgba(0,102,255,0.06), transparent 60%)",
+        }}
+      />
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-20 sm:pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          {/* Left */}
+          <div>
             <div
-              key={b.label}
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs text-black/70"
+              className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm"
+              style={{ borderColor: "rgba(0,102,255,0.25)" }}
             >
-              <b.icon className="h-3.5 w-3.5 text-[#0066FF]" />
-              {b.label}
+              <Star className="h-3.5 w-3.5" style={{ color: BRAND }} />
+              {t("landing.hero.eyebrow", "All-in-one Inventory & Operations Platform")}
             </div>
-          ))}
+
+            <h1 className="mt-5 text-4xl sm:text-5xl lg:text-[56px] font-bold tracking-[-0.025em] leading-[1.05] text-slate-900">
+              {t(
+                "landing.hero.title",
+                "Stop losing money to disorganized inventory and manual operations.",
+              )}
+            </h1>
+
+            <p className="mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
+              {t(
+                "landing.hero.subtitle",
+                "InventoryFlow helps restaurants, stores, and growing businesses control inventory, employees, products, and operations from one simple platform.",
+              )}
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 px-5 text-white shadow-md rounded-xl"
+                style={{ backgroundColor: BRAND }}
+              >
+                <Link to="/signup">
+                  <Rocket className="h-4 w-4" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span className="text-sm font-semibold">
+                      {t("landing.hero.ctaPrimary", "Start 7-Day Trial")}
+                    </span>
+                    <span className="text-[10px] font-normal opacity-90">
+                      {t("landing.hero.ctaPrimarySub", "All modules included")}
+                    </span>
+                  </span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 px-5 rounded-xl border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+              >
+                <a href={BOOK_DEMO_URL} target="_blank" rel="noopener noreferrer">
+                  <Calendar className="h-4 w-4" style={{ color: BRAND }} />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span className="text-sm font-semibold">
+                      {t("landing.hero.ctaDemo", "Schedule Demo")}
+                    </span>
+                    <span className="text-[10px] font-normal text-slate-500">
+                      {t("landing.hero.ctaDemoSub", "See it in action")}
+                    </span>
+                  </span>
+                </a>
+              </Button>
+            </div>
+
+            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
+              {[
+                t("landing.hero.bullet1", "All modules included"),
+                t("landing.hero.bullet2", "Card required"),
+                t("landing.hero.bullet3", "Fast onboarding"),
+              ].map((b) => (
+                <li key={b} className="flex items-center gap-2">
+                  <span
+                    className="h-5 w-5 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: BRAND }}
+                  >
+                    <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                  </span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right — Dashboard mockup */}
+          <div className="relative">
+            <DashboardMockup />
+            <PhoneMockup />
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/* ---------- Dashboard preview ---------- */
-
-function DashboardPreview() {
-  const { t } = useTranslation();
+function DashboardMockup() {
   return (
-    <section className="pb-20 sm:pb-28">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-black/[0.08] bg-white shadow-[0_24px_60px_-24px_rgba(0,0,0,0.18)] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 h-9 border-b border-black/[0.06] bg-[#FAFAFA]">
-            <div className="flex gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
-              <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
-            </div>
-            <div className="mx-auto text-[11px] text-black/50 font-mono">
-              {t("landing.dashboardPreview.urlbar")}
-            </div>
+    <div
+      className="relative rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden"
+      style={{ boxShadow: "0 30px 60px -20px rgba(15,23,42,0.25)" }}
+    >
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="hidden sm:flex flex-col gap-1 w-12 bg-slate-900 py-4 px-2">
+          {[BarChart3, LayoutDashboard, Package, Users, Bell, TrendingUp, Settings].map(
+            (Icon, i) => (
+              <div
+                key={i}
+                className={`h-8 w-8 rounded-md flex items-center justify-center ${
+                  i === 0 ? "bg-white/10" : ""
+                }`}
+              >
+                <Icon className="h-4 w-4 text-white/80" />
+              </div>
+            ),
+          )}
+        </div>
+
+        <div className="flex-1 p-3 sm:p-4 space-y-3">
+          <div className="text-xs font-semibold text-slate-900">Dashboard</div>
+
+          {/* KPI grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            {[
+              { label: "Total Products", value: "1,245", color: "bg-blue-50 text-blue-700" },
+              { label: "Low Stock Alerts", value: "23", color: "bg-amber-50 text-amber-700" },
+              { label: "Total Locations", value: "5", color: "bg-emerald-50 text-emerald-700" },
+              { label: "Inventory Value", value: "$24,560", color: "bg-violet-50 text-violet-700" },
+            ].map((k) => (
+              <div key={k.label} className="rounded-lg border border-slate-200 bg-white p-2.5">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">{k.label}</div>
+                <div className="text-base font-bold text-slate-900 mt-0.5">{k.value}</div>
+              </div>
+            ))}
           </div>
 
-          <div className="grid grid-cols-12 min-h-[440px]">
-            <div className="hidden md:flex col-span-2 flex-col gap-0.5 p-3 border-r border-black/[0.06] bg-white">
-              {[
-                { icon: LayoutDashboard, label: t("landing.dashboardPreview.nav.dashboard"), active: true },
-                { icon: Package, label: t("landing.dashboardPreview.nav.products") },
-                { icon: ArrowLeftRight, label: t("landing.dashboardPreview.nav.movements") },
-                { icon: Receipt, label: t("landing.dashboardPreview.nav.orders") },
-                { icon: ScanLine, label: t("landing.dashboardPreview.nav.scanner") },
-                { icon: AlertTriangle, label: t("landing.dashboardPreview.nav.alerts") },
-              ].map((i) => (
-                <div
-                  key={i.label}
-                  className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs ${
-                    i.active
-                      ? "bg-[#0066FF]/8 text-[#0066FF] font-medium"
-                      : "text-black/60"
-                  }`}
-                >
-                  <i.icon className="h-3.5 w-3.5" />
-                  {i.label}
-                </div>
-              ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {/* Chart card */}
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="text-[11px] font-semibold text-slate-900 mb-2">
+                Inventory Overview
+              </div>
+              <svg viewBox="0 0 200 80" className="w-full h-20">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor={BRAND} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={BRAND} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M0,60 L30,50 L60,55 L90,35 L120,40 L150,20 L180,25 L200,10 L200,80 L0,80 Z"
+                  fill="url(#g1)"
+                />
+                <path
+                  d="M0,60 L30,50 L60,55 L90,35 L120,40 L150,20 L180,25 L200,10"
+                  fill="none"
+                  stroke={BRAND}
+                  strokeWidth="2"
+                />
+              </svg>
             </div>
 
-            <div className="col-span-12 md:col-span-10 p-5 space-y-4 bg-[#FAFAFA]/60">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Alerts */}
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="text-[11px] font-semibold text-slate-900 mb-2">Recent Alerts</div>
+              <ul className="space-y-1.5">
                 {[
-                  { label: t("landing.dashboardPreview.kpis.totalSkus"), value: "1,284", trend: "+3.2%" },
-                  { label: t("landing.dashboardPreview.kpis.stockValue"), value: "$842k", trend: "+5.4%" },
-                  { label: t("landing.dashboardPreview.kpis.lowStock"), value: "27", trend: "-12%" },
-                  { label: t("landing.dashboardPreview.kpis.movements24"), value: "318", trend: "+8.1%" },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="rounded-xl border border-black/[0.06] bg-white p-3.5"
-                  >
-                    <span className="text-[11px] uppercase tracking-wider text-black/50">
-                      {s.label}
-                    </span>
-                    <div className="mt-1.5 text-xl font-semibold tracking-tight text-black">
-                      {s.value}
-                    </div>
-                    <div className="text-[11px] text-[#0066FF] font-medium">{s.trend}</div>
-                  </div>
+                  { name: "Olive Oil", tone: "red" },
+                  { name: "Chicken Breast", tone: "red" },
+                  { name: "Tomatoes", tone: "amber" },
+                  { name: "Paper Cups", tone: "amber" },
+                ].map((a) => (
+                  <li key={a.name} className="flex items-center gap-2 text-[10px] text-slate-700">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        a.tone === "red" ? "bg-red-500" : "bg-amber-500"
+                      }`}
+                    />
+                    Low stock: {a.name}
+                  </li>
                 ))}
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                <div className="lg:col-span-2 rounded-xl border border-black/[0.06] bg-white p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.recent")}</span>
-                    <span className="text-[11px] text-black/50">{t("landing.dashboardPreview.last24")}</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {[
-                      { sku: "BRK-204", name: "Brake pad set", qty: "+120", in: true },
-                      { sku: "OIL-005", name: "Synthetic oil 5W-30", qty: "-48", in: false },
-                      { sku: "FLT-118", name: "Cabin air filter", qty: "+60", in: true },
-                      { sku: "BAT-AGM", name: "AGM battery 70Ah", qty: "-12", in: false },
-                    ].map((r) => (
-                      <div
-                        key={r.sku}
-                        className="flex items-center justify-between text-xs py-1.5 border-b border-black/[0.05] last:border-0"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-black/50">{r.sku}</span>
-                          <span className="text-black/80">{r.name}</span>
-                        </div>
-                        <span
-                          className={r.in ? "text-[#0066FF] font-medium" : "text-black/70 font-medium"}
-                        >
-                          {r.qty}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-black/[0.06] bg-white p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-black">{t("landing.dashboardPreview.stockHealth")}</span>
-                    <TrendingUp className="h-3.5 w-3.5 text-black/40" />
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { label: t("landing.dashboardPreview.inStock"), pct: 78, color: "bg-[#0066FF]" },
-                      { label: t("landing.dashboardPreview.lowStockLabel"), pct: 16, color: "bg-black/40" },
-                      { label: t("landing.dashboardPreview.outOfStock"), pct: 6, color: "bg-black/15" },
-                    ].map((b) => (
-                      <div key={b.label}>
-                        <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="text-black/60">{b.label}</span>
-                          <span className="font-medium text-black">{b.pct}%</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-black/[0.06] overflow-hidden">
-                          <div className={`h-full ${b.color}`} style={{ width: `${b.pct}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              </ul>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function PhoneMockup() {
+  return (
+    <div
+      className="hidden md:block absolute -bottom-6 -right-2 lg:-right-6 w-32 lg:w-40 rounded-[1.5rem] bg-slate-900 p-1.5 shadow-2xl"
+      style={{ boxShadow: "0 25px 50px -12px rgba(15,23,42,0.35)" }}
+    >
+      <div className="rounded-[1.2rem] bg-white p-2.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="text-[8px] text-slate-500">9:41</div>
+          <div className="text-[9px] font-semibold text-slate-900">Dashboard</div>
+        </div>
+        <div className="rounded-lg bg-violet-50 p-2">
+          <div className="text-[7px] uppercase text-violet-700">Inventory Value</div>
+          <div className="text-sm font-bold text-slate-900">$24,560</div>
+          <div className="text-[7px] text-emerald-600">+12.5% vs last month</div>
+        </div>
+        <div className="rounded-lg bg-amber-50 p-2">
+          <div className="text-[7px] uppercase text-amber-700">Low Stock Alerts</div>
+          <div className="text-sm font-bold text-slate-900">23</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -401,60 +430,60 @@ function DashboardPreview() {
 
 function ProblemSolution() {
   const { t } = useTranslation();
-  const problems = t("landing.problemSolution.problems", { returnObjects: true }) as string[];
-  const solutions = t("landing.problemSolution.solutions", { returnObjects: true }) as string[];
-  return (
-    <section className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              {t("landing.problemSolution.problemEyebrow")}
-            </p>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-              {t("landing.problemSolution.problemTitle")}
-            </h2>
-            <ul className="mt-6 space-y-3">
-              {problems.map((p) => (
-                <li
-                  key={p}
-                  className="flex items-start gap-3 rounded-xl border border-black/[0.08] bg-[#FAFAFA] p-4"
-                >
-                  <X className="h-4 w-4 text-black/40 shrink-0 mt-0.5" />
-                  <span className="text-sm text-black/80">{p}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+  const problems = [
+    t("landing.ps.p1", "Inventory losses"),
+    t("landing.ps.p2", "Excel chaos"),
+    t("landing.ps.p3", "Employee mistakes"),
+    t("landing.ps.p4", "No operational visibility"),
+    t("landing.ps.p5", "Slow manual processes"),
+  ];
+  const solutions = [
+    t("landing.ps.s1", "Real-time inventory tracking"),
+    t("landing.ps.s2", "Smart alerts"),
+    t("landing.ps.s3", "Employee accountability"),
+    t("landing.ps.s4", "Audit logs"),
+    t("landing.ps.s5", "Fast operational control"),
+  ];
 
-          <div className="lg:sticky lg:top-24">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-              {t("landing.problemSolution.solutionEyebrow")}
-            </p>
-            <h3 className="mt-2 text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-black">
-              {t("landing.problemSolution.solutionTitle")}
-            </h3>
-            <p className="mt-3 text-black/60">
-              {t("landing.problemSolution.solutionSubtitle")}
-            </p>
-            <ul className="mt-6 space-y-2.5">
-              {solutions.map((s) => (
-                <li key={s} className="flex items-center gap-2.5 text-sm text-black/85">
-                  <Check className="h-4 w-4 text-[#0066FF] shrink-0" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-            <Button
-              asChild
-              size="lg"
-              className="mt-6 h-11 px-5 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none"
-            >
-              <Link to="/signup">
-                {t("landing.problemSolution.cta")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+  return (
+    <section className="py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-10 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+                {t("landing.ps.problemTitle", "Still running your business manually?")}
+              </h2>
+              <ul className="mt-5 space-y-3">
+                {problems.map((p) => (
+                  <li key={p} className="flex items-center gap-3 text-slate-700">
+                    <span className="h-6 w-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                      <X className="h-3.5 w-3.5 text-red-500" strokeWidth={3} />
+                    </span>
+                    <span className="text-[15px]">{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+                {t("landing.ps.solutionTitle", "InventoryFlow gives you control and clarity.")}
+              </h2>
+              <ul className="mt-5 space-y-3">
+                {solutions.map((s) => (
+                  <li key={s} className="flex items-center gap-3 text-slate-700">
+                    <span
+                      className="h-6 w-6 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "rgba(16,185,129,0.12)" }}
+                    >
+                      <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={3} />
+                    </span>
+                    <span className="text-[15px]">{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -466,268 +495,54 @@ function ProblemSolution() {
 
 function Features() {
   const { t } = useTranslation();
-  const icons = [Package, ArrowLeftRight, Receipt, ScanLine, AlertTriangle, TrendingUp];
-  const items = t("landing.features.items", { returnObjects: true }) as { title: string; desc: string }[];
-  const features = items.map((it, i) => ({ ...it, icon: icons[i] }));
+  const items = [
+    {
+      icon: Package,
+      title: t("landing.feat.realtime.title", "Real-time Inventory"),
+      desc: t("landing.feat.realtime.desc", "Track stock instantly and reduce losses."),
+    },
+    {
+      icon: Users,
+      title: t("landing.feat.employee.title", "Employee Control"),
+      desc: t("landing.feat.employee.desc", "Know who changed products or inventory."),
+    },
+    {
+      icon: Bell,
+      title: t("landing.feat.alerts.title", "Smart Alerts"),
+      desc: t("landing.feat.alerts.desc", "Fix inventory problems before they cost money."),
+    },
+    {
+      icon: Smartphone,
+      title: t("landing.feat.mobile.title", "Mobile Access"),
+      desc: t("landing.feat.mobile.desc", "Manage your business from anywhere."),
+    },
+    {
+      icon: BarChart3,
+      title: t("landing.feat.insights.title", "Business Insights"),
+      desc: t(
+        "landing.feat.insights.desc",
+        "Make smarter operational decisions with clear analytics.",
+      ),
+    },
+  ];
 
   return (
-    <section id="features" className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.features.eyebrow")}</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.features.title")}
-          </h2>
-          <p className="mt-3 text-black/60">
-            {t("landing.features.subtitle")}
-          </p>
-        </div>
-
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.06] rounded-2xl overflow-hidden border border-black/[0.06]">
-          {features.map((f) => (
-            <div key={f.title} className="bg-white p-7">
-              <div className="h-9 w-9 rounded-lg bg-[#0066FF]/8 flex items-center justify-center mb-5">
-                <f.icon className="h-4 w-4 text-[#0066FF]" />
-              </div>
-              <h3 className="font-semibold tracking-tight text-black">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-black/60 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Screenshots gallery ---------- */
-
-function ScreenshotsGallery() {
-  const { t } = useTranslation();
-  const icons = [LayoutDashboard, Package, ScanLine, TrendingUp, ArrowLeftRight, ShieldCheck];
-  const items = t("landing.screenshots.items", { returnObjects: true }) as { title: string; desc: string }[];
-  const shots = items.map((it, i) => ({ ...it, icon: icons[i] }));
-  return (
-    <section className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.screenshots.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.screenshots.title")}
-          </h2>
-          <p className="mt-3 text-black/60">
-            {t("landing.screenshots.subtitle")}
-          </p>
-        </div>
-
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {shots.map((s) => (
-            <figure
-              key={s.title}
-              className="rounded-2xl border border-black/[0.08] bg-white overflow-hidden"
-            >
-              <div className="aspect-[16/10] bg-gradient-to-br from-[#F4F7FB] to-[#E9F0FA] border-b border-black/[0.06] flex flex-col items-center justify-center text-center p-6">
-                <div className="h-12 w-12 rounded-xl bg-white border border-black/[0.06] flex items-center justify-center mb-3 shadow-sm">
-                  <s.icon className="h-5 w-5 text-[#0066FF]" />
-                </div>
-                <div className="text-[11px] uppercase tracking-wider text-black/40">
-                  {t("landing.screenshots.label")}
-                </div>
-                <div className="mt-1 text-sm font-medium text-black">{s.title}</div>
-              </div>
-              <figcaption className="p-4">
-                <div className="text-sm font-medium text-black">{s.title}</div>
-                <p className="mt-1 text-xs text-black/60 leading-relaxed">{s.desc}</p>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Demo video ---------- */
-
-function DemoVideo() {
-  const { t } = useTranslation();
-  return (
-    <section id="demo" className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.demoVideo.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.demoVideo.title")}
-          </h2>
-          <p className="mt-3 text-black/60">
-            {t("landing.demoVideo.subtitle")}
-          </p>
-        </div>
-
-        <div className="mt-10 relative rounded-2xl overflow-hidden border border-black/[0.08] bg-black aspect-video max-w-4xl mx-auto group cursor-pointer">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0066FF]/30 via-black to-black" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              type="button"
-              aria-label={t("landing.demoVideo.play")}
-              className="h-20 w-20 rounded-full bg-white/95 flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110"
-            >
-              <Play className="h-8 w-8 text-[#0066FF] fill-[#0066FF] ml-1" />
-            </button>
-          </div>
-          <div className="absolute bottom-4 left-4 text-white/80 text-xs font-medium">
-            {t("landing.demoVideo.duration")}
-          </div>
-        </div>
-
-        <div className="mt-6 text-center">
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-11 px-5 border-black/15 text-black hover:bg-black/5 bg-white"
-          >
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-4 w-4" />
-              {t("landing.demoVideo.walkthrough")}
-            </a>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- How it works ---------- */
-
-function HowItWorks() {
-  const { t } = useTranslation();
-  const stepItems = t("landing.howItWorks.steps", { returnObjects: true }) as { title: string; desc: string }[];
-  const steps = stepItems.map((s, i) => ({ ...s, n: String(i + 1).padStart(2, "0") }));
-  return (
-    <section id="how" className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.howItWorks.eyebrow")}</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.howItWorks.title")}
-          </h2>
-        </div>
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {steps.map((s) => (
-            <div key={s.n} className="rounded-2xl border border-black/[0.08] bg-white p-7">
-              <div className="text-sm font-mono text-[#0066FF]">{s.n}</div>
-              <h3 className="mt-3 text-lg font-semibold tracking-tight text-black">{s.title}</h3>
-              <p className="mt-2 text-sm text-black/60 leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Who it's for ---------- */
-
-function WhoItsFor() {
-  const { t } = useTranslation();
-  const icons = [Building2, Store, Truck, Wrench];
-  const items = t("landing.whoItsFor.items", { returnObjects: true }) as { title: string; desc: string }[];
-  const audiences = items.map((it, i) => ({ ...it, icon: icons[i] }));
-  return (
-    <section id="who" className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.whoItsFor.eyebrow")}</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.whoItsFor.title")}
-          </h2>
-        </div>
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {audiences.map((a) => (
-            <div key={a.title} className="rounded-2xl border border-black/[0.08] bg-white p-6">
-              <a.icon className="h-5 w-5 text-[#0066FF]" />
-              <h3 className="mt-4 font-semibold tracking-tight text-black">{a.title}</h3>
-              <p className="mt-1.5 text-sm text-black/60 leading-relaxed">{a.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Testimonials / Social proof ---------- */
-
-function Testimonials() {
-  const { t } = useTranslation();
-  const items = t("landing.testimonials.items", { returnObjects: true }) as { quote: string; name: string; role: string }[];
-  return (
-    <section className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.testimonials.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.testimonials.title")}
-          </h2>
-        </div>
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
+    <section id="features" className="py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {items.map((it) => (
-            <figure
-              key={it.name + it.role}
-              className="rounded-2xl border border-black/[0.08] bg-white p-7 flex flex-col"
-            >
-              <Quote className="h-5 w-5 text-[#0066FF]" />
-              <blockquote className="mt-4 text-sm text-black/85 leading-relaxed flex-1">
-                "{it.quote}"
-              </blockquote>
-              <figcaption className="mt-5 pt-4 border-t border-black/[0.06]">
-                <div className="text-sm font-medium text-black">{it.name}</div>
-                <div className="text-xs text-black/55">{it.role}</div>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-        <p className="mt-8 text-center text-xs text-black/45">
-          {t("landing.testimonials.note")}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Built for growth ---------- */
-
-function BuiltForGrowth() {
-  const { t } = useTranslation();
-  const points = t("landing.recurring.points", { returnObjects: true }) as string[];
-  return (
-    <section className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.recurring.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.recurring.title")}
-          </h2>
-          <p className="mt-3 text-black/60">{t("landing.recurring.subtitle")}</p>
-        </div>
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {points.map((p) => (
             <div
-              key={p}
-              className="flex items-start gap-3 rounded-2xl border border-black/[0.08] bg-white p-6"
+              key={it.title}
+              className="group rounded-2xl bg-white border border-slate-200 p-5 text-center hover:shadow-lg hover:-translate-y-0.5 transition-all"
             >
-              <div className="h-8 w-8 rounded-lg bg-[#0066FF]/8 flex items-center justify-center shrink-0">
-                <Check className="h-4 w-4 text-[#0066FF]" />
+              <div
+                className="mx-auto h-12 w-12 rounded-xl flex items-center justify-center mb-3 transition-colors"
+                style={{ backgroundColor: "rgba(0,102,255,0.08)" }}
+              >
+                <it.icon className="h-6 w-6" style={{ color: BRAND }} />
               </div>
-              <p className="text-sm font-medium text-black leading-relaxed">{p}</p>
+              <div className="text-sm font-semibold text-slate-900">{it.title}</div>
+              <div className="mt-1.5 text-xs text-slate-500 leading-snug">{it.desc}</div>
             </div>
           ))}
         </div>
@@ -736,364 +551,171 @@ function BuiltForGrowth() {
   );
 }
 
-/* ---------- Pricing ---------- */
+/* ---------- Pricing + Why ---------- */
 
 type PlanKey = "starter" | "pro";
 
-function Pricing() {
+function PricingAndWhy() {
   const { t } = useTranslation();
 
   const plans: {
     key: PlanKey;
-    popular?: boolean;
-    ctaLabel: string;
-    ctaVariant: "primary" | "outline";
-    trialLine?: string;
-    cardLine?: string;
-    growthLine?: string;
+    name: string;
+    price: string;
+    onboarding: string;
+    badge: string;
+    badgeColor: string;
+    badgeIcon: typeof Star;
+    features: string[];
+    cta: string;
+    ctaTo: string;
+    primary: boolean;
   }[] = [
     {
       key: "starter",
-      ctaLabel: t("landing.pricing.startStarter", "Start 7-Day Free Trial"),
-      ctaVariant: "outline",
-      trialLine: t("landing.pricing.starterTrial", "7-day free trial"),
-      cardLine: t("landing.pricing.starterCard", "Card required"),
+      name: t("landing.pricing.plans.starter.name", "Starter"),
+      price: t("landing.pricing.plans.starter.price", "$14.99"),
+      onboarding: t("landing.pricing.plans.starter.onboarding", "+ $19 one-time Onboarding Process"),
+      badge: t("landing.pricing.starterTrial", "7-Day Free Trial"),
+      badgeColor: BRAND,
+      badgeIcon: Star,
+      features: [
+        t("landing.pricing.starter.f1", "All modules included"),
+        t("landing.pricing.starter.f2", "Up to 3 users"),
+        t("landing.pricing.starter.f3", "Up to 500 products"),
+        t("landing.pricing.starter.f4", "2 locations"),
+      ],
+      cta: t("landing.pricing.startStarter", "Start 7-Day Trial"),
+      ctaTo: "/signup?plan=starter",
+      primary: true,
     },
     {
       key: "pro",
-      popular: true,
-      ctaLabel: t("landing.pricing.upgradeToPro", "Upgrade to Pro"),
-      ctaVariant: "primary",
-      growthLine: t("landing.pricing.proGrowth", "For growing businesses"),
+      name: t("landing.pricing.plans.pro.name", "Pro"),
+      price: t("landing.pricing.plans.pro.price", "$79"),
+      onboarding: t("landing.pricing.plans.pro.onboarding", "+ $79 guided Onboarding Process"),
+      badge: t("landing.pricing.proGrowth", "For growing businesses"),
+      badgeColor: "#D97706",
+      badgeIcon: Crown,
+      features: [
+        t("landing.pricing.pro.f1", "All modules included"),
+        t("landing.pricing.pro.f2", "Up to 25 users"),
+        t("landing.pricing.pro.f3", "Unlimited products"),
+        t("landing.pricing.pro.f4", "Multi-location support (10)"),
+      ],
+      cta: t("landing.pricing.upgradeToPro", "Upgrade to Pro"),
+      ctaTo: "/signup?plan=pro",
+      primary: false,
     },
   ];
 
-  const limits: Record<PlanKey, { users: string; products: string; locations: string }> = {
-    starter: { users: "3", products: "500", locations: "2" },
-    pro: { users: "25", products: "∞", locations: "10" },
-  };
+  const whyItems = [
+    { icon: Zap, text: t("landing.why.fast", "Fast onboarding") },
+    { icon: Settings, text: t("landing.why.nosetup", "No complicated setup") },
+    { icon: Smartphone, text: t("landing.why.mobile", "Mobile friendly") },
+    { icon: TrendingUp, text: t("landing.why.realtime", "Real-time inventory tracking") },
+    { icon: Users, text: t("landing.why.real", "Designed for real businesses") },
+    { icon: Cloud, text: t("landing.why.cloud", "Modern cloud-based platform") },
+    { icon: Languages, text: t("landing.why.bilingual", "Bilingual platform (English & Español)") },
+  ];
 
   return (
-    <section id="pricing" className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.pricing.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.pricing.title")}
-          </h2>
-          <p className="mt-3 text-black/60">{t("landing.pricing.subtitle")}</p>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
-          {plans.map(({ key, popular, ctaLabel, ctaVariant, trialLine, cardLine, growthLine }) => {
-            const features = t(`landing.pricing.plans.${key}.features`, { returnObjects: true }) as string[];
-            const price = t(`landing.pricing.plans.${key}.price`);
-            const onboarding = t(`landing.pricing.plans.${key}.onboarding`, { defaultValue: "" });
-            const planLimits = limits[key];
-            const to = `/checkout?plan=${key}`;
-
-            return (
-              <div
-                key={key}
-                className={`relative flex flex-col rounded-2xl border bg-white p-6 ${
-                  popular
-                    ? "border-[#0066FF] shadow-[0_24px_60px_-30px_rgba(0,102,255,0.45)]"
-                    : "border-black/[0.08]"
-                }`}
-              >
-                {popular && (
-                  <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-[#0066FF] px-2.5 py-1 text-[11px] font-medium text-white">
-                    <Star className="h-3 w-3" /> {t("landing.pricing.mostPopular")}
-                  </div>
-                )}
-
-                <div className="text-sm font-medium text-black">{t(`landing.pricing.plans.${key}.name`)}</div>
-
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-3xl font-semibold tracking-tight text-black">{price}</span>
-                  <span className="text-sm text-black/50">{t("landing.pricing.perMonth")}</span>
-                </div>
-
-                {onboarding && (
-                  <p className="mt-1 text-xs text-black/60">{onboarding}</p>
-                )}
-
-                <p className="mt-2 text-sm text-black/60 min-h-[40px]">
-                  {t(`landing.pricing.plans.${key}.tagline`)}
-                </p>
-
-                {(trialLine || growthLine) && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {trialLine && (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[11px] font-medium">
-                        {trialLine}
-                      </span>
-                    )}
-                    {cardLine && (
-                      <span className="inline-flex items-center rounded-full bg-black/[0.05] text-black/70 px-2.5 py-1 text-[11px] font-medium">
-                        {cardLine}
-                      </span>
-                    )}
-                    {growthLine && (
-                      <span className="inline-flex items-center rounded-full bg-[#0066FF]/10 text-[#0066FF] px-2.5 py-1 text-[11px] font-medium">
-                        {growthLine}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Capacity limits — growth, not feature locks */}
-                <div className="mt-4 rounded-lg bg-black/[0.03] p-3">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-black/50 mb-2">
-                    {t("landing.pricing.capacityLabel", "Capacity")}
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <div className="text-xs font-semibold text-black">{planLimits.users}</div>
-                      <div className="text-[10px] text-black/50">{t("landing.pricing.usersLabel")}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-black">{planLimits.products}</div>
-                      <div className="text-[10px] text-black/50">{t("landing.pricing.productsLabel")}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-black">{planLimits.locations}</div>
-                      <div className="text-[10px] text-black/50">{t("landing.pricing.locationsLabel")}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-black/50">
-                  {t("landing.pricing.includedLabel", "All modules included")}
-                </p>
-                <ul className="mt-2 space-y-2 text-sm">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-black/80">
-                      <Check className="h-4 w-4 text-[#0066FF] shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-6 pt-4">
-                  <Button
-                    asChild
-                    className={`w-full h-10 shadow-none ${
-                      ctaVariant === "primary"
-                        ? "bg-[#0066FF] hover:bg-[#0052CC] text-white"
-                        : "bg-white border border-black/15 text-black hover:bg-black/5"
-                    }`}
+    <section id="pricing" className="py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {plans.map((p) => (
+            <div
+              key={p.key}
+              className={`relative flex flex-col rounded-2xl bg-white border p-6 ${
+                p.primary
+                  ? "border-transparent ring-2 shadow-lg"
+                  : "border-slate-200 shadow-sm"
+              }`}
+              style={p.primary ? { boxShadow: `0 20px 50px -20px rgba(0,102,255,0.35)` } : {}}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-bold text-slate-900">{p.name}</div>
+                  <div
+                    className="mt-1 text-xs font-medium"
+                    style={{ color: p.badgeColor }}
                   >
-                    <a href={to}>{ctaLabel}</a>
-                  </Button>
+                    {p.badge}
+                  </div>
+                </div>
+                <div
+                  className="h-8 w-8 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${p.badgeColor}15` }}
+                >
+                  <p.badgeIcon className="h-4 w-4" style={{ color: p.badgeColor }} />
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        <p className="mt-8 text-center text-xs text-black/50">
-          {t("landing.pricing.trialNote", "7-day free trial on Starter · 30-Day Satisfaction Guarantee · Cancel anytime")}
-        </p>
-
-        <p className="mt-2 text-center text-xs text-black/50">
-          {t("landing.pricing.enterpriseLine", "Need Enterprise? ")}
-          <a href={`mailto:${SALES_EMAIL}?subject=InventoryFlow%20Enterprise%20Inquiry`} className="underline">
-            {t("landing.pricing.contactSales", "Contact Sales")}
-          </a>
-        </p>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- Compare table ---------- */
-
-type CompareRow = { label: string; trial: string; starter: string; pro: string; enterprise: string };
-
-function CompareCell({ value }: { value: string }) {
-  if (value === "yes") return <Check className="h-4 w-4 text-[#0066FF] mx-auto" />;
-  if (value === "no") return <X className="h-4 w-4 text-black/25 mx-auto" />;
-  return <span className="text-sm text-black/80">{value}</span>;
-}
-
-function CompareTable() {
-  const { t } = useTranslation();
-  const rows = t("landing.pricing.compare.rows", { returnObjects: true }) as CompareRow[];
-  return (
-    <section className="border-t border-black/[0.06] bg-[#FAFAFA]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <h3 className="text-xl sm:text-2xl font-semibold tracking-[-0.01em] text-black">
-          {t("landing.pricing.compare.title")}
-        </h3>
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-black/[0.08] bg-white">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b border-black/[0.06] text-left">
-                <th className="px-5 py-3.5 font-medium text-black/60">{t("landing.pricing.compare.feature")}</th>
-                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.starter.name")}</th>
-                <th className="px-5 py-3.5 font-medium text-[#0066FF] text-center">{t("landing.pricing.plans.pro.name")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.label} className="border-b border-black/[0.04] last:border-0">
-                  <td className="px-5 py-3 text-black/80">{r.label}</td>
-                  <td className="px-5 py-3 text-center"><CompareCell value={r.starter} /></td>
-                  <td className="px-5 py-3 text-center bg-[#0066FF]/[0.03]"><CompareCell value={r.pro} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- LATAM positioning ---------- */
-
-function LatamPositioning() {
-  const { t } = useTranslation();
-  const icons = [Globe, Smartphone, Sparkles, Cloud];
-  const raw = t("landing.latam.items", { returnObjects: true }) as { title: string; desc: string }[];
-  const items = raw.map((it, i) => ({ ...it, icon: icons[i] }));
-  return (
-    <section className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">
-            {t("landing.latam.eyebrow")}
-          </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.latam.title")}
-          </h2>
-          <p className="mt-3 text-black/60">
-            {t("landing.latam.subtitle")}
-          </p>
-        </div>
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {items.map((it) => (
-            <div key={it.title} className="rounded-2xl border border-black/[0.08] bg-[#FAFAFA] p-6">
-              <div className="h-9 w-9 rounded-lg bg-white border border-black/[0.06] flex items-center justify-center">
-                <it.icon className="h-4 w-4 text-[#0066FF]" />
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold tracking-tight text-slate-900">{p.price}</span>
+                <span className="text-sm text-slate-500">
+                  {t("landing.pricing.perMonth", "/month")}
+                </span>
               </div>
-              <h3 className="mt-4 font-semibold tracking-tight text-black">{it.title}</h3>
-              <p className="mt-1.5 text-sm text-black/60 leading-relaxed">{it.desc}</p>
+              <div className="mt-1 text-xs text-slate-500">
+                {t("landing.pricing.billedMonthly", "Billed monthly")}
+              </div>
+              {p.onboarding && (
+                <div className="mt-1 text-xs text-slate-500">{p.onboarding}</div>
+              )}
+
+              <ul className="mt-5 space-y-2.5 flex-1">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <Check
+                      className="h-4 w-4 mt-0.5 shrink-0"
+                      style={{ color: BRAND }}
+                      strokeWidth={3}
+                    />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                asChild
+                className={`mt-6 w-full h-11 rounded-xl shadow-none ${
+                  p.primary ? "text-white" : "bg-white border border-slate-200 text-slate-900 hover:bg-slate-50"
+                }`}
+                style={p.primary ? { backgroundColor: BRAND } : {}}
+              >
+                <Link to={p.ctaTo}>{p.cta}</Link>
+              </Button>
+              <div className="mt-3 text-center text-[11px] text-slate-500">
+                🔒 {t("landing.pricing.cardRequired", "Card required")}
+              </div>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
-/* ---------- FAQ ---------- */
-
-function FAQ() {
-  const { t } = useTranslation();
-  const items = t("landing.faqSection.items", { returnObjects: true }) as { q: string; a: string }[];
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-  return (
-    <section id="faq" className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-3xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0066FF]">{t("landing.faqSection.eyebrow")}</p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-            {t("landing.faqSection.title")}
-          </h2>
-        </div>
-        <div className="mt-10 space-y-2">
-          {items.map((it, i) => {
-            const open = openIndex === i;
-            return (
-              <div
-                key={it.q}
-                className="rounded-xl border border-black/[0.08] bg-white overflow-hidden"
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(open ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-black/[0.02] transition-colors"
-                  aria-expanded={open}
-                >
-                  <span className="text-sm font-medium text-black">{it.q}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-black/50 transition-transform shrink-0 ${
-                      open ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {open && (
-                  <div className="px-5 pb-4 text-sm text-black/70 leading-relaxed">{it.a}</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------- WhatsApp CTA ---------- */
-
-function WhatsAppCTA() {
-  const { t } = useTranslation();
-  return (
-    <section id="whatsapp-cta" className="border-t border-black/[0.06] bg-[#f8faf8]">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div className="rounded-3xl bg-white border border-black/[0.06] p-10 sm:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#25D366]/10 px-3 py-1 text-xs font-semibold text-[#1B8C4A] mb-4">
-              <MessageCircle className="h-3.5 w-3.5" />
-              WhatsApp
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-[-0.02em] text-black">
-              {t("landing.whatsappCta.title", "Need a quick demo?")}
-            </h2>
-            <p className="mt-3 text-black/60 max-w-md leading-relaxed">
-              {t("landing.whatsappCta.subtitle", "Chat directly with us on WhatsApp and learn how InventoryFlow can help your business.")}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-black/50">
-              <span className="inline-flex items-center gap-1.5">
-                <Smartphone className="h-4 w-4" />
-                {t("landing.whatsappCta.mobile", "Mobile friendly")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Globe className="h-4 w-4" />
-                {t("landing.whatsappCta.bilingual", "EN / ES")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-[#25D366]" />
-                {t("landing.whatsappCta.instant", "Instant reply")}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 px-6 bg-[#25D366] hover:bg-[#1FB855] text-white shadow-none text-base"
-            >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-5 w-5" />
-                {t("landing.whatsappCta.chat", "Chat on WhatsApp")}
-              </a>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 px-6 border-black/10 hover:bg-black/[0.03] text-black shadow-none text-base"
-            >
-              <a href={`mailto:${SALES_EMAIL}`}>
-                <Mail className="h-4 w-4" />
-                {t("landing.whatsappCta.book", "Book Demo")}
-              </a>
-            </Button>
+          {/* Why choose */}
+          <div
+            className="rounded-2xl border border-slate-200 p-6 shadow-sm"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(0,102,255,0.05) 0%, rgba(255,255,255,1) 60%)",
+            }}
+          >
+            <h3 className="text-lg font-bold text-slate-900 leading-tight">
+              {t("landing.why.title", "Why businesses choose InventoryFlow")}
+            </h3>
+            <ul className="mt-5 space-y-3">
+              {whyItems.map((w) => (
+                <li key={w.text} className="flex items-center gap-3 text-sm text-slate-700">
+                  <span
+                    className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: "rgba(0,102,255,0.10)" }}
+                  >
+                    <w.icon className="h-3.5 w-3.5" style={{ color: BRAND }} />
+                  </span>
+                  {w.text}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
@@ -1105,49 +727,54 @@ function WhatsAppCTA() {
 
 function FinalCTA() {
   const { t } = useTranslation();
-  const bullets = t("landing.cta.bullets", { returnObjects: true }) as string[];
   return (
-    <section id="request" className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-20 sm:py-24">
-        <div className="rounded-3xl bg-black text-white p-10 sm:p-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#5C9BFF]">
-              {t("landing.cta.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.02em]">
-              {t("landing.cta.title")}
-            </h2>
-            <p className="mt-3 text-white/70 max-w-md">{t("landing.cta.subtitle")}</p>
-            <ul className="mt-6 space-y-2.5">
-              {bullets.map((b) => (
-                <li key={b} className="flex items-center gap-2.5 text-sm text-white/85">
-                  <Check className="h-4 w-4 text-[#5C9BFF]" />
-                  {b}
-                </li>
-              ))}
-            </ul>
+    <section className="py-12 sm:py-16">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div
+          className="relative overflow-hidden rounded-3xl p-8 sm:p-10 text-white"
+          style={{
+            background: `linear-gradient(135deg, ${BRAND_DARK} 0%, ${BRAND} 60%, #3D87FF 100%)`,
+          }}
+        >
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute top-4 left-10 h-2 w-2 rounded-full bg-white" />
+            <div className="absolute top-16 left-32 h-1 w-1 rounded-full bg-white" />
+            <div className="absolute bottom-10 left-20 h-1.5 w-1.5 rounded-full bg-white" />
+            <div className="absolute top-10 right-40 h-1 w-1 rounded-full bg-white" />
           </div>
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-stretch">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 px-6 bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-none text-base"
-            >
-              <Link to="/signup">
-                {t("landing.cta.primary")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              className="h-12 px-6 bg-[#25D366] hover:bg-[#1FB855] text-white shadow-none text-base"
-            >
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-4 w-4" />
-                {t("landing.whatsappCta.chat", "Chat on WhatsApp")}
-              </a>
-            </Button>
+
+          <div className="relative grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] items-center gap-6">
+            <div className="hidden sm:flex h-20 w-20 rounded-2xl bg-white/15 items-center justify-center shrink-0">
+              <Rocket className="h-10 w-10 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                {t("landing.finalCta.title", "Take control of your business today.")}
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-white/85 max-w-2xl">
+                {t(
+                  "landing.finalCta.subtitle",
+                  "InventoryFlow helps you organize inventory, employees, and operations faster — without complicated systems.",
+                )}
+              </p>
+            </div>
+            <div className="flex flex-col items-start lg:items-end gap-2">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 px-6 rounded-xl bg-white text-slate-900 hover:bg-slate-100 shadow-md"
+              >
+                <Link to="/signup">
+                  {t("landing.finalCta.cta", "Start Your 7-Day Trial")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div className="text-[11px] text-white/80 flex flex-wrap gap-x-3 gap-y-1">
+                <span>• {t("landing.finalCta.b1", "All modules included")}</span>
+                <span>• {t("landing.finalCta.b2", "Card required")}</span>
+                <span>• {t("landing.finalCta.b3", "Quick onboarding")}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1159,124 +786,112 @@ function FinalCTA() {
 
 function SiteFooter() {
   const { t } = useTranslation();
+  const cols = [
+    {
+      title: t("landing.footer.product", "Product"),
+      links: [
+        { label: t("landing.nav.features", "Features"), href: "#features" },
+        { label: t("landing.nav.pricing", "Pricing"), href: "#pricing" },
+      ],
+    },
+    {
+      title: t("landing.footer.company", "Company"),
+      links: [
+        { label: t("landing.footer.about", "About"), href: `mailto:${SUPPORT_EMAIL}` },
+        { label: t("landing.footer.contact", "Contact"), href: `mailto:${SUPPORT_EMAIL}` },
+      ],
+    },
+    {
+      title: t("landing.footer.resources", "Resources"),
+      links: [
+        { label: t("landing.nav.helpCenter", "Help Center"), href: `mailto:${SUPPORT_EMAIL}` },
+        { label: t("landing.nav.setupGuides", "Setup Guides"), href: `mailto:${SUPPORT_EMAIL}` },
+      ],
+    },
+    {
+      title: t("landing.footer.legal", "Legal"),
+      links: [
+        { label: t("landing.footer.privacy", "Privacy Policy"), href: "/privacy" },
+        { label: t("landing.footer.terms", "Terms of Service"), href: "/terms" },
+      ],
+    },
+  ];
+
   return (
-    <footer className="border-t border-black/[0.06] bg-white">
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-          <div className="col-span-2 sm:col-span-1">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center">
-                <Boxes className="h-4 w-4 text-white" strokeWidth={2.25} />
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
+          <div className="col-span-2">
+            <Link to="/" className="flex items-center gap-2">
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND_DARK})` }}
+              >
+                <BarChart3 className="h-4 w-4 text-white" strokeWidth={2.5} />
               </div>
-              <span className="font-semibold tracking-tight text-black">InventoryFlow</span>
-            </div>
-            <p className="mt-3 text-xs text-black/55 leading-relaxed max-w-xs">
-              {t("landing.footer.tagline")}
+              <span className="font-bold tracking-tight text-slate-900">InventoryFlow</span>
+            </Link>
+            <p className="mt-3 text-sm text-slate-500 max-w-xs">
+              {t("landing.footer.tagline", "Control your inventory. Grow your business.")}
             </p>
+            <div className="mt-4">
+              <LanguageSwitcher />
+            </div>
           </div>
 
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              {t("landing.footer.product")}
+          {cols.map((c) => (
+            <div key={c.title}>
+              <div className="text-sm font-semibold text-slate-900">{c.title}</div>
+              <ul className="mt-3 space-y-2">
+                {c.links.map((l) => (
+                  <li key={l.label}>
+                    <a
+                      href={l.href}
+                      className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                    >
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><a href="#features" className="hover:text-black">{t("landing.footer.features")}</a></li>
-              <li><a href="#pricing" className="hover:text-black">{t("landing.footer.pricing")}</a></li>
-              <li><a href="#demo" className="hover:text-black">{t("landing.footer.demo")}</a></li>
-              <li><a href="#faq" className="hover:text-black">{t("landing.footer.faq")}</a></li>
-              <li><Link to="/login" className="hover:text-black">{t("landing.footer.login")}</Link></li>
-            </ul>
-          </div>
+          ))}
 
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              {t("landing.footer.contact")}
+            <div className="text-sm font-semibold text-slate-900">
+              {t("landing.footer.needHelp", "Need help?")}
             </div>
-            <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li>
-                <a
-                  href={WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 hover:text-black"
-                >
-                  <MessageCircle className="h-3.5 w-3.5 text-[#25D366]" />
-                  WhatsApp
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 hover:text-black">
-                  <Mail className="h-3.5 w-3.5" />
-                  {SUPPORT_EMAIL}
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${SALES_EMAIL}`} className="inline-flex items-center gap-2 hover:text-black">
-                  <Phone className="h-3.5 w-3.5" />
-                  {SALES_EMAIL}
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://inventoryflowapp.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-black"
-                >
-                  inventoryflowapp.com
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
-              {t("landing.footer.legal")}
-            </div>
-            <ul className="mt-4 space-y-2 text-sm text-black/70">
-              <li><Link to="/privacy" className="hover:text-black">{t("landing.footer.privacy")}</Link></li>
-              <li><Link to="/terms" className="hover:text-black">{t("landing.footer.terms")}</Link></li>
-              <li><Link to="/disclaimer" className="hover:text-black">{t("landing.footer.disclaimer")}</Link></li>
-              <li><Link to="/service-agreement" className="hover:text-black">{t("landing.footer.serviceAgreement")}</Link></li>
-            </ul>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 w-full"
+            >
+              <Mail className="h-3.5 w-3.5" style={{ color: BRAND }} />
+              <span className="flex flex-col leading-tight">
+                <span>{t("landing.footer.emailSupport", "Email Support")}</span>
+                <span className="text-[10px] text-slate-500">(for USA)</span>
+              </span>
+            </a>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-white w-full"
+              style={{ backgroundColor: "#25D366" }}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span className="flex flex-col leading-tight">
+                <span>{t("landing.footer.whatsapp", "Chat on WhatsApp")}</span>
+                <span className="text-[10px] opacity-90">(for LATAM)</span>
+              </span>
+            </a>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-black/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-black/50">
-          <span>{t("landing.footer.copyright", { year: new Date().getFullYear() })}</span>
-          <span>{t("landing.footer.builtFor")}</span>
+        <div className="mt-10 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-wrap justify-between gap-3">
+          <span>© {new Date().getFullYear()} InventoryFlow. All rights reserved.</span>
+          <span>{t("landing.footer.builtWith", "Built for growing businesses.")}</span>
         </div>
       </div>
     </footer>
-  );
-}
-
-/* ---------- Floating WhatsApp ---------- */
-
-function FloatingWhatsApp() {
-  const { t } = useTranslation();
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {hovered && (
-        <div className="mb-1 rounded-2xl bg-white border border-black/[0.08] px-4 py-2.5 text-sm text-black shadow-[0_8px_24px_-6px_rgba(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-200">
-          {t("landing.floatingWhatsapp.tooltip")}
-        </div>
-      )}
-      <a
-        href={WHATSAPP_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={t("landing.floatingWhatsapp.aria")}
-        className="group relative inline-flex items-center justify-center rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white w-14 h-14 shadow-[0_12px_30px_-8px_rgba(37,211,102,0.55)] transition-all hover:scale-105 active:scale-95"
-      >
-        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
-        <MessageCircle className="h-6 w-6 relative z-10" />
-      </a>
-    </div>
   );
 }
