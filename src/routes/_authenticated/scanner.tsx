@@ -63,6 +63,12 @@ import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { cn } from "@/lib/utils";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { ScannerStatusPill } from "@/components/ScannerStatusPill";
+import { ScannerAnalyticsPanel } from "@/components/ScannerAnalyticsPanel";
+import { FrequentTodayStrip } from "@/components/FrequentTodayStrip";
+import { LabelPrintDialog } from "@/components/LabelPrintDialog";
+import { installAutoSync } from "@/lib/scan-queue";
+import { Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   component: ScannerPage,
