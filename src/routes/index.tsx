@@ -933,20 +933,16 @@ function CompareTable() {
             <thead>
               <tr className="border-b border-black/[0.06] text-left">
                 <th className="px-5 py-3.5 font-medium text-black/60">{t("landing.pricing.compare.feature")}</th>
-                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.trial.name")}</th>
                 <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.starter.name")}</th>
                 <th className="px-5 py-3.5 font-medium text-[#0066FF] text-center">{t("landing.pricing.plans.pro.name")}</th>
-                <th className="px-5 py-3.5 font-medium text-black/80 text-center">{t("landing.pricing.plans.enterprise.name")}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.label} className="border-b border-black/[0.04] last:border-0">
                   <td className="px-5 py-3 text-black/80">{r.label}</td>
-                  <td className="px-5 py-3 text-center"><CompareCell value={r.trial} /></td>
                   <td className="px-5 py-3 text-center"><CompareCell value={r.starter} /></td>
                   <td className="px-5 py-3 text-center bg-[#0066FF]/[0.03]"><CompareCell value={r.pro} /></td>
-                  <td className="px-5 py-3 text-center"><CompareCell value={r.enterprise} /></td>
                 </tr>
               ))}
             </tbody>
