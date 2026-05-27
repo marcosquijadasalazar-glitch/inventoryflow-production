@@ -121,6 +121,9 @@ const PRODUCTS_IMPORT_SCHEMA: ImportSchema = {
 
 export const Route = createFileRoute("/_authenticated/products")({
   component: ProductsPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    import: search.import === 1 || search.import === "1" ? 1 : undefined,
+  }),
 });
 
 type SortKey =
