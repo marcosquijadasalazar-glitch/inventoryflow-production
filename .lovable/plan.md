@@ -1,54 +1,115 @@
+## Goal
 
-# Barcode Scanner Phase 4 — Implementation Plan
+Evolve **Location Stock** into a hierarchical inventory browser (Location → Sub-location → Aisle → Bin) with inline stock actions, while preserving the current page's design system, card/table styles, and SMB-friendly feel.
 
-Phase 4 is large (10 sub-features). To keep InventoryFlow simple and avoid bloating the scanner UI, I'll group the work into focused changes and reuse existing patterns (ZXing, `createMovement`, `insights.functions`, `usePermissions`, i18n). No redesign — additive only.
+---
 
-## Scope summary
+## 1. Database (single migration)
 
-| # | Feature | Approach |
-|---|---|---|
-| 1 | Hands-free continuous scan | Toggle in BatchMode; keep camera open after a successful decode, auto-add, beep+vibrate, visible "Hands-Free ON" badge |
-| 2 | Smart duplicate detection | Replace 1s ref-throttle with per-code map (configurable window, default 2.5s). Toast: "Duplicate scan ignored" |
-| 3 | Offline scan queue | New `src/lib/scan-queue.ts` using `localStorage` + `navigator.onLine` + `online`/`offline` events. Queues `createMovement` payloads, retries on reconnect, dedupes by client UUID. Status pill (Online / Offline / Syncing / N pending) in scanner header |
-| 4 | Barcode label generation | Add `bwip-js` (pure JS, Worker-safe). New `LabelPrintDialog` with Code128/EAN/UPC auto-detect, print + PDF download (jsPDF already used in `src/lib/pdf.ts`). Button in Product Found card + ProductDetailsDialog |
-| 5 | QR code support | ZXing's `BrowserMultiFormatReader` already decodes QR. Treat result text: if URL with `inventoryflow://product/<id>` or `loc:<id>`, route accordingly; unsupported → friendly toast |
-| 6 | Smart scan shortcuts | "Frequent Today" strip above product card — derived from existing `scanner-history-v1` localStorage + today's `transaction_history`. Tap to re-open product |
-| 7 | Scan analytics | New `getScannerAnalytics` server fn (today's scans, top 5 products, busiest location, receive/transfer counts). Compact `ScannerAnalyticsCard` rendered in a collapsible section |
-| 8 | Advanced scanner permissions | Add `print_labels` to `app_permission` enum + `ALL_PERMISSIONS`. Reuse existing `use_barcode_scanner`, `adjust_stock`, `create_movements`, `manage_transfer_orders` to gate hands-free actions, label printing, receive, transfer (already partially gated) |
-| 9 | Scanner activity timeline | Server fn querying `transaction_history` filtered to `source = 'barcode_scan'`, last 50, org-scoped. Compact list (user_email • product • qty • time) in collapsible "Activity" panel |
-| 10 | Performance / UX | Lazy-load label generator chunk; memoize shortcut derivation; keep panels collapsed by default on mobile |
+Extend the existing `locations` table rather than introducing a parallel table, so RLS/grants/audit already in place are inherited automatically.
 
-## File changes
+```text
+locations
+  + parent_id      uuid  null  (self-FK)
+  + node_level     text  not null default 'location'
+                    check (node_level in ('location','sublocation','aisle','bin'))
+  + code           text  null   (short code, e.g. "A-01")
+```
 
-### New files
-- `src/lib/scan-queue.ts` — offline queue (localStorage, online listeners, dedupe)
-- `src/lib/scanner-analytics.functions.ts` — `getScannerAnalytics`, `getScannerActivity` server fns
-- `src/components/LabelPrintDialog.tsx` — barcode label preview + print/PDF
-- `src/components/ScannerAnalyticsPanel.tsx` — analytics + activity timeline
-- `src/components/ScannerStatusPill.tsx` — online/offline/syncing indicator
-- `src/components/FrequentTodayStrip.tsx` — shortcut chips
+Index on `(organization_id, parent_id)` for fast tree queries. Existing rows default to `node_level='location'`, `parent_id=null` — fully backward compatible.
 
-### Edited files
-- `src/routes/_authenticated/scanner.tsx` — wire hands-free toggle, status pill, frequent strip, analytics panel, smart duplicate logic, queue integration
-- `src/components/BarcodeScanInput.tsx` — `continuous` prop (don't stop camera on decode in hands-free mode), expose decode callback for QR routing
-- `src/components/ProductDetailsDialog.tsx` — "Print Label" button
-- `src/lib/permissions.ts` — add `print_labels` constant
-- `src/i18n/en.json`, `src/i18n/es.json` — ~40 new keys
+Products keep the existing `location` text field for backward compatibility, plus a new optional `bin_id uuid` pointer for fine-grained placement (nullable; no migration of old data).
 
-### Migration
-- Add `print_labels` value to `app_permission` enum; grant by default to owner/manager (mirror `adjust_stock` defaults)
+```text
+products
+  + bin_id uuid null  (FK conceptually to locations.id where node_level='bin')
+```
 
-### Dependency
-- `bun add bwip-js` (pure JS, Worker-compatible)
+RLS: reuse existing `org delete/insert/read/update locations` and `products` policies — no new policies needed. Grants already present.
 
-## Out of scope
-- Full offline app shell (only scanner workflow continuity, as requested)
-- Bin/location QR creation UI (decode is supported; creation deferred)
-- Redesign of scanner page
+## 2. Hierarchy data layer
+
+New `src/lib/location-tree.ts`:
+- `listNodes(parentId | null, level?)` — fetches children
+- `createNode({ name, parent_id, node_level, code?, address?, type?, notes? })`
+- `updateNode`, `deleteNode`
+- `getBreadcrumb(nodeId)` — walks parents
+- `getDescendantBinIds(nodeId)` — recursive (client-side BFS over fetched rows)
+
+## 3. Page restructure (`location-stock.tsx`)
+
+Keep current layout, header, ExportMenu, search input, and table styles. **No redesign.** Add:
+
+- **Breadcrumb strip** above the existing card: `Locations / Cold Storage / Aisle A / Bin A-01`
+- **Hierarchy cards row** — when no leaf bin is selected, show clickable cards for children of current node (same Card style already used)
+- **Action buttons** in top-right cluster (next to ExportMenu): `New Location` (root view), `New Sub-location` / `New Aisle` / `New Bin` (contextual based on current node level)
+- **Existing stock table** stays — now scoped to current node + descendants. Add an **Actions** column (kebab menu)
+
+## 4. Inline stock actions (per row)
+
+New `src/components/StockActionsMenu.tsx` with DropdownMenu:
+- Add Stock → reuses existing `inventory_movements` insert (`type='add'`)
+- Remove Stock → `type='remove'` with reason
+- Adjust Quantity → `type='adjustment'` (preview shows diff)
+- Move Product → creates a `transfer_orders` row (from current bin/location → target) + `transfer_order_items`, status `completed` so existing per-location math picks it up
+- View Product → opens existing `ProductDetailsDialog`
+
+All flows use existing `Dialog` / `Sheet` patterns already in the project (mobile-first bottom sheet on small viewports via responsive `Sheet`).
+
+Audit logging: piggy-backs on existing `log_movement_history` trigger — no new code needed.
+
+## 5. Create-node modals
+
+Single `LocationNodeDialog.tsx` parameterized by `level` — renders the right fields (name, code [aisle/bin], address [location], type [location/sublocation], notes, optional "default location" toggle for root). Parent is prefilled from current breadcrumb.
+
+## 6. Search + filters
+
+Extend existing search input to also match: aisle code, bin code, sub-location name. New filter chips row above the table: **Low stock**, **Empty bins**, **Recent movement (7d)**, **Out of stock**. Computed client-side from already-loaded `products` + `lastMoves`.
+
+## 7. Stock status visuals
+
+Replace the current single `Badge` with a small helper `StockBadge` returning one of:
+- `In stock` (subtle muted)
+- `Low stock` (warning tint — existing token)
+- `Critical` (destructive-soft)
+- `Out of stock` (muted outline)
+
+Driven by `product.min_stock` thresholds already on the schema.
+
+## 8. Mobile UX
+
+- Hierarchy cards: 1-col on `<sm`, 2-col `sm`, 3-col `md+`
+- Table → on `<md`, switch to compact card-list (one product card per row with action menu)
+- All dialogs become `Sheet side="bottom"` on `<md` via the existing `useIsMobile` hook
+
+## 9. New files
+
+- `src/lib/location-tree.ts`
+- `src/components/StockActionsMenu.tsx`
+- `src/components/stock-actions/AddStockDialog.tsx`
+- `src/components/stock-actions/RemoveStockDialog.tsx`
+- `src/components/stock-actions/AdjustStockDialog.tsx`
+- `src/components/stock-actions/MoveStockDialog.tsx`
+- `src/components/LocationNodeDialog.tsx`
+- `src/components/HierarchyBreadcrumb.tsx`
+- `src/components/HierarchyChildrenGrid.tsx`
+- `src/components/StockBadge.tsx`
+
+## 10. Edited files
+
+- `src/routes/_authenticated/location-stock.tsx` — add breadcrumb, hierarchy grid, actions column, filter chips. **No restyle** of existing pieces.
+- `src/i18n/en.json`, `src/i18n/es.json` — ~35 new keys
+
+## Out of scope (explicit)
+
+- No redesign of the page, header, cards, or table
+- No changes to RLS, RBAC, or audit logging beyond reusing existing ones
+- No new permission enum values (uses existing `adjust_stock`, `create_movements`, `manage_locations`, `manage_transfer_orders`)
+- No barcode-printing for bins (separate feature)
+- No bulk move; one product at a time
 
 ## Risk notes
-- Hands-free needs careful camera lifecycle so torch/track state isn't reset on each decode
-- Offline queue must reject duplicates by client UUID before insert to avoid double-posting on reconnect
-- `bwip-js` is ~150KB; lazy-imported only inside `LabelPrintDialog`
 
-After approval I'll start with the migration (permission enum), then ship the code changes in two batches: (a) core automation — hands-free, dupes, queue, status pill; (b) labels, QR routing, analytics, activity, shortcuts.
+- `bin_id` is nullable + new column → safe additive change; existing queries unaffected
+- Hierarchy depth capped at 4 (UI enforces); recursive descendant lookup runs over a small in-memory tree (org-scoped)
+- "Move Product" uses `transfer_orders` so existing per-location math is automatically correct without duplicating logic
