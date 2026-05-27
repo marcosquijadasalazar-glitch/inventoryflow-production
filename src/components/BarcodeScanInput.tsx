@@ -65,8 +65,22 @@ export function BarcodeScanInput({ onScan, autoFocus = true }: Props) {
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraOn(false);
     setStarting(false);
+    setTorchOn(false);
+    setTorchSupported(false);
     startingRef.current = false;
   }, []);
+
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      const next = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: next } as any] });
+      setTorchOn(next);
+    } catch (e) {
+      console.warn("[scanner] torch toggle failed", e);
+    }
+  };
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
