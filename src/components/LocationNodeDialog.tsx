@@ -20,23 +20,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createNode, LEVEL_LABEL, type NodeLevel } from "@/lib/location-tree";
+import {
+  createNode,
+  updateNode,
+  LEVEL_LABEL,
+  type LocationNode,
+  type NodeLevel,
+} from "@/lib/location-tree";
 
 export function LocationNodeDialog({
   open,
   level,
   parentId,
   parentLabel,
+  editNode,
   onClose,
 }: {
   open: boolean;
   level: NodeLevel;
   parentId: string | null;
   parentLabel?: string | null;
+  /** When set, the dialog edits this node instead of creating. */
+  editNode?: LocationNode | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const isEdit = !!editNode;
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [type, setType] = useState("warehouse");
@@ -46,13 +56,21 @@ export function LocationNodeDialog({
 
   useEffect(() => {
     if (open) {
-      setName("");
-      setCode("");
-      setType(level === "sublocation" ? "shelf" : "warehouse");
-      setAddress("");
-      setNotes("");
+      if (editNode) {
+        setName(editNode.name ?? "");
+        setCode(editNode.code ?? "");
+        setType(editNode.type ?? "warehouse");
+        setAddress(editNode.address ?? "");
+        setNotes(editNode.notes ?? "");
+      } else {
+        setName("");
+        setCode("");
+        setType(level === "sublocation" ? "shelf" : "warehouse");
+        setAddress("");
+        setNotes("");
+      }
     }
-  }, [open, level]);
+  }, [open, level, editNode]);
 
   if (!open) return null;
 
@@ -60,18 +78,29 @@ export function LocationNodeDialog({
     e.preventDefault();
     setSaving(true);
     try {
-      await createNode({
-        name,
-        node_level: level,
-        parent_id: parentId,
-        type: level === "bin" ? "bin" : type,
-        address: level === "location" ? address || null : null,
-        notes: notes || null,
-        code: level === "aisle" || level === "bin" ? code || null : null,
-      });
-      toast.success(
-        t("ln.created", { defaultValue: "{{label}} created", label: t(`ln.levels.${level}`, LEVEL_LABEL[level]) }),
-      );
+      if (isEdit && editNode) {
+        await updateNode(editNode.id, {
+          name,
+          code: level === "aisle" || level === "bin" ? code : null,
+          type: level === "bin" ? "bin" : type,
+          address: level === "location" ? address : null,
+          notes,
+        });
+        toast.success(t("ln.updated", { defaultValue: "{{label}} updated", label: t(`ln.levels.${level}`, LEVEL_LABEL[level]) }));
+      } else {
+        await createNode({
+          name,
+          node_level: level,
+          parent_id: parentId,
+          type: level === "bin" ? "bin" : type,
+          address: level === "location" ? address || null : null,
+          notes: notes || null,
+          code: level === "aisle" || level === "bin" ? code || null : null,
+        });
+        toast.success(
+          t("ln.created", { defaultValue: "{{label}} created", label: t(`ln.levels.${level}`, LEVEL_LABEL[level]) }),
+        );
+      }
       qc.invalidateQueries({ queryKey: ["location-nodes-all"] });
       qc.invalidateQueries({ queryKey: ["locations"] });
       onClose();
@@ -82,8 +111,9 @@ export function LocationNodeDialog({
     }
   };
 
-  const title =
-    level === "location"
+  const title = isEdit
+    ? t("ln.edit_x", { defaultValue: "Edit {{label}}", label: t(`ln.levels.${level}`, LEVEL_LABEL[level]) })
+    : level === "location"
       ? t("ln.new_location", "New Location")
       : level === "sublocation"
         ? t("ln.new_sublocation", "New Sub-location")
@@ -98,7 +128,7 @@ export function LocationNodeDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          {parentLabel && (
+          {parentLabel && !isEdit && (
             <p className="text-xs text-muted-foreground">
               {t("ln.parent", "Parent")}: <span className="font-medium">{parentLabel}</span>
             </p>
@@ -187,7 +217,11 @@ export function LocationNodeDialog({
               {t("common.cancel", "Cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? t("common.saving", "Saving…") : t("common.create", "Create")}
+              {saving
+                ? t("common.saving", "Saving…")
+                : isEdit
+                  ? t("common.save", "Save")
+                  : t("common.create", "Create")}
             </Button>
           </DialogFooter>
         </form>
