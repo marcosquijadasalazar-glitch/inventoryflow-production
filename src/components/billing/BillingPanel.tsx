@@ -221,7 +221,7 @@ export function BillingPanel() {
           <PlanCard
             name="Pro"
             price="$79/mo"
-            setupNote={data.setup_fee_paid ? "Setup fee already paid" : "+ $99 one-time setup fee"}
+            setupNote={data.setup_fee_paid ? "Onboarding Process already completed" : "+ $99 one-time Onboarding Process"}
             features={["25 users", "Unlimited products", "10 locations", "All modules + reports"]}
             current={data.plan === "pro"}
             onSelect={() => goCheckout("pro")}
