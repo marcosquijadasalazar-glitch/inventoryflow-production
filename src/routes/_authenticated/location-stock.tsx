@@ -427,7 +427,8 @@ function LocationStockPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3">
           <Card className="border-border shadow-soft">
-            <CardContent className="p-4">
+            <CardContent className="p-4 flex items-center gap-2">
+              <div className="min-w-0 flex-1">
               <Select
                 value={selectedLocationId ?? ""}
                 onValueChange={(v) => setSelectedLocationId(v)}
