@@ -936,10 +936,10 @@ function LocationStockPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    pagedRows.map(({ p, qty, lastMove, status }) => {
+                    pagedRows.map(({ key, p, qty, nodeId: rowNodeId, lastMove, status }) => {
                       const meta = STATUS_META[status];
                       return (
-                        <TableRow key={p.id}>
+                        <TableRow key={key}>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-muted text-muted-foreground shrink-0">
@@ -953,6 +953,14 @@ function LocationStockPage() {
                             {p.barcode ?? "—"}
                           </TableCell>
                           <TableCell className="text-xs">{p.category ?? "—"}</TableCell>
+                          <TableCell>
+                            <LocationPath
+                              nodeId={rowNodeId}
+                              fallback={(p as any).location}
+                              nodes={nodes}
+                              showIcon={false}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="inline-flex items-center gap-2">
                               <span className={cn("h-4 w-1 rounded-sm", meta.bar)} />
