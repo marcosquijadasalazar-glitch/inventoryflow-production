@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
+import { LocationPath } from "@/components/LocationPath";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
