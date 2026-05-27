@@ -1020,6 +1020,10 @@ function LocationStockPage() {
         product={viewProduct}
         onClose={() => setViewProduct(null)}
       />
+      <ImportLocationsDialog
+        open={showImport}
+        onClose={() => setShowImport(false)}
+      />
     </div>
   );
 }
