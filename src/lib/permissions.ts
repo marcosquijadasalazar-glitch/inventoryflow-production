@@ -102,6 +102,7 @@ export const PERMISSION_GROUPS: { key: string; perms: AppPermission[] }[] = [
       "adjust_stock",
       "view_transaction_history",
       "use_barcode_scanner",
+      "print_labels",
     ],
   },
   {
