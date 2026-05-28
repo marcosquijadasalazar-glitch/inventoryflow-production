@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupCompleteRouteImport } from './routes/signup-complete'
-import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ServiceAgreementRouteImport } from './routes/service-agreement'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -24,6 +23,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignupDisabledRouteImport } from './routes/signup.disabled'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedTransferOrdersRouteImport } from './routes/_authenticated/transfer-orders'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -57,11 +57,6 @@ const TermsRoute = TermsRouteImport.update({
 const SignupCompleteRoute = SignupCompleteRouteImport.update({
   id: '/signup-complete',
   path: '/signup-complete',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServiceAgreementRoute = ServiceAgreementRouteImport.update({
@@ -121,6 +116,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupDisabledRoute = SignupDisabledRouteImport.update({
+  id: '/signup/disabled',
+  path: '/signup/disabled',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
@@ -264,7 +264,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
-  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
@@ -289,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/signup/disabled': typeof SignupDisabledRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
   '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
@@ -304,7 +304,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
-  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
@@ -329,6 +328,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRoute
   '/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/signup/disabled': typeof SignupDisabledRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
   '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
@@ -346,7 +346,6 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
-  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/_authenticated/adjustments': typeof AuthenticatedAdjustmentsRoute
@@ -371,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
   '/_authenticated/transfer-orders': typeof AuthenticatedTransferOrdersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/signup/disabled': typeof SignupDisabledRoute
   '/api/public/hooks/run-backup': typeof ApiPublicHooksRunBackupRoute
   '/api/public/hooks/stripe': typeof ApiPublicHooksStripeRoute
 }
@@ -388,7 +388,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
-    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/adjustments'
@@ -413,6 +412,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/transfer-orders'
     | '/users'
+    | '/signup/disabled'
     | '/api/public/hooks/run-backup'
     | '/api/public/hooks/stripe'
   fileRoutesByTo: FileRoutesByTo
@@ -428,7 +428,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
-    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/adjustments'
@@ -453,6 +452,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/transfer-orders'
     | '/users'
+    | '/signup/disabled'
     | '/api/public/hooks/run-backup'
     | '/api/public/hooks/stripe'
   id:
@@ -469,7 +469,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
-    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/_authenticated/adjustments'
@@ -494,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/transfer-orders'
     | '/_authenticated/users'
+    | '/signup/disabled'
     | '/api/public/hooks/run-backup'
     | '/api/public/hooks/stripe'
   fileRoutesById: FileRoutesById
@@ -511,9 +511,9 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ServiceAgreementRoute: typeof ServiceAgreementRoute
-  SignupRoute: typeof SignupRoute
   SignupCompleteRoute: typeof SignupCompleteRoute
   TermsRoute: typeof TermsRoute
+  SignupDisabledRoute: typeof SignupDisabledRoute
   ApiPublicHooksRunBackupRoute: typeof ApiPublicHooksRunBackupRoute
   ApiPublicHooksStripeRoute: typeof ApiPublicHooksStripeRoute
 }
@@ -532,13 +532,6 @@ declare module '@tanstack/react-router' {
       path: '/signup-complete'
       fullPath: '/signup-complete'
       preLoaderRoute: typeof SignupCompleteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/service-agreement': {
@@ -623,6 +616,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup/disabled': {
+      id: '/signup/disabled'
+      path: '/signup/disabled'
+      fullPath: '/signup/disabled'
+      preLoaderRoute: typeof SignupDisabledRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/users': {
@@ -863,9 +863,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ServiceAgreementRoute: ServiceAgreementRoute,
-  SignupRoute: SignupRoute,
   SignupCompleteRoute: SignupCompleteRoute,
   TermsRoute: TermsRoute,
+  SignupDisabledRoute: SignupDisabledRoute,
   ApiPublicHooksRunBackupRoute: ApiPublicHooksRunBackupRoute,
   ApiPublicHooksStripeRoute: ApiPublicHooksStripeRoute,
 }
