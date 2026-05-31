@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { MailCheck, ShieldQuestion } from "lucide-react";
+import { WhatsAppHelpButton } from "@/components/onboarding/WhatsAppHelpButton";
 
 export const Route = createFileRoute("/email-confirmed")({
   component: EmailConfirmedPage,
@@ -29,6 +30,9 @@ function EmailConfirmedPage() {
         <Button asChild className="mt-6 w-full h-11">
           <Link to="/login">{t("onboarding.backToLogin", { defaultValue: "Back to Login" })}</Link>
         </Button>
+        <div className="mt-4">
+          <WhatsAppHelpButton variant="card" topic="setup" />
+        </div>
       </div>
     </div>
   );

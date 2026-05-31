@@ -59,6 +59,105 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_policies: {
+        Row: {
+          action_type: Database["public"]["Enums"]["approval_action_type"]
+          block_completely: boolean
+          created_at: string
+          enabled: boolean
+          id: string
+          organization_id: string
+          required_role: Database["public"]["Enums"]["approval_required_role"]
+          threshold_qty: number | null
+          threshold_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["approval_action_type"]
+          block_completely?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id: string
+          required_role?: Database["public"]["Enums"]["approval_required_role"]
+          threshold_qty?: number | null
+          threshold_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["approval_action_type"]
+          block_completely?: boolean
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id?: string
+          required_role?: Database["public"]["Enums"]["approval_required_role"]
+          threshold_qty?: number | null
+          threshold_value?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      approval_requests: {
+        Row: {
+          action_type: Database["public"]["Enums"]["approval_action_type"]
+          approved_by: string | null
+          approved_by_email: string | null
+          created_at: string
+          decided_at: string | null
+          decision_note: string | null
+          entity_label: string | null
+          expires_at: string
+          id: string
+          organization_id: string
+          payload: Json
+          reason: string | null
+          requested_by: string | null
+          requested_by_email: string | null
+          same_session: boolean
+          status: Database["public"]["Enums"]["approval_request_status"]
+          threshold_snapshot: Json
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["approval_action_type"]
+          approved_by?: string | null
+          approved_by_email?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          entity_label?: string | null
+          expires_at?: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          reason?: string | null
+          requested_by?: string | null
+          requested_by_email?: string | null
+          same_session?: boolean
+          status?: Database["public"]["Enums"]["approval_request_status"]
+          threshold_snapshot?: Json
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["approval_action_type"]
+          approved_by?: string | null
+          approved_by_email?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          entity_label?: string | null
+          expires_at?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          reason?: string | null
+          requested_by?: string | null
+          requested_by_email?: string | null
+          same_session?: boolean
+          status?: Database["public"]["Enums"]["approval_request_status"]
+          threshold_snapshot?: Json
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           address: string | null
@@ -258,9 +357,66 @@ export type Database = {
           },
         ]
       }
+      login_activity: {
+        Row: {
+          action: string
+          browser: string | null
+          category: string
+          country: string | null
+          created_at: string
+          device: string | null
+          email: string | null
+          id: string
+          ip_address: string | null
+          organization_id: string | null
+          os: string | null
+          severity: string
+          status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          browser?: string | null
+          category?: string
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          os?: string | null
+          severity?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          browser?: string | null
+          category?: string
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          os?: string | null
+          severity?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
+          action_path: string | null
           created_at: string
+          entity_id: string | null
+          entity_type: string | null
           id: string
           message: string
           metadata: Json
@@ -272,7 +428,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          action_path?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           message: string
           metadata?: Json
@@ -284,7 +443,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          action_path?: string | null
           created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           message?: string
           metadata?: Json
@@ -294,6 +456,117 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      operational_audit_log: {
+        Row: {
+          action_type: string
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string
+          id: string
+          metadata: Json
+          organization_id: string | null
+          summary: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json
+          organization_id?: string | null
+          summary?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          organization_id?: string | null
+          summary?: string | null
+        }
+        Relationships: []
+      }
+      organization_preferences: {
+        Row: {
+          contact_address: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string | null
+          default_location_id: string | null
+          default_low_stock_threshold: number
+          id: string
+          language: string | null
+          manager_can_edit_org_settings: boolean
+          notify_billing: boolean
+          notify_low_stock: boolean
+          notify_security: boolean
+          notify_transfers: boolean
+          organization_id: string
+          scanner_auto_commit: boolean
+          scanner_haptics: boolean
+          scanner_sound: boolean
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          default_location_id?: string | null
+          default_low_stock_threshold?: number
+          id?: string
+          language?: string | null
+          manager_can_edit_org_settings?: boolean
+          notify_billing?: boolean
+          notify_low_stock?: boolean
+          notify_security?: boolean
+          notify_transfers?: boolean
+          organization_id: string
+          scanner_auto_commit?: boolean
+          scanner_haptics?: boolean
+          scanner_sound?: boolean
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string | null
+          default_location_id?: string | null
+          default_low_stock_threshold?: number
+          id?: string
+          language?: string | null
+          manager_can_edit_org_settings?: boolean
+          notify_billing?: boolean
+          notify_low_stock?: boolean
+          notify_security?: boolean
+          notify_transfers?: boolean
+          organization_id?: string
+          scanner_auto_commit?: boolean
+          scanner_haptics?: boolean
+          scanner_sound?: boolean
+          timezone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1174,6 +1447,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          browser: string | null
+          current_page: string | null
+          device: string | null
+          is_online: boolean
+          last_seen_at: string
+          organization_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          current_page?: string | null
+          device?: string | null
+          is_online?: boolean
+          last_seen_at?: string
+          organization_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          current_page?: string | null
+          device?: string | null
+          is_online?: boolean
+          last_seen_at?: string
+          organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1253,6 +1559,14 @@ export type Database = {
         | "manage_company_settings"
         | "print_labels"
       app_role: "super_admin" | "owner" | "manager" | "employee"
+      approval_action_type:
+        | "stock_adjustment"
+        | "transfer_order"
+        | "product_deletion"
+        | "role_change"
+        | "large_import"
+      approval_request_status: "pending" | "approved" | "rejected" | "expired"
+      approval_required_role: "manager" | "owner"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
       notification_type:
@@ -1262,6 +1576,9 @@ export type Database = {
         | "user_created"
         | "role_changed"
         | "system"
+        | "transfer_received"
+        | "suspicious_activity"
+        | "onboarding_incomplete"
       org_plan: "free" | "starter" | "pro" | "enterprise"
       payment_status: "unpaid" | "paid" | "partial" | "refunded"
       po_status:
@@ -1448,6 +1765,15 @@ export const Constants = {
         "print_labels",
       ],
       app_role: ["super_admin", "owner", "manager", "employee"],
+      approval_action_type: [
+        "stock_adjustment",
+        "transfer_order",
+        "product_deletion",
+        "role_change",
+        "large_import",
+      ],
+      approval_request_status: ["pending", "approved", "rejected", "expired"],
+      approval_required_role: ["manager", "owner"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
       movement_type: ["add", "remove", "adjustment"],
       notification_type: [
@@ -1457,6 +1783,9 @@ export const Constants = {
         "user_created",
         "role_changed",
         "system",
+        "transfer_received",
+        "suspicious_activity",
+        "onboarding_incomplete",
       ],
       org_plan: ["free", "starter", "pro", "enterprise"],
       payment_status: ["unpaid", "paid", "partial", "refunded"],

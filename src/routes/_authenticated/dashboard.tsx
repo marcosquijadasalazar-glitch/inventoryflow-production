@@ -17,6 +17,8 @@ import {
   Search,
   X,
   ScanLine,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UsageSummaryCard } from "@/components/PlanLimitBanner";
 import { useOrgUsage } from "@/lib/use-org-usage";
 import { GettingStartedCard } from "@/components/onboarding/GettingStartedCard";
+import { ContinueSetupButton } from "@/components/onboarding/ContinueSetupButton";
 import { InsightsSummaryCard } from "@/components/InsightsPanel";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -102,6 +105,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <ContinueSetupButton variant="banner" />
       <GettingStartedCard />
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
@@ -134,6 +138,14 @@ function Dashboard() {
           </Button>
         </div>
       </div>
+
+      <DailyBrief
+        loading={products.isLoading || movements.isLoading}
+        total={products.data?.length ?? 0}
+        lowStock={(products.data ?? []).filter((p) => getStockStatus(p) === "low").length}
+        outOfStock={(products.data ?? []).filter((p) => getStockStatus(p) === "out").length}
+        movements={movements.data ?? []}
+      />
 
       {/* Quick search + filters */}
       <div className="flex flex-col lg:flex-row gap-3">
@@ -510,3 +522,138 @@ function EmptyState({
     </div>
   );
 }
+
+function DailyBrief({
+  loading,
+  total,
+  lowStock,
+  outOfStock,
+  movements,
+}: {
+  loading: boolean;
+  total: number;
+  lowStock: number;
+  outOfStock: number;
+  movements: Array<{ created_at: string; type: string }>;
+}) {
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 5 ? "Working late" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const last24h = movements.filter((m) => now - new Date(m.created_at).getTime() < dayMs);
+  const prev24h = movements.filter((m) => {
+    const t = now - new Date(m.created_at).getTime();
+    return t >= dayMs && t < 2 * dayMs;
+  });
+  const scans24h = last24h.length;
+
+  // Tone
+  let tone: "healthy" | "warning" | "critical" | "empty" = "healthy";
+  let headline = "Everything looks healthy today.";
+  if (total === 0) {
+    tone = "empty";
+    headline = "Let's get your inventory set up.";
+  } else if (outOfStock > 0) {
+    tone = "critical";
+    headline =
+      outOfStock === 1
+        ? "1 product is out of stock and needs restocking."
+        : `${outOfStock} products are out of stock and need restocking.`;
+  } else if (lowStock > 0) {
+    tone = "warning";
+    headline =
+      lowStock === 1
+        ? "1 product may need restocking soon."
+        : `${lowStock} products may need restocking soon.`;
+  }
+
+  const hints: string[] = [];
+  if (total > 0) {
+    if (scans24h === 0) {
+      hints.push("No stock activity in the last 24 hours yet.");
+    } else if (prev24h.length > 0 && scans24h >= prev24h.length * 2 && scans24h >= 6) {
+      hints.push(`Activity is unusually high — ${scans24h} movements in the last 24 hours.`);
+    } else {
+      hints.push(`${scans24h} stock ${scans24h === 1 ? "movement" : "movements"} in the last 24 hours.`);
+    }
+    if (tone === "warning" || tone === "critical") {
+      hints.push("Open Alerts to review what to restock first.");
+    } else if (tone === "healthy") {
+      hints.push("A good moment to plan ahead or review reports.");
+    }
+  } else {
+    hints.push("Add a product or import a CSV to begin.");
+  }
+
+  const accent =
+    tone === "critical"
+      ? {
+          ring: "border-destructive/25",
+          bg: "bg-destructive/5",
+          chip: "bg-destructive/10 text-destructive",
+          Icon: AlertTriangle,
+        }
+      : tone === "warning"
+        ? {
+            ring: "border-warning/30",
+            bg: "bg-warning/5",
+            chip: "bg-warning/15 text-[oklch(0.5_0.14_70)]",
+            Icon: AlertTriangle,
+          }
+        : tone === "empty"
+          ? {
+              ring: "border-border",
+              bg: "bg-surface",
+              chip: "bg-primary/10 text-primary",
+              Icon: Sparkles,
+            }
+          : {
+              ring: "border-success/25",
+              bg: "bg-success/5",
+              chip: "bg-success/10 text-[oklch(0.4_0.12_155)]",
+              Icon: CheckCircle2,
+            };
+
+  if (loading) {
+    return (
+      <Card className={`border-border shadow-soft`}>
+        <CardContent className="p-5">
+          <Skeleton className="h-4 w-32 mb-3" />
+          <Skeleton className="h-5 w-2/3 mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const Icon = accent.Icon;
+  return (
+    <Card className={`${accent.ring} ${accent.bg} shadow-soft`}>
+      <CardContent className="p-5 flex items-start gap-4">
+        <div
+          className={`h-11 w-11 rounded-xl ${accent.chip} flex items-center justify-center shrink-0`}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {greeting} · Today's brief
+          </p>
+          <p className="text-base font-semibold tracking-tight mt-0.5">{headline}</p>
+          {hints.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {hints.map((h, i) => (
+                <li key={i} className="text-sm text-muted-foreground">
+                  · {h}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+

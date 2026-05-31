@@ -34,7 +34,7 @@ export function QuickMovementDialog({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = parseInt(qty, 10);
-    if (isNaN(q) || q <= 0) return toast.error("Enter a valid quantity");
+    if (isNaN(q) || q <= 0) return toast.error("Please enter a valid quantity.");
     setSaving(true);
     try {
       await createMovement({
@@ -43,7 +43,11 @@ export function QuickMovementDialog({
         quantity: q,
         note: note || null,
       });
-      toast.success(type === "add" ? "Stock added" : "Stock removed");
+      toast.success(
+        type === "add"
+          ? `Added ${q} ${q === 1 ? "unit" : "units"} to ${product.name}.`
+          : `Removed ${q} ${q === 1 ? "unit" : "units"} from ${product.name}.`,
+      );
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       onClose();

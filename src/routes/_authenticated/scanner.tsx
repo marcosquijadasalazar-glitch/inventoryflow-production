@@ -44,7 +44,7 @@ import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import {
   ScanLine,
   PackageCheck,
-  PackageX,
+  
   Plus,
   Minus,
   Settings2,
@@ -69,14 +69,19 @@ import { ScannerAnalyticsPanel } from "@/components/ScannerAnalyticsPanel";
 import { FrequentTodayStrip } from "@/components/FrequentTodayStrip";
 import { LabelPrintDialog } from "@/components/LabelPrintDialog";
 import { installAutoSync, submitMovement } from "@/lib/scan-queue";
-import { Tag } from "lucide-react";
+import { Tag, SlidersHorizontal } from "lucide-react";
+import { ScannerFeedbackFlash, type FlashState } from "@/components/ScannerFeedbackFlash";
+import {
+  BarcodeIntelCard,
+  type BarcodeIntelDecision,
+} from "@/components/BarcodeIntelCard";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   component: ScannerPage,
 });
 
 type Action = "add" | "remove" | "adjustment";
-type ScanMode = "lookup" | "count" | "receive" | "transfer";
+type ScanMode = "lookup" | "count" | "receive" | "transfer" | "adjust";
 
 type SessionItem = {
   product: Product;
@@ -93,7 +98,9 @@ type HistoryEntry = {
 const HISTORY_KEY = "scanner-history-v1";
 const HISTORY_MAX = 10;
 
-function playBeep() {
+type FeedbackKind = "success" | "duplicate" | "error";
+
+function playBeep(kind: FeedbackKind = "success") {
   try {
     const Ctx =
       (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -102,22 +109,26 @@ function playBeep() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
-    osc.frequency.value = 880;
+    const freq = kind === "success" ? 880 : kind === "duplicate" ? 520 : 220;
+    const duration = kind === "error" ? 0.32 : 0.18;
+    osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.2);
-    setTimeout(() => ctx.close().catch(() => {}), 300);
+    osc.stop(ctx.currentTime + duration + 0.02);
+    setTimeout(() => ctx.close().catch(() => {}), Math.round((duration + 0.1) * 1000));
   } catch {
     /* ignore */
   }
 }
 
-function vibrate() {
+function vibrate(kind: FeedbackKind = "success") {
   try {
-    navigator.vibrate?.(40);
+    const pattern =
+      kind === "success" ? 40 : kind === "duplicate" ? [20, 40, 20] : [80, 40, 80];
+    navigator.vibrate?.(pattern);
   } catch {
     /* ignore */
   }
@@ -200,6 +211,7 @@ function ScannerPage() {
   const canCount = can("adjust_stock");
   const canReceive = can("create_movements") || can("adjust_stock");
   const canTransfer = can("manage_transfer_orders") || can("create_movements");
+  const canAdjust = can("adjust_stock");
 
   const transferDisabled = locations.length < 2;
 
@@ -225,12 +237,19 @@ function ScannerPage() {
         transferDisabled={transferDisabled}
       />
 
+      <p className="-mt-3 text-xs text-muted-foreground px-1">
+        {t(`scanner.modeHints.${mode}`)}
+      </p>
+
       {mode === "lookup" && <LookupMode />}
       {mode === "count" && (
         <BatchMode mode="count" locations={locations} canSave={canCount} />
       )}
       {mode === "receive" && (
         <BatchMode mode="receive" locations={locations} canSave={canReceive} />
+      )}
+      {mode === "adjust" && (
+        <BatchMode mode="adjust" locations={locations} canSave={canAdjust} />
       )}
       {mode === "transfer" &&
         (transferDisabled ? (
@@ -270,9 +289,10 @@ function ModeTabs({
       icon: ArrowLeftRight,
       disabled: transferDisabled,
     },
+    { id: "adjust", label: t("scanner.modes.adjust"), icon: SlidersHorizontal },
   ];
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-lg bg-muted/40 p-1">
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 rounded-lg bg-muted/40 p-1">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const active = mode === tab.id;
@@ -283,7 +303,7 @@ function ModeTabs({
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors",
+              "rounded-md px-3 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors min-h-[44px]",
               active
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -309,6 +329,9 @@ function LookupMode() {
   const [scanned, setScanned] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [intelPrefill, setIntelPrefill] = useState<BarcodeIntelDecision | null>(
+    null,
+  );
   const [actionOpen, setActionOpen] = useState<Action | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -335,6 +358,8 @@ function LookupMode() {
       }
       if (!data) {
         setNotFound(true);
+        playBeep("error");
+        vibrate("error");
         toast.warning(t("scanner.productNotFound"));
         pushHistory({
           productName: t("scanner.productNotFound"),
@@ -379,6 +404,7 @@ function LookupMode() {
     setProduct(null);
     setScanned(null);
     setNotFound(false);
+    setIntelPrefill(null);
   };
 
   const { data: lastActivity } = useQuery({
@@ -409,27 +435,20 @@ function LookupMode() {
 
       <div ref={scanRegionRef}>
         {scanned && notFound && (
-          <Card className="border-warning/30 bg-warning/5">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <PackageX className="h-5 w-5 text-warning" />
-                {t("scanner.productNotFound")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-center gap-3">
-              <code className="px-2 py-1 bg-muted rounded font-mono text-sm">
-                {scanned}
-              </code>
-              <Button onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-1.5" />
-                {t("scanner.createNewProduct")}
-              </Button>
-              <Button variant="ghost" onClick={resetScan}>
-                {t("scanner.scanAgain")}
-              </Button>
-            </CardContent>
-          </Card>
+          <BarcodeIntelCard
+            barcode={scanned}
+            onConfirm={(decision) => {
+              setIntelPrefill(decision);
+              setCreateOpen(true);
+            }}
+            onManual={() => {
+              setIntelPrefill(null);
+              setCreateOpen(true);
+            }}
+            onDismiss={resetScan}
+          />
         )}
+
 
         {product && (
           <Card>
@@ -541,17 +560,30 @@ function LookupMode() {
       />
 
       <ProductForm
+        key={`create-${scanned ?? "none"}-${intelPrefill ? "intel" : "blank"}`}
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(v) => {
+          setCreateOpen(v);
+          if (!v) setIntelPrefill(null);
+        }}
         product={
-          scanned ? ({ barcode: scanned } as unknown as Product) : null
+          scanned
+            ? ({
+                barcode: scanned,
+                name: intelPrefill?.name ?? "",
+                category: intelPrefill?.category ?? "",
+                supplier: intelPrefill?.brand ?? "",
+              } as unknown as Product)
+            : null
         }
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["products"] });
           qc.invalidateQueries({ queryKey: ["history"] });
+          setIntelPrefill(null);
           if (scanned) handleScan(scanned);
         }}
       />
+
 
       <ProductDetailsDialog
         product={detailsOpen ? product : null}
@@ -574,7 +606,7 @@ function BatchMode({
   locations,
   canSave,
 }: {
-  mode: "count" | "receive" | "transfer";
+  mode: "count" | "receive" | "transfer" | "adjust";
   locations: Location[];
   canSave: boolean;
 }) {
@@ -588,7 +620,16 @@ function BatchMode({
   const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [flash, setFlash] = useState<FlashState>(null);
+  // Adjust mode extras
+  const [adjustDirection, setAdjustDirection] = useState<"add" | "remove">("add");
+  const [adjustReason, setAdjustReason] = useState<string>("");
   const dedupeRef = useRef<Map<string, number>>(new Map());
+  const flashNonce = useRef(0);
+  const pushFlash = (s: Omit<NonNullable<FlashState>, "nonce">) => {
+    flashNonce.current += 1;
+    setFlash({ ...s, nonce: flashNonce.current });
+  };
 
   // Auto-select first location when relevant
   useEffect(() => {
@@ -627,6 +668,15 @@ function BatchMode({
       needsLocation: true,
       needsTwoLocations: true,
     },
+    adjust: {
+      title: t("scanner.modes.adjust"),
+      saveNote: "Stock adjustment via barcode scanner",
+      saveLabel: t("scanner.saveAdjust"),
+      empty: t("scanner.emptyAdjust"),
+      locationLabel: t("scanner.locationOptional"),
+      needsLocation: false,
+      needsTwoLocations: false,
+    },
   }[mode];
 
   const handleScan = async (code: string) => {
@@ -634,7 +684,13 @@ function BatchMode({
     const now = Date.now();
     const prevTs = dedupeRef.current.get(code);
     if (prevTs && now - prevTs < 2500) {
-      toast.message(t("scanner.duplicateIgnored"));
+      playBeep("duplicate");
+      vibrate("duplicate");
+      pushFlash({
+        kind: "duplicate",
+        title: t("scanner.scanFlash.duplicate"),
+        detail: code,
+      });
       return;
     }
     dedupeRef.current.set(code, now);
@@ -659,7 +715,13 @@ function BatchMode({
       }
       if (!product) {
         setPendingBarcode(code);
-        toast.warning(t("scanner.productNotFound"));
+        playBeep("error");
+        vibrate("error");
+        pushFlash({
+          kind: "error",
+          title: t("scanner.scanFlash.notFound"),
+          detail: code,
+        });
         setCreateOpen(true);
         pushHistory({
           productName: t("scanner.productNotFound"),
@@ -680,6 +742,11 @@ function BatchMode({
       });
       playBeep();
       vibrate();
+      pushFlash({
+        kind: "success",
+        title: product.name,
+        detail: t("scanner.scanFlash.added"),
+      });
       pushHistory({
         productName: product.name,
         barcode: code,
@@ -735,12 +802,17 @@ function BatchMode({
         return;
       }
     }
+    if (mode === "adjust" && !adjustReason) {
+      toast.error(t("scanner.adjustReasonRequired"));
+      return;
+    }
 
     setSaving(true);
     try {
       const fromName = locations.find((l) => l.id === fromLocation)?.name;
       const toName = locations.find((l) => l.id === toLocation)?.name;
       let queuedAny = false;
+      let varianceCount = 0;
       const submit = async (payload: Parameters<typeof submitMovement>[0]) => {
         const r = await submitMovement(payload);
         if (r.queued) queuedAny = true;
@@ -748,6 +820,7 @@ function BatchMode({
 
       for (const item of items) {
         if (mode === "count") {
+          if (item.quantity !== item.product.stock) varianceCount += 1;
           const note = `[scan] ${labels.saveNote}${
             fromName ? ` @${fromName}` : ""
           }`;
@@ -782,11 +855,48 @@ function BatchMode({
             quantity: item.quantity,
             note,
           });
+        } else if (mode === "adjust") {
+          const note = `[scan] [${adjustReason}] ${labels.saveNote}${
+            fromName ? ` @${fromName}` : ""
+          }`;
+          await submit({
+            product_id: item.product.id,
+            type: adjustDirection,
+            quantity: item.quantity,
+            note,
+          });
         }
       }
 
+      const totalCount = items.reduce((s, i) => s + i.quantity, 0);
       if (queuedAny) {
         toast.success(t("scanner.queuedSession", { count: items.length }));
+      } else if (mode === "receive") {
+        toast.success(
+          t("scanner.receivedSuccess", {
+            count: totalCount,
+            at: fromName ? ` at ${fromName}` : "",
+          }),
+        );
+      } else if (mode === "transfer") {
+        toast.success(
+          t("scanner.transferSuccess", {
+            count: totalCount,
+            to: toName ?? "",
+          }),
+        );
+      } else if (mode === "count") {
+        toast.success(
+          varianceCount > 0
+            ? t("scanner.countSavedVariance", { count: varianceCount })
+            : t("scanner.countSavedClean"),
+        );
+      } else if (mode === "adjust") {
+        toast.success(
+          adjustDirection === "add"
+            ? t("scanner.adjustSavedAdd", { count: totalCount })
+            : t("scanner.adjustSavedRemove", { count: totalCount }),
+        );
       } else {
         toast.success(t("scanner.sessionSaved", { count: items.length }));
       }
@@ -857,9 +967,54 @@ function BatchMode({
                 />
               </div>
             )}
+            {mode === "adjust" && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>{t("scanner.adjustDirection")}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={adjustDirection === "add" ? "default" : "outline"}
+                      className="h-11"
+                      onClick={() => setAdjustDirection("add")}
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      {t("scanner.adjustAdd")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={adjustDirection === "remove" ? "default" : "outline"}
+                      className="h-11"
+                      onClick={() => setAdjustDirection("remove")}
+                    >
+                      <Minus className="h-4 w-4 mr-1.5" />
+                      {t("scanner.adjustRemove")}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t("scanner.adjustReason")}</Label>
+                  <Select value={adjustReason} onValueChange={setAdjustReason}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="—" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="physical_count">{t("sa.adj_reasons.physical_count", "Physical count")}</SelectItem>
+                      <SelectItem value="correction">{t("sa.adj_reasons.correction", "Inventory correction")}</SelectItem>
+                      <SelectItem value="damaged">{t("sa.adj_reasons.damaged", "Damaged items")}</SelectItem>
+                      <SelectItem value="expired">{t("sa.adj_reasons.expired", "Expired inventory")}</SelectItem>
+                      <SelectItem value="shrinkage">{t("sa.adj_reasons.shrinkage", "Shrinkage")}</SelectItem>
+                      <SelectItem value="other">{t("sa.adj_reasons.other", "Other")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
+
+      <ScannerFeedbackFlash state={flash} />
 
       <Card>
         <CardContent className="pt-6">
@@ -907,17 +1062,54 @@ function BatchMode({
                         {t("scanner.currentStock")}: {item.product.stock}
                       </div>
                     )}
+                    {mode === "count" && (
+                      <div className="text-xs mt-0.5">
+                        <span className="text-muted-foreground">
+                          {t("scanner.currentStock")}: {item.product.stock} ·{" "}
+                        </span>
+                        {item.quantity === item.product.stock ? (
+                          <span className="text-success font-medium">{t("scanner.countMatch")}</span>
+                        ) : (
+                          <span className={cn("font-medium", item.quantity > item.product.stock ? "text-success" : "text-destructive")}>
+                            {t("scanner.countVariance")}: {item.quantity > item.product.stock ? "+" : ""}
+                            {item.quantity - item.product.stock}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={mode === "count" ? 0 : 1}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateQty(item.product.id, parseInt(e.target.value, 10) || 0)
-                    }
-                    className="w-20 h-10 text-center"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 shrink-0"
+                      onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                      aria-label="Decrease"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={mode === "count" ? 0 : 1}
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateQty(item.product.id, parseInt(e.target.value, 10) || 0)
+                      }
+                      className="w-14 h-10 text-center font-semibold"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 shrink-0"
+                      onClick={() => updateQty(item.product.id, item.quantity + 1)}
+                      aria-label="Increase"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -1005,12 +1197,13 @@ function ScanHistoryPanel() {
     return () => window.removeEventListener("scanner-history-changed", refresh);
   }, []);
 
-  const modeLabel = useMemo(
+  const modeLabel = useMemo<Record<ScanMode, string>>(
     () => ({
       lookup: t("scanner.modes.lookup"),
       count: t("scanner.modes.count"),
       receive: t("scanner.modes.receive"),
       transfer: t("scanner.modes.transfer"),
+      adjust: t("scanner.modes.adjust"),
     }),
     [t],
   );

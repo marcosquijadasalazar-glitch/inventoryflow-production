@@ -90,21 +90,22 @@ function AlertsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-[oklch(0.55_0.16_70)] mb-1.5">
-            Attention required
+            Worth a look
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Stock Alerts</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Stock that needs you</h1>
           <p className="text-muted-foreground mt-1">
-            Products needing review based on stock thresholds and activity.
+            A calm view of products running low, sitting idle, or worth keeping an eye on.
           </p>
         </div>
         <ExportMenu
-          title={`Stock Alerts — ${filter}`}
+          title={`Stock that needs you — ${filter}`}
           filename={`alerts-${filter}`}
           rows={list}
           columns={ALERT_EXPORT_COLUMNS}
           meta={[{ label: "View", value: filter }]}
         />
       </div>
+
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <SummaryCard
@@ -114,34 +115,36 @@ function AlertsPage() {
           icon={AlertTriangle}
         />
         <SummaryCard
-          label="Low stock"
+          label="Running low"
           value={low.length}
           accent="warning"
           icon={AlertTriangle}
         />
         <SummaryCard
-          label="No recent movement"
+          label="Sitting idle"
           value={stale.length}
           accent="muted"
           icon={ArrowLeftRight}
         />
         <SummaryCard
-          label="High value low stock"
+          label="High-value, low stock"
           value={highValueLow.length}
           accent="warning"
           icon={AlertTriangle}
         />
+
       </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as AlertFilter)}>
         <TabsList className="bg-surface-muted">
           <TabsTrigger value="all">All ({allAttention.length})</TabsTrigger>
-          <TabsTrigger value="low">Low stock ({low.length})</TabsTrigger>
+          <TabsTrigger value="low">Running low ({low.length})</TabsTrigger>
           <TabsTrigger value="out">Out of stock ({out.length})</TabsTrigger>
-          <TabsTrigger value="stale">No movement ({stale.length})</TabsTrigger>
+          <TabsTrigger value="stale">Sitting idle ({stale.length})</TabsTrigger>
           <TabsTrigger value="high-value-low">
             High value ({highValueLow.length})
           </TabsTrigger>
+
         </TabsList>
       </Tabs>
 
@@ -233,10 +236,11 @@ function AlertsPage() {
                       <div className="h-14 w-14 rounded-2xl bg-success/10 flex items-center justify-center mb-4">
                         <CheckCircle2 className="h-6 w-6 text-[oklch(0.4_0.12_155)]" />
                       </div>
-                      <p className="font-medium">All clear</p>
+                      <p className="font-medium">You're all caught up</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        No products in this category right now.
+                        Nothing in this view needs your attention right now.
                       </p>
+
                     </div>
                   </TableCell>
                 </TableRow>

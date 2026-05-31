@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ALL_PERMISSIONS } from "@/lib/permissions";
 

@@ -1,9 +1,11 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
+import { invalidateDerived } from "@/lib/invalidate-after-write";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useApprovalGate } from "@/components/approvals/useApprovalGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +24,7 @@ import {
 import { toast } from "sonner";
 import {
   Users, UserPlus, MoreHorizontal, KeyRound, ShieldOff, ShieldCheck, Trash2, Pencil, Mail, Upload,
-  ScrollText, ShieldQuestion,
+  ScrollText, ShieldQuestion, UserCheck, Armchair,
 } from "lucide-react";
 import { useProfile } from "@/lib/profile";
 import {
@@ -54,7 +56,10 @@ const USERS_IMPORT_SCHEMA: ImportSchema = {
 };
 
 export const Route = createFileRoute("/_authenticated/users")({
-  component: UsersPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/settings", search: { tab: "team" } as any });
+  },
+  component: () => null,
 });
 
 type AssignableRole = "manager" | "employee" | "custom";
@@ -79,7 +84,7 @@ type UserRow = {
   last_sign_in_at: string | null;
 };
 
-function UsersPage() {
+export function UsersPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const profile = useProfile();
   const qc = useQueryClient();
@@ -110,11 +115,26 @@ function UsersPage() {
   const runImport = useServerFn(orgImportUsers);
   const purgeUserFn = useServerFn(purgeUserSecure);
 
-  if (!canAccess) return <Navigate to="/dashboard" replace />;
+  if (!canAccess) {
+    if (embedded) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Not available</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Ask your organization owner for access to team management.
+          </CardContent>
+        </Card>
+      );
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["org-users"] });
     qc.invalidateQueries({ queryKey: ["org-audit"] });
+    invalidateDerived(qc);
   };
 
   const users = (list.data?.users ?? []) as UserRow[];
@@ -130,18 +150,34 @@ function UsersPage() {
     ((presenceQ.data?.rows ?? []) as any[]).map((r) => [r.user_id, r]),
   );
 
+  const totalUsers = users.length;
+  const activeCount = active.length;
+  const pendingCount = pending.length;
+  const availableSeats = cap != null ? Math.max(0, cap - used) : null;
+
   return (
     <div className="space-y-6">
-      <FirstTimeTooltip storageKey="users" i18nKey="onboarding.tips.users" />
+      {!embedded && <FirstTimeTooltip storageKey="users" i18nKey="onboarding.tips.users" />}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            {t("orgUsers.title", "Users & Roles")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("orgUsers.subtitle", "Invite teammates and manage their access.")}
-          </p>
+          {embedded ? (
+            <>
+              <h2 className="text-xl font-semibold tracking-tight">{t("orgUsers.title", "Team & Users")}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("orgUsers.embeddedSubtitle", "Manage your team members, invites, and user access.")}
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                <Users className="h-6 w-6 text-primary" />
+                {t("orgUsers.title", "Users & Roles")}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("orgUsers.subtitle", "Invite teammates and manage their access.")}
+              </p>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {cap != null && (
@@ -152,12 +188,43 @@ function UsersPage() {
           {(role === "owner" || role === "manager") && (
             <Button onClick={() => setInviteOpen(true)} disabled={limitReached}>
               <UserPlus className="h-4 w-4 mr-2" />
-              {t("orgUsers.addUser", "Add User")}
+              {t("orgUsers.addUser", "Invite User")}
             </Button>
           )}
         </div>
-
       </header>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          icon={<Users className="h-5 w-5 text-primary" />}
+          tone="primary"
+          label={t("orgUsers.kpi.total", "Total Users")}
+          value={totalUsers}
+          hint={t("orgUsers.kpi.totalHint", "All team members")}
+        />
+        <KpiCard
+          icon={<UserCheck className="h-5 w-5 text-emerald-600" />}
+          tone="emerald"
+          label={t("orgUsers.kpi.active", "Active Users")}
+          value={activeCount}
+          hint={t("orgUsers.kpi.activeHint", "Currently active")}
+        />
+        <KpiCard
+          icon={<Mail className="h-5 w-5 text-amber-600" />}
+          tone="amber"
+          label={t("orgUsers.kpi.pending", "Pending Invites")}
+          value={pendingCount}
+          hint={t("orgUsers.kpi.pendingHint", "Invitations sent")}
+        />
+        <KpiCard
+          icon={<Armchair className="h-5 w-5 text-sky-600" />}
+          tone="sky"
+          label={t("orgUsers.kpi.seats", "Available Seats")}
+          value={availableSeats ?? "∞"}
+          hint={cap != null ? t("orgUsers.kpi.seatsHint", "Out of {{cap}} seats", { cap }) : t("orgUsers.kpi.seatsUnlimited", "Unlimited on your plan")}
+        />
+      </div>
+
 
       <Tabs defaultValue="users">
         <TabsList className="flex-wrap h-auto">
@@ -801,6 +868,7 @@ function EditDialog({
 }) {
   const { t } = useTranslation();
   const update = useServerFn(orgUpdateUser);
+  const { guard, modal } = useApprovalGate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<AssignableRole>("employee");
@@ -817,22 +885,34 @@ function EditDialog({
   if (!user) return null;
 
   const submit = async () => {
-    setBusy(true);
-    try {
-      await update({
-        data: {
-          user_id: user.user_id,
-          full_name: fullName.trim(),
-          phone: phone.trim() || null,
-          role,
-        },
+    const roleChanged = role !== user.role;
+    const doSave = async () => {
+      setBusy(true);
+      try {
+        await update({
+          data: {
+            user_id: user.user_id,
+            full_name: fullName.trim(),
+            phone: phone.trim() || null,
+            role,
+          },
+        });
+        toast.success(t("orgUsers.updated", "User updated"));
+        onSaved();
+      } catch (e) {
+        toast.error((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
+    };
+    if (roleChanged) {
+      guard({
+        action: "role_change",
+        entityLabel: `${user.full_name ?? user.email} → ${role}`,
+        onApproved: doSave,
       });
-      toast.success(t("orgUsers.updated", "User updated"));
-      onSaved();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBusy(false);
+    } else {
+      void doSave();
     }
   };
 
@@ -873,6 +953,42 @@ function EditDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      {modal}
     </Dialog>
+  );
+}
+
+function KpiCard({
+  icon,
+  tone,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  tone: "primary" | "emerald" | "amber" | "sky";
+  label: string;
+  value: number | string;
+  hint?: string;
+}) {
+  const toneBg: Record<string, string> = {
+    primary: "bg-primary/10",
+    emerald: "bg-emerald-500/10",
+    amber: "bg-amber-500/10",
+    sky: "bg-sky-500/10",
+  };
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${toneBg[tone]}`}>
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground truncate">{label}</div>
+          <div className="text-2xl font-semibold leading-tight">{value}</div>
+          {hint && <div className="text-xs text-muted-foreground truncate">{hint}</div>}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

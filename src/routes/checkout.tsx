@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createSignupCheckoutSession } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, ShieldCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 
 type CheckoutSearch = { plan?: "starter" | "pro" };
 
@@ -25,24 +24,26 @@ export const Route = createFileRoute("/checkout")({
 function CheckoutPage() {
   const { plan = "starter" } = Route.useSearch();
   const start = useServerFn(createSignupCheckoutSession);
-  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isStarter = plan === "starter";
-  const heading = isStarter ? "Start your 7-day free trial" : "Get Pro";
+  const heading = isStarter ? "Starting your 7-day free trial…" : "Continuing to checkout…";
   const sub = isStarter
-    ? "Your billing email and payment method will be collected securely by Stripe."
-    : "Your billing email and payment method will be collected securely by Stripe.";
+    ? "Card required. You won't be charged during your 7-day trial."
+    : "You'll be redirected to Stripe to complete payment.";
 
-  const startPayment = async () => {
-    setBusy(true);
-    try {
-      const { url } = await start({ data: { plan } });
-      window.location.href = url;
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not start checkout");
-      setBusy(false);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { url } = await start({ data: { plan } });
+        if (!cancelled) window.location.href = url;
+      } catch (err: any) {
+        if (!cancelled) setError(err?.message ?? "Could not start checkout");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [plan, start]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -54,27 +55,33 @@ function CheckoutPage() {
           <span className="text-sm font-semibold">InventoryFlow</span>
         </div>
       </header>
-
       <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             {isStarter ? "Starter Plan" : "Pro Plan"}
           </p>
-
           <h1 className="mt-1 text-2xl font-semibold">{heading}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
 
-          <div className="mt-6 space-y-4">
-            <Button onClick={startPayment} className="w-full" disabled={busy}>
-              {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Continue to secure Stripe Checkout
-            </Button>
-
-            <p className="text-xs text-muted-foreground flex items-start gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-              Stripe will collect your billing email securely. Your InventoryFlow account is created only after checkout is confirmed.
-            </p>
-          </div>
+          {error ? (
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-center gap-2 text-sm text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/">Back to home</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground flex items-start gap-1.5 max-w-xs">
+                <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+                Stripe will collect your email and payment method. You'll set your password and company details after checkout.
+              </p>
+            </div>
+          )}
 
           <p className="mt-6 text-xs text-center text-muted-foreground">
             Already have an account?{" "}

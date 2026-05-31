@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Bell, CheckCheck, Inbox, AlertTriangle, CreditCard, Clock, UserPlus, ShieldCheck, Info } from "lucide-react";
+import { Bell, CheckCheck, Inbox, AlertTriangle, CreditCard, Clock, UserPlus, ShieldCheck, Info, PackageCheck, ShieldAlert, Sparkles } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useRouter } from "@tanstack/react-router";
 import {
   listNotifications,
   markNotificationRead,
@@ -13,6 +14,44 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+
+// Safety net: only allow same-origin app paths. Mirrors sanitizePath in
+// notifications.server.ts — defense in depth in case a row was inserted
+// from another path or migrated from older data.
+function safeAppPath(p: string | null | undefined): string | null {
+  if (!p || typeof p !== "string") return null;
+  if (!p.startsWith("/") || p.startsWith("//")) return null;
+  if (p.length > 512) return null;
+  return p;
+}
+
+// Fallback deep link inferred from notification type + metadata. Covers older
+// rows and DB-trigger inserts (e.g. low_stock) that don't carry action_path.
+function resolveDeepLink(n: NotificationRow): string | null {
+  const direct = safeAppPath(n.action_path);
+  if (direct) return direct;
+  const meta = (n.metadata ?? {}) as Record<string, unknown>;
+  const entityId = (n.entity_id ?? (meta.product_id as string) ?? (meta.transfer_id as string) ?? (meta.request_id as string) ?? null) as string | null;
+  switch (n.type) {
+    case "low_stock":
+      return entityId ? `/products?focus=${entityId}` : "/products";
+    case "transfer_received":
+      return entityId ? `/transfer-orders?focus=${entityId}` : "/transfer-orders";
+    case "suspicious_activity":
+      return "/settings?tab=security";
+    case "user_created":
+      return "/settings?tab=team";
+    case "role_changed":
+      return "/settings?tab=team";
+    case "payment_failed":
+    case "trial_ending":
+      return "/settings?tab=billing";
+    case "onboarding_incomplete":
+      return "/setup";
+    default:
+      return null;
+  }
+}
 
 function relTime(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -26,6 +65,9 @@ function relTime(iso: string) {
 
 const ICONS: Record<NotificationType, typeof Bell> = {
   low_stock: AlertTriangle,
+  transfer_received: PackageCheck,
+  suspicious_activity: ShieldAlert,
+  onboarding_incomplete: Sparkles,
   payment_failed: CreditCard,
   trial_ending: Clock,
   user_created: UserPlus,
@@ -35,6 +77,9 @@ const ICONS: Record<NotificationType, typeof Bell> = {
 
 const ICON_COLORS: Record<NotificationType, string> = {
   low_stock: "text-warning",
+  transfer_received: "text-success",
+  suspicious_activity: "text-destructive",
+  onboarding_incomplete: "text-primary",
   payment_failed: "text-destructive",
   trial_ending: "text-warning",
   user_created: "text-primary",
@@ -46,6 +91,7 @@ export function NotificationBell() {
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
+  const router = useRouter();
   const fetchList = useServerFn(listNotifications);
   const fetchMarkRead = useServerFn(markNotificationRead);
   const fetchMarkAll = useServerFn(markAllNotificationsRead);
@@ -122,6 +168,11 @@ export function NotificationBell() {
                   n={n}
                   onClick={() => {
                     if (!n.read) markOne.mutate(n.id);
+                    const target = resolveDeepLink(n);
+                    if (target) {
+                      setOpen(false);
+                      router.history.push(target);
+                    }
                   }}
                 />
               ))}
@@ -175,7 +226,12 @@ function NotificationItem({ n, onClick }: { n: NotificationRow; onClick: () => v
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
-          <p className="text-[10px] text-muted-foreground/80 mt-1">{relTime(n.created_at)}</p>
+          <div className="flex items-center justify-between gap-2 mt-1">
+            <p className="text-[10px] text-muted-foreground/80">{relTime(n.created_at)}</p>
+            {resolveDeepLink(n) && (
+              <span className="text-[10px] font-medium text-primary">Open →</span>
+            )}
+          </div>
         </div>
       </button>
     </li>

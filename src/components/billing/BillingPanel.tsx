@@ -57,7 +57,7 @@ export function BillingPanel() {
     const params = new URLSearchParams(window.location.search);
     const result = params.get("billing");
     if (result === "success") {
-      toast.success("Subscription updated. It may take a few seconds to reflect.");
+      toast.success("Subscription updated. Changes may take a moment to appear.");
       setTimeout(() => qc.invalidateQueries({ queryKey: ["billing-status"] }), 2000);
       params.delete("billing");
       const q = params.toString();
@@ -76,7 +76,7 @@ export function BillingPanel() {
       const { url } = await checkout({ data: { plan } });
       window.location.href = url;
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to start checkout");
+      toast.error(e.message ?? "We couldn't start checkout. Please try again.");
       setBusy(null);
     }
   };
@@ -91,7 +91,7 @@ export function BillingPanel() {
       if (/no billing account|customer not configured|No organization|Stripe customer/i.test(msg)) {
         toast.error("No billing account found.");
       } else {
-        toast.error(msg || "Failed to open billing portal");
+        toast.error(msg || "We couldn't open the billing portal. Please try again.");
       }
       setBusy(null);
     }

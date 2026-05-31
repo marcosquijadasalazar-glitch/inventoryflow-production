@@ -2,11 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { PLAN_LIMITS } from "./plan-limits";
-import { createNotification } from "./notifications.functions";
+import { createNotification } from "./notifications.server";
 
 // Roles an owner/manager is allowed to assign within their org.
 const ASSIGNABLE_ROLES = ["manager", "employee", "custom"] as const;
@@ -249,6 +249,9 @@ export const orgInviteUser = createServerFn({ method: "POST" })
       type: "user_created",
       title: "New user added",
       message: `${data.full_name} (${data.email}) was added as ${data.role}.`,
+      entity_type: "user",
+      entity_id: uid,
+      action_path: "/settings?tab=team",
       metadata: { user_id: uid, email: data.email, role: data.role },
     });
 
@@ -318,6 +321,9 @@ export const orgUpdateUser = createServerFn({ method: "POST" })
           type: "role_changed",
           title: "Your role was updated",
           message: `Your role was changed from ${target.role} to ${data.role}.`,
+          entity_type: "user",
+          entity_id: data.user_id,
+          action_path: "/settings?tab=team",
           metadata: { previous: target.role, next: data.role },
         });
       }

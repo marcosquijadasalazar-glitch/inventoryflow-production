@@ -15,16 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Boxes, Upload, Users, Database, Rocket, MessageCircle, Play } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Check, Boxes, Upload, Users, Database, Rocket, MessageCircle, Play, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import {
   updateOnboardingStep,
   completeOnboarding,
-  skipOnboardingWizard,
   installDemoData,
   inviteTeamDuringOnboarding,
 } from "@/lib/onboarding.functions";
 import { NeedHelpCTA } from "./NeedHelpCTA";
+import { WhatsAppHelpButton } from "./WhatsAppHelpButton";
+import { snoozeWizard } from "./wizard-snooze";
 import { setLanguage } from "@/i18n";
 import { whatsappUrl, WHATSAPP_ONBOARDING_MESSAGE, QUICK_DEMO_VIDEO_URL } from "@/lib/contact";
 import { Link } from "@tanstack/react-router";
@@ -63,19 +64,18 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
 
   const updateFn = useServerFn(updateOnboardingStep);
   const completeFn = useServerFn(completeOnboarding);
-  const skipFn = useServerFn(skipOnboardingWizard);
   const demoFn = useServerFn(installDemoData);
   const inviteFn = useServerFn(inviteTeamDuringOnboarding);
 
   const updateStep = useMutation({ mutationFn: (input: any) => updateFn({ data: input }) });
-  const skipAll = useMutation({
-    mutationFn: () => skipFn({}),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["onboarding-state"] });
-      setOpen(false);
-      onClose();
-    },
-  });
+
+  // "Skip" no longer marks onboarding complete — it snoozes the wizard locally so
+  // owners can safely resume from the last saved step via the Continue Setup CTA.
+  const snoozeAndClose = () => {
+    snoozeWizard();
+    setOpen(false);
+    onClose();
+  };
   const demoMut = useMutation({
     mutationFn: () => demoFn({}),
     onSuccess: () => {
@@ -163,8 +163,16 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
     );
   }
 
+  const tipKeyByStep: Record<number, string> = {
+    0: "onboarding.tips.welcome",
+    1: "onboarding.tips.business",
+    2: "onboarding.tips.demo",
+    3: "onboarding.tips.import",
+    4: "onboarding.tips.invite",
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) skipAll.mutate(); setOpen(o); }}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) snoozeAndClose(); else setOpen(o); }}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0">
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-background px-6 pt-6 pb-4 border-b border-border">
@@ -197,7 +205,7 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
+        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
           {step === 0 && <WelcomeIntro />}
           {step === 1 && (
             <StepBusiness
@@ -216,16 +224,26 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
           {step === 2 && (
             <StepDemo wantDemo={wantDemo} setWantDemo={setWantDemo} loading={demoMut.isPending} />
           )}
-          {step === 3 && <StepImport onOpenImporter={() => { setOpen(false); onClose(); }} />}
+          {step === 3 && <StepImport onOpenImporter={() => { snoozeAndClose(); }} />}
           {step === 4 && <StepInvite invites={invites} setInvites={setInvites} />}
+
+          {/* Calm, operational tip — refreshes per step */}
+          <div className="flex items-start gap-2.5 rounded-lg bg-muted/40 border border-border/60 px-3 py-2.5">
+            <Lightbulb className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t(tipKeyByStep[step] ?? "onboarding.tips.welcome", {
+                defaultValue: "Your progress saves automatically — you can close this and come back anytime.",
+              })}
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border bg-muted/30 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {step === 0 ? (
-              <Button variant="ghost" size="sm" onClick={() => skipAll.mutate()} disabled={skipAll.isPending}>
-                {t("onboarding.actions.skip")}
+              <Button variant="ghost" size="sm" onClick={snoozeAndClose}>
+                {t("onboarding.actions.later", "I'll do this later")}
               </Button>
             ) : (
               <Button variant="ghost" size="sm" onClick={goBack} disabled={step === 1 || updateStep.isPending}>
@@ -236,7 +254,7 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
               href={whatsappUrl(WHATSAPP_ONBOARDING_MESSAGE)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              className="text-xs text-[oklch(0.45_0.18_150)] hover:text-[oklch(0.4_0.18_150)] inline-flex items-center gap-1"
             >
               <MessageCircle className="h-3.5 w-3.5" /> {t("onboarding.help.needHelp")}
             </a>
@@ -257,6 +275,7 @@ export function WelcomeWizard({ org, onClose }: { org: OrgInfo; onClose: () => v
     </Dialog>
   );
 }
+
 
 function WelcomeIntro() {
   const { t } = useTranslation();
@@ -279,6 +298,7 @@ function WelcomeIntro() {
           </li>
         ))}
       </ul>
+      <WhatsAppHelpButton variant="card" topic="setup" />
       <NeedHelpCTA />
     </div>
   );

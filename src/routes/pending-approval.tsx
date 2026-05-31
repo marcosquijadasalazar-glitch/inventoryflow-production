@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Clock, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { WhatsAppHelpButton } from "@/components/onboarding/WhatsAppHelpButton";
 
 export const Route = createFileRoute("/pending-approval")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -69,6 +70,9 @@ function PendingApprovalPage() {
           >
             <LogOut className="h-4 w-4" /> {t("nav.signOut")}
           </Button>
+        </div>
+        <div className="mt-4">
+          <WhatsAppHelpButton variant="card" topic="setup" />
         </div>
       </div>
     </div>

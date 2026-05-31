@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { invalidateDerived } from "@/lib/invalidate-after-write";
 import { FirstTimeTooltip } from "@/components/onboarding/FirstTimeTooltip";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -96,8 +97,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { ImportDialog } from "@/components/ImportDialog";
+import { ProductsImportDialog } from "@/components/ProductsImportDialog";
 import type { ImportSchema } from "@/lib/import-utils";
+import { useApprovalGate } from "@/components/approvals/useApprovalGate";
 import { importProducts } from "@/lib/products-import.functions";
 import { listLocations } from "@/lib/locations";
 import { Label } from "@/components/ui/label";
@@ -204,6 +206,8 @@ function ProductsPage() {
   } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const { guard: approvalGuard, modal: approvalModal } = useApprovalGate();
+
   const [bulkCategoryOpen, setBulkCategoryOpen] = useState(false);
   const [bulkLocationOpen, setBulkLocationOpen] = useState(false);
   const [bulkCategory, setBulkCategory] = useState("");
@@ -220,7 +224,7 @@ function ProductsPage() {
   const [costMax, setCostMax] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [importOpen, setImportOpen] = useState(false);
-  const [autoCreateSuppliers, setAutoCreateSuppliers] = useState(false);
+  
   const [importLocation, setImportLocation] = useState<string>("");
   const runImport = useServerFn(importProducts);
   const search = Route.useSearch();
@@ -266,7 +270,10 @@ function ProductsPage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ["products"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["products"] });
+    invalidateDerived(qc);
+  };
 
   const suppliers = useMemo(() => {
     const s = new Set<string>();
@@ -422,29 +429,47 @@ function ProductsPage() {
 
   const onDelete = async () => {
     if (!deleteId) return;
-    try {
-      await deleteProduct(deleteId);
-      toast.success(t("products.deleted"));
-      refresh();
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setDeleteId(null);
-    }
+    const product = (data ?? []).find((p) => p.id === deleteId);
+    approvalGuard({
+      action: "product_deletion",
+      measurements: { quantity: product?.stock ?? 0, value: (product?.stock ?? 0) * (product?.cost ?? 0) },
+      entityLabel: product ? `${product.name} (${product.sku})` : deleteId,
+      onApproved: async () => {
+        try {
+          await deleteProduct(deleteId);
+          toast.success(t("products.deleted"));
+          refresh();
+        } catch (e: any) {
+          toast.error(e.message);
+        } finally {
+          setDeleteId(null);
+        }
+      },
+    });
   };
 
   const onBulkDelete = async () => {
     const ids = Array.from(selected);
-    try {
-      await Promise.all(ids.map((id) => deleteProduct(id)));
-      toast.success(t("products.deletedMany", { count: ids.length }));
-      setSelected(new Set());
-      refresh();
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setBulkDeleteOpen(false);
-    }
+    const products = (data ?? []).filter((p) => ids.includes(p.id));
+    const totalStock = products.reduce((s, p) => s + (p.stock ?? 0), 0);
+    const totalValue = products.reduce((s, p) => s + (p.stock ?? 0) * (p.cost ?? 0), 0);
+    approvalGuard({
+      action: "product_deletion",
+      measurements: { quantity: totalStock, value: totalValue },
+      entityLabel: `${ids.length} products`,
+      onApproved: async () => {
+        try {
+          await Promise.all(ids.map((id) => deleteProduct(id)));
+          toast.success(t("products.deletedMany", { count: ids.length }));
+          setSelected(new Set());
+          refresh();
+        } catch (e: any) {
+          toast.error(e.message);
+        } finally {
+          setBulkDeleteOpen(false);
+        }
+      },
+    });
   };
 
   const onBulkCategory = async () => {
@@ -1080,67 +1105,35 @@ function ProductsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <ImportDialog
+      <ProductsImportDialog
         open={importOpen}
         onOpenChange={setImportOpen}
         schema={PRODUCTS_IMPORT_SCHEMA}
-        title={t("products.importTitle", "Import products")}
-        extraControls={
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs">
-                {t("importer.assignLocation", "Assign to location")}
-              </Label>
-              <Select
-                value={importLocation}
-                onValueChange={setImportLocation}
-                disabled={orgLocations.length <= 1}
-              >
-                <SelectTrigger className="h-8 w-56 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {orgLocations.map((l) => (
-                    <SelectItem key={l.id} value={l.name}>
-                      {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <label className="inline-flex items-center gap-2 text-xs">
-              <Checkbox
-                checked={autoCreateSuppliers}
-                onCheckedChange={(v) => setAutoCreateSuppliers(v === true)}
-              />
-              <span>
-                {t(
-                  "products.importAutoCreateSuppliers",
-                  "Auto-create missing suppliers",
-                )}
-              </span>
-            </label>
-          </div>
-        }
-        onImport={async (rows) => {
-          const validNames = new Set(orgLocations.map((l) => l.name.toLowerCase()));
-          const normalized = rows.map((r) => {
-            const provided = (r.location ?? "").trim();
-            const useProvided = provided && validNames.has(provided.toLowerCase());
-            return { ...r, location: useProvided ? provided : importLocation };
-          });
+        orgLocations={orgLocations.map((l) => ({ id: l.id, name: l.name }))}
+        defaultLocation={importLocation || orgLocations[0]?.name}
+        onImport={async ({ rows, location_mappings, auto_create_locations, auto_create_suppliers, sku_resolutions }) => {
+          // If a row has no location, fall back to the user's default selection
+          const fallback = importLocation || orgLocations[0]?.name || "";
+          const normalized = rows.map((r) => ({
+            ...r,
+            location: (r.location ?? "").trim() || fallback,
+          }));
           return runImport({
             data: {
               rows: normalized,
               auto_create_categories: true,
-              auto_create_suppliers: autoCreateSuppliers,
+              auto_create_suppliers,
+              auto_create_locations,
+              location_mappings,
+              sku_resolutions,
             },
           });
         }}
-
         onDone={refresh}
       />
 
+
+      {approvalModal}
     </div>
   );
 }
