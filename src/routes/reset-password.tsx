@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { logAuthSecurityEvent } from "@/lib/security.functions";
@@ -24,7 +23,7 @@ function ResetPasswordPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const logAuthEvent = useServerFn(logAuthSecurityEvent);
+  const logAuthEvent = logAuthSecurityEvent;
 
   useEffect(() => {
     // Supabase recovery links arrive with a hash like #access_token=...&type=recovery

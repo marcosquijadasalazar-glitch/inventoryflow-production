@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { createSignupCheckoutSession } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, ArrowLeft, AlertTriangle } from "lucide-react";
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const { plan = "starter" } = Route.useSearch();
-  const start = useServerFn(createSignupCheckoutSession);
+  const start = createSignupCheckoutSession;
   const [error, setError] = useState<string | null>(null);
 
   const isStarter = plan === "starter";

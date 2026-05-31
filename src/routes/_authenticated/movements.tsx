@@ -4,12 +4,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ActivityTab } from "@/components/movements-tabs/ActivityTab";
 import { AdjustmentsTab } from "@/components/movements-tabs/AdjustmentsTab";
 import { TransfersTab } from "@/components/movements-tabs/TransfersTab";
+import { InternalUseTab } from "@/components/movements-tabs/InternalUseTab";
 import {
   ArrowLeftRight,
   Package,
   SlidersHorizontal,
   ArrowDownRight,
   ArrowUpRight,
+  Wrench,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/movements")({
@@ -42,6 +44,11 @@ function MovementsPage() {
       key: "stock-out",
       label: t("movements.tabStockOut", "Stock Out"),
       icon: ArrowDownRight,
+    },
+    {
+      key: "internal-use",
+      label: t("movements.tabInternalUse", "Internal Use"),
+      icon: Wrench,
     },
     {
       key: "activity",
@@ -84,6 +91,9 @@ function MovementsPage() {
         </TabsContent>
         <TabsContent value="stock-out" className="mt-4">
           <ActivityTab mode="history-only" presetType="remove" />
+        </TabsContent>
+        <TabsContent value="internal-use" className="mt-4">
+          <InternalUseTab />
         </TabsContent>
         <TabsContent value="activity" className="mt-4">
           <ActivityTab mode="history-only" />

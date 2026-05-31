@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ function ChangePasswordPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const clearFlag = useServerFn(clearMustChangePassword);
+  const clearFlag = clearMustChangePassword;
   const [hasSession, setHasSession] = useState(false);
   const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState("");
