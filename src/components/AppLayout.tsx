@@ -24,6 +24,8 @@ import {
   SlidersHorizontal,
   Lock,
   Activity,
+  ClipboardList,
+  
 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,7 @@ import type { AppPermission } from "@/lib/permissions";
 import { useOrgUsage } from "@/lib/use-org-usage";
 import { useUpgradeModal } from "@/components/UpgradeDialog";
 import type { PlanType } from "@/lib/plan-limits";
+import { ContinueSetupButton } from "@/components/onboarding/ContinueSetupButton";
 
 type NavEntry = {
   to: string;
@@ -66,14 +69,11 @@ function useNavItems(): NavEntry[] {
     { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard, module: "dashboard", permission: "view_dashboard" },
     { to: "/products", label: t("nav.products"), icon: Package, module: "products", permission: "view_products" },
     { to: "/movements", label: t("nav.movements"), icon: ArrowLeftRight, module: "movements", permission: "view_movements" },
-    { to: "/purchase-orders", label: t("nav.purchaseOrders", "Purchase Orders"), icon: ShoppingCart, module: "purchase_orders", permission: "manage_purchase_orders" },
-    { to: "/sales-orders", label: t("nav.salesOrders", "Sales Orders"), icon: Receipt, module: "sales_orders", permission: "manage_sales_orders" },
+    { to: "/orders", label: t("nav.orders", "Orders"), icon: ShoppingCart, module: "purchase_orders", permission: "manage_purchase_orders" },
+
     { to: "/customers", label: t("nav.customers", "Customers"), icon: Users, module: "sales_orders", permission: "manage_sales_orders" },
     { to: "/suppliers", label: t("nav.suppliers", "Suppliers"), icon: Truck, module: "purchase_orders", permission: "manage_purchase_orders" },
     { to: "/locations", label: t("nav.locations", "Locations"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
-    { to: "/adjustments", label: t("nav.adjustments", "Adjustments"), icon: SlidersHorizontal, module: "movements", permission: "adjust_stock" },
-    { to: "/transfer-orders", label: t("nav.transferOrders", "Transfers"), icon: ArrowRightLeft, module: "transfer_orders", permission: "manage_transfer_orders" },
-    { to: "/location-stock", label: t("nav.locationStock", "Location Stock"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
     { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use", permission: "manage_internal_use" },
     { to: "/history", label: t("nav.history"), icon: History, module: "history", permission: "view_transaction_history" },
     { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart, module: "reports", permission: "view_reports" },
@@ -100,16 +100,7 @@ function useNavItems(): NavEntry[] {
       requiredPlan: i.module ? MODULE_MIN_PLAN[i.module] : undefined,
     });
   }
-  const role = profile.data?.role;
-  if ((role === "owner" || role === "manager") && (role === "owner" || perms.can("manage_users"))) {
-    visible.push({ to: "/users", label: t("orgUsers.navLabel", "Users & Roles"), icon: Users, module: null, permission: null });
-  }
-  if (role === "owner" || role === "manager" || role === "super_admin") {
-    visible.push({ to: "/security-activity", label: "Security Activity", icon: Activity, module: null, permission: null });
-  }
-  if (role === "owner" || role === "manager") {
-    visible.push({ to: "/permissions", label: t("permissions.navLabel", "Roles & Permissions"), icon: ShieldCheck, module: null, permission: null });
-  }
+  
   if (isSuper) {
     visible.push({ to: "/admin", label: "Admin", icon: Shield, module: null, permission: null });
   }
@@ -327,6 +318,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <header className="hidden md:flex sticky top-0 z-30 h-14 items-center justify-between px-8 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <ScanBarcodeButton />
+            <ContinueSetupButton variant="compact" />
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <NotificationBell />

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupCompleteRouteImport } from './routes/signup-complete'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ServiceAgreementRouteImport } from './routes/service-agreement'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -35,6 +36,8 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
+import { Route as AuthenticatedOrganizationSettingsRouteImport } from './routes/_authenticated/organization-settings'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedMovementsRouteImport } from './routes/_authenticated/movements'
 import { Route as AuthenticatedLocationsRouteImport } from './routes/_authenticated/locations'
 import { Route as AuthenticatedLocationStockRouteImport } from './routes/_authenticated/location-stock'
@@ -42,6 +45,7 @@ import { Route as AuthenticatedInternalUseRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdjustmentsRouteImport } from './routes/_authenticated/adjustments'
@@ -56,6 +60,11 @@ const TermsRoute = TermsRouteImport.update({
 const SignupCompleteRoute = SignupCompleteRouteImport.update({
   id: '/signup-complete',
   path: '/signup-complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServiceAgreementRoute = ServiceAgreementRouteImport.update({
@@ -182,6 +191,17 @@ const AuthenticatedPermissionsRoute =
     path: '/permissions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedOrganizationSettingsRoute =
+  AuthenticatedOrganizationSettingsRouteImport.update({
+    id: '/organization-settings',
+    path: '/organization-settings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedMovementsRoute = AuthenticatedMovementsRouteImport.update({
   id: '/movements',
   path: '/movements',
@@ -217,6 +237,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAuditLogsRoute = AuthenticatedAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
@@ -258,11 +283,13 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
+  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alerts': typeof AuthenticatedAlertsRoute
+  '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -270,6 +297,8 @@ export interface FileRoutesByFullPath {
   '/location-stock': typeof AuthenticatedLocationStockRoute
   '/locations': typeof AuthenticatedLocationsRoute
   '/movements': typeof AuthenticatedMovementsRoute
+  '/orders': typeof AuthenticatedOrdersRoute
+  '/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -297,11 +326,13 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
+  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alerts': typeof AuthenticatedAlertsRoute
+  '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
@@ -309,6 +340,8 @@ export interface FileRoutesByTo {
   '/location-stock': typeof AuthenticatedLocationStockRoute
   '/locations': typeof AuthenticatedLocationsRoute
   '/movements': typeof AuthenticatedMovementsRoute
+  '/orders': typeof AuthenticatedOrdersRoute
+  '/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/permissions': typeof AuthenticatedPermissionsRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -338,11 +371,13 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/service-agreement': typeof ServiceAgreementRoute
+  '/signup': typeof SignupRoute
   '/signup-complete': typeof SignupCompleteRoute
   '/terms': typeof TermsRoute
   '/_authenticated/adjustments': typeof AuthenticatedAdjustmentsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
+  '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
@@ -350,6 +385,8 @@ export interface FileRoutesById {
   '/_authenticated/location-stock': typeof AuthenticatedLocationStockRoute
   '/_authenticated/locations': typeof AuthenticatedLocationsRoute
   '/_authenticated/movements': typeof AuthenticatedMovementsRoute
+  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/organization-settings': typeof AuthenticatedOrganizationSettingsRoute
   '/_authenticated/permissions': typeof AuthenticatedPermissionsRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
@@ -379,11 +416,13 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
+    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/adjustments'
     | '/admin'
     | '/alerts'
+    | '/audit-logs'
     | '/customers'
     | '/dashboard'
     | '/history'
@@ -391,6 +430,8 @@ export interface FileRouteTypes {
     | '/location-stock'
     | '/locations'
     | '/movements'
+    | '/orders'
+    | '/organization-settings'
     | '/permissions'
     | '/products'
     | '/purchase-orders'
@@ -418,11 +459,13 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
+    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/adjustments'
     | '/admin'
     | '/alerts'
+    | '/audit-logs'
     | '/customers'
     | '/dashboard'
     | '/history'
@@ -430,6 +473,8 @@ export interface FileRouteTypes {
     | '/location-stock'
     | '/locations'
     | '/movements'
+    | '/orders'
+    | '/organization-settings'
     | '/permissions'
     | '/products'
     | '/purchase-orders'
@@ -458,11 +503,13 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/service-agreement'
+    | '/signup'
     | '/signup-complete'
     | '/terms'
     | '/_authenticated/adjustments'
     | '/_authenticated/admin'
     | '/_authenticated/alerts'
+    | '/_authenticated/audit-logs'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
@@ -470,6 +517,8 @@ export interface FileRouteTypes {
     | '/_authenticated/location-stock'
     | '/_authenticated/locations'
     | '/_authenticated/movements'
+    | '/_authenticated/orders'
+    | '/_authenticated/organization-settings'
     | '/_authenticated/permissions'
     | '/_authenticated/products'
     | '/_authenticated/purchase-orders'
@@ -499,6 +548,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ServiceAgreementRoute: typeof ServiceAgreementRoute
+  SignupRoute: typeof SignupRoute
   SignupCompleteRoute: typeof SignupCompleteRoute
   TermsRoute: typeof TermsRoute
   ApiPublicHooksRunBackupRoute: typeof ApiPublicHooksRunBackupRoute
@@ -519,6 +569,13 @@ declare module '@tanstack/react-router' {
       path: '/signup-complete'
       fullPath: '/signup-complete'
       preLoaderRoute: typeof SignupCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/service-agreement': {
@@ -689,6 +746,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPermissionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/organization-settings': {
+      id: '/_authenticated/organization-settings'
+      path: '/organization-settings'
+      fullPath: '/organization-settings'
+      preLoaderRoute: typeof AuthenticatedOrganizationSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/movements': {
       id: '/_authenticated/movements'
       path: '/movements'
@@ -738,6 +809,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/audit-logs': {
+      id: '/_authenticated/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/audit-logs'
+      preLoaderRoute: typeof AuthenticatedAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/alerts': {
       id: '/_authenticated/alerts'
       path: '/alerts'
@@ -780,6 +858,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdjustmentsRoute: typeof AuthenticatedAdjustmentsRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
+  AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
@@ -787,6 +866,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLocationStockRoute: typeof AuthenticatedLocationStockRoute
   AuthenticatedLocationsRoute: typeof AuthenticatedLocationsRoute
   AuthenticatedMovementsRoute: typeof AuthenticatedMovementsRoute
+  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedOrganizationSettingsRoute: typeof AuthenticatedOrganizationSettingsRoute
   AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
@@ -805,6 +886,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdjustmentsRoute: AuthenticatedAdjustmentsRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAlertsRoute: AuthenticatedAlertsRoute,
+  AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
@@ -812,6 +894,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLocationStockRoute: AuthenticatedLocationStockRoute,
   AuthenticatedLocationsRoute: AuthenticatedLocationsRoute,
   AuthenticatedMovementsRoute: AuthenticatedMovementsRoute,
+  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedOrganizationSettingsRoute:
+    AuthenticatedOrganizationSettingsRoute,
   AuthenticatedPermissionsRoute: AuthenticatedPermissionsRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
@@ -843,6 +928,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ServiceAgreementRoute: ServiceAgreementRoute,
+  SignupRoute: SignupRoute,
   SignupCompleteRoute: SignupCompleteRoute,
   TermsRoute: TermsRoute,
   ApiPublicHooksRunBackupRoute: ApiPublicHooksRunBackupRoute,

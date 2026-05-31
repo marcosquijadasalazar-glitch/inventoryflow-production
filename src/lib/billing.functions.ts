@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   ensureStripeCustomer,
@@ -10,7 +10,7 @@ import {
   setupPriceIdForPlan,
   type BillingPlan,
 } from "./stripe.server";
-import { logSecurityEventServer } from "./security.functions";
+import { logSecurityEventServer } from "./security.server";
 
 const TRIAL_DAYS = 7;
 
@@ -185,8 +185,6 @@ export const createPortalSession = createServerFn({ method: "POST" })
 // ---------------------------------------------------------------------------
 // Payment-first signup: anonymous Stripe Checkout that provisions the
 // organization + user only after a successful payment / trial start.
-// Stripe collects the billing email. InventoryFlow does NOT create a
-// Supabase auth user or organization until checkout.session.completed.
 // ---------------------------------------------------------------------------
 
 const SignupCheckoutSchema = z.object({
@@ -197,6 +195,10 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => SignupCheckoutSchema.parse(input))
   .handler(async ({ data }): Promise<{ url: string }> => {
     const stripe = getStripe();
+    await logSecurityEventServer({
+      action: "signup_started",
+      status: "info",
+    });
 
     let recurringPriceId: string;
     try {
@@ -205,24 +207,21 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
       throw new Error("Billing is not fully configured. Please contact support.");
     }
 
-    // Always include the one-time Onboarding Process line item for new signups.
     const lineItems: Array<{ price: string; quantity: number }> = [
       { price: recurringPriceId, quantity: 1 },
     ];
 
-    const onboardingPrice = setupPriceIdForPlan(data.plan as BillingPlan);
-    if (onboardingPrice) {
-      lineItems.push({ price: onboardingPrice, quantity: 1 });
+    // Starter trial signup must NOT include the one-time Onboarding fee.
+    // Pro signup still includes it (and account upgrades go through
+    // createCheckoutSession, which has its own setup_fee_paid logic).
+    let includesOnboarding = false;
+    if (data.plan === "pro") {
+      const onboardingPrice = setupPriceIdForPlan("pro");
+      if (onboardingPrice) {
+        lineItems.push({ price: onboardingPrice, quantity: 1 });
+        includesOnboarding = true;
+      }
     }
-
-    // Create a Stripe Customer without email.
-    // Stripe Checkout will collect the billing email securely.
-    const customer = await stripe.customers.create({
-      metadata: {
-        selected_plan: data.plan,
-        signup: "true",
-      },
-    });
 
     const origin = getRequestHeader("origin") ?? getRequestHeader("referer") ?? "";
     const base = origin.replace(/\/$/, "") || "https://inventoryflowapp.com";
@@ -233,34 +232,43 @@ export const createSignupCheckoutSession = createServerFn({ method: "POST" })
         selected_plan: data.plan,
       },
     };
-
     if (data.plan === "starter") {
       subscriptionData.trial_period_days = TRIAL_DAYS;
     }
 
+    // No customer is passed: in subscription mode Stripe collects the email
+    // and creates the customer automatically.
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer: customer.id,
       line_items: lineItems,
       success_url: `${base}/signup-complete?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/?checkout=cancelled`,
       allow_promotion_codes: true,
       automatic_tax: { enabled: true },
       billing_address_collection: "required",
-      customer_update: { address: "auto", name: "auto" },
       tax_id_collection: { enabled: true },
       subscription_data: subscriptionData,
       metadata: {
         signup: "true",
         selected_plan: data.plan,
-        includes_onboarding: onboardingPrice ? "true" : "false",
+        includes_onboarding: includesOnboarding ? "true" : "false",
       },
     });
+    await logSecurityEventServer({
+      action: "checkout_started",
+      status: "success",
+    });
 
-    if (!session.url) {
-      throw new Error("Stripe did not return a checkout URL");
-    }
+    // Reserve a signup-session row so /signup-complete can poll for status.
+    // Email is filled in by the webhook once Stripe collects it.
+    await supabaseAdmin.from("signup_sessions" as never).insert({
+      session_id: session.id,
+      email: "",
+      plan: data.plan,
+      status: "pending",
+    } as never);
 
+    if (!session.url) throw new Error("Stripe did not return a checkout URL");
     return { url: session.url };
   });
 
@@ -284,22 +292,17 @@ export const getSignupSession = createServerFn({ method: "POST" })
       .select("session_id, email, status, temp_password, consumed_at")
       .eq("session_id", data.session_id)
       .maybeSingle();
-
     if (!row) return { status: "missing" } as SignupStatus;
-
     const r = row as any;
     if (r.status !== "ready") {
       return { status: "pending", email: r.email };
     }
-
     const tempPassword: string | null = r.consumed_at ? null : (r.temp_password ?? null);
-
     if (tempPassword) {
       await supabaseAdmin
         .from("signup_sessions" as never)
         .update({ temp_password: null, consumed_at: new Date().toISOString() } as never)
         .eq("session_id", data.session_id);
     }
-
     return { status: "ready", email: r.email, temp_password: tempPassword };
   });

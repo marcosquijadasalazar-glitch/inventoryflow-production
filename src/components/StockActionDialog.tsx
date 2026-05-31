@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invalidateDerived } from "@/lib/invalidate-after-write";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ import { Plus, Minus, Scale, ArrowRightLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listAllNodes, getBreadcrumb, type LocationNode } from "@/lib/location-tree";
 import { useQuery } from "@tanstack/react-query";
+import { useApprovalGate } from "@/components/approvals/useApprovalGate";
 
 const sb = supabase as any;
 
@@ -79,13 +81,9 @@ export function StockActionDialog({
 
   if (!product || !mode) return null;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = parseInt(qty, 10);
-    if (isNaN(q) || q < 0)
-      return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
-    if (mode !== "adjust" && q <= 0)
-      return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
+  const { guard, modal } = useApprovalGate();
+
+  const performAction = async (q: number) => {
     setSaving(true);
     try {
       if (mode === "add") {
@@ -126,7 +124,6 @@ export function StockActionDialog({
           throw new Error(t("sa.select_dest", "Select a destination"));
         if (q > product.stock)
           throw new Error(t("sa.insufficient", "Insufficient stock"));
-        // Create a completed transfer order — picked up by per-location math.
         const { data: to, error: tErr } = await sb
           .from("transfer_orders")
           .insert({
@@ -155,12 +152,29 @@ export function StockActionDialog({
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["location_stock"] });
+      invalidateDerived(qc);
       onClose();
     } catch (err: any) {
       toast.error(err.message ?? String(err));
     } finally {
       setSaving(false);
     }
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = parseInt(qty, 10);
+    if (isNaN(q) || q < 0)
+      return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
+    if (mode !== "adjust" && q <= 0)
+      return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
+    const value = q * (product.cost ?? product.price ?? 0);
+    guard({
+      action: mode === "move" ? "transfer_order" : "stock_adjustment",
+      measurements: { quantity: q, value },
+      entityLabel: `${product.name} (${product.sku})`,
+      onApproved: () => performAction(q),
+    });
   };
 
   const title =
@@ -185,6 +199,7 @@ export function StockActionDialog({
     mode === "adjust" ? parseInt(qty, 10) - product.stock : 0;
 
   return (
+    <>
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="bg-surface max-w-md">
         <DialogHeader>
@@ -364,5 +379,7 @@ export function StockActionDialog({
         </form>
       </DialogContent>
     </Dialog>
+    {modal}
+    </>
   );
 }

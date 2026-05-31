@@ -594,10 +594,10 @@ export async function updateSOStatus(id: string, status: SOStatus) {
 export async function listTransferOrders(): Promise<TransferOrder[]> {
   const { data, error } = await sb
     .from("transfer_orders")
-    .select("*")
+    .select("*, items:transfer_order_items(*)")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as TransferOrder[];
 }
 
 export async function getTransferOrder(id: string): Promise<TransferOrder | null> {
@@ -648,6 +648,13 @@ export async function createTransferOrder(input: {
       );
     }
   }
+  // Always insert as draft first. If the caller asked for "completed",
+  // completeTransferOrder() will flip the status AND apply the
+  // remove + add inventory movement pair. Inserting directly with
+  // status="completed" would cause completeTransferOrder() to early-return
+  // (idempotency guard), leaving stock untouched on both sides.
+  const initialStatus: TransferStatus =
+    input.status === "completed" ? "draft" : input.status;
   const { data: t, error } = await sb
     .from("transfer_orders")
     .insert({
@@ -658,7 +665,7 @@ export async function createTransferOrder(input: {
       to_location_id: input.to_location_id,
       transfer_date: input.transfer_date,
       notes: input.notes,
-      status: input.status,
+      status: initialStatus,
     })
     .select()
     .single();

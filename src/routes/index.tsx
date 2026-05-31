@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/lib/auth";
-import { logPublicSecurityEvent } from "@/lib/security.functions";
+import { logPublicSecurityEvent } from "@/lib/security-public.functions";
 import {
   ArrowRight,
   Check,

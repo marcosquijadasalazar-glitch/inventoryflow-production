@@ -1,351 +1,224 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { listTransactionHistory, type TransactionRow } from "@/lib/history";
-import { getCompanySettings } from "@/lib/settings";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  History as HistoryIcon,
+  Search,
+  Package,
+  ScanLine,
+  ArrowLeftRight,
+  MapPin,
+  Boxes,
+  Sparkles,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Download,
-  Search,
-  FileText,
-  History as HistoryIcon,
-  X,
-} from "lucide-react";
-import { downloadCsv } from "@/lib/csv";
-import { exportHistoryPdf } from "@/lib/pdf";
-import { exportHistoryXlsx } from "@/lib/xlsx-export";
-import { ExportMenu } from "@/components/ExportMenu";
-import type { ExportColumn } from "@/lib/exporters";
-
-const HISTORY_EXPORT_COLUMNS: ExportColumn<TransactionRow>[] = [
-  { key: "date", header: "Date", get: (r) => new Date(r.created_at).toLocaleString() },
-  { key: "type", header: "Type" },
-  { key: "source", header: "Source" },
-  { key: "product_name", header: "Product" },
-  { key: "sku", header: "SKU" },
-  { key: "barcode", header: "Barcode" },
-  { key: "quantity_change", header: "Qty", align: "right" },
-  { key: "previous_stock", header: "Prev", align: "right" },
-  { key: "new_stock", header: "New", align: "right" },
-  { key: "reason", header: "Reason" },
-  { key: "user_email", header: "User" },
-];
+  listOperationalFeed,
+  type FeedItem,
+} from "@/lib/operational-feed.functions";
 
 export const Route = createFileRoute("/_authenticated/history")({
   component: HistoryPage,
 });
 
-const TYPES = [
-  "product_created",
-  "product_updated",
-  "product_deleted",
-  "stock_added",
-  "stock_removed",
-  "stock_adjusted",
-  "low_stock",
-] as const;
+const TABS: Array<{ id: "all" | FeedItem["category"]; label: string; icon: any }> = [
+  { id: "all", label: "All activity", icon: Sparkles },
+  { id: "inventory", label: "Inventory", icon: Boxes },
+  { id: "scanner", label: "Scanner", icon: ScanLine },
+  { id: "transfers", label: "Transfers", icon: ArrowLeftRight },
+  { id: "products", label: "Products", icon: Package },
+  { id: "locations", label: "Locations", icon: MapPin },
+];
 
-const SOURCES = ["manual", "barcode_scan", "adjustment", "system"] as const;
+const ICONS: Record<FeedItem["category"], any> = {
+  inventory: Boxes,
+  scanner: ScanLine,
+  transfers: ArrowLeftRight,
+  products: Package,
+  locations: MapPin,
+  other: Sparkles,
+};
 
-function typeColor(t: TransactionRow["type"]) {
-  switch (t) {
-    case "stock_added":
-      return "bg-success/15 text-[oklch(0.4_0.12_155)] border-success/25";
-    case "stock_removed":
-      return "bg-destructive/10 text-destructive border-destructive/20";
-    case "stock_adjusted":
-      return "bg-primary/10 text-primary border-primary/25";
-    case "low_stock":
-      return "bg-warning/15 text-[oklch(0.45_0.12_70)] border-warning/30";
-    case "product_created":
-      return "bg-success/10 text-[oklch(0.4_0.12_155)] border-success/20";
-    case "product_deleted":
-      return "bg-destructive/10 text-destructive border-destructive/20";
-    default:
-      return "bg-muted text-muted-foreground border-border";
-  }
+const TONES: Record<FeedItem["category"], string> = {
+  inventory: "bg-success/10 text-success",
+  scanner: "bg-primary/10 text-primary",
+  transfers: "bg-blue-500/10 text-blue-500",
+  products: "bg-violet-500/10 text-violet-500",
+  locations: "bg-amber-500/10 text-amber-500",
+  other: "bg-muted text-muted-foreground",
+};
+
+function timeAgo(iso: string): string {
+  const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (d < 45) return "just now";
+  if (d < 3600) return `${Math.round(d / 60)}m ago`;
+  if (d < 86400) return `${Math.round(d / 3600)}h ago`;
+  if (d < 7 * 86400) return `${Math.round(d / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function dayBucket(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yest = new Date(today.getTime() - 86400_000);
+  const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (dDay.getTime() === today.getTime()) return "Today";
+  if (dDay.getTime() === yest.getTime()) return "Yesterday";
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 }
 
 function HistoryPage() {
   const { t } = useTranslation();
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["history"],
-    queryFn: listTransactionHistory,
-  });
-  const { data: settings } = useQuery({
-    queryKey: ["company-settings"],
-    queryFn: getCompanySettings,
-  });
-
+  const fetchFeed = useServerFn(listOperationalFeed);
+  const [tab, setTab] = useState<typeof TABS[number]["id"]>("all");
   const [q, setQ] = useState("");
-  const [type, setType] = useState<string>("__all");
-  const [source, setSource] = useState<string>("__all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
 
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (type !== "__all" && r.type !== type) return false;
-      if (source !== "__all" && r.source !== source) return false;
-      if (from && new Date(r.created_at) < new Date(from)) return false;
-      if (to && new Date(r.created_at) > new Date(to + "T23:59:59")) return false;
-      if (term) {
-        const hay = [r.product_name, r.sku, r.barcode, r.user_email, r.reason]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!hay.includes(term)) return false;
-      }
-      return true;
-    });
-  }, [rows, q, type, source, from, to]);
+  const feedQ = useInfiniteQuery({
+    queryKey: ["op-feed", tab, q],
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      fetchFeed({
+        data: {
+          category: tab,
+          search: q || null,
+          before: pageParam ?? null,
+          limit: 50,
+        },
+      }),
+    getNextPageParam: (last) => last.next_cursor,
+  });
 
-  const reset = () => {
-    setQ("");
-    setType("__all");
-    setSource("__all");
-    setFrom("");
-    setTo("");
-  };
+  const items: FeedItem[] = useMemo(
+    () => (feedQ.data?.pages ?? []).flatMap((p) => p.items),
+    [feedQ.data],
+  );
 
-  const exportCsv = () => {
-    const headers = [
-      "date",
-      "type",
-      "source",
-      "product",
-      "sku",
-      "barcode",
-      "qty",
-      "previous",
-      "new",
-      "reason",
-      "user",
-    ];
-    const escape = (v: any) => {
-      if (v == null) return "";
-      const s = String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const csv = [
-      headers.join(","),
-      ...filtered.map((r) =>
-        [
-          new Date(r.created_at).toISOString(),
-          r.type,
-          r.source,
-          r.product_name,
-          r.sku,
-          r.barcode,
-          r.quantity_change,
-          r.previous_stock,
-          r.new_stock,
-          r.reason,
-          r.user_email,
-        ]
-          .map(escape)
-          .join(","),
-      ),
-    ].join("\n");
-    downloadCsv(`history-${Date.now()}.csv`, csv);
-  };
+  const grouped = useMemo(() => {
+    const map = new Map<string, FeedItem[]>();
+    for (const it of items) {
+      const k = dayBucket(it.created_at);
+      const arr = map.get(k) ?? [];
+      arr.push(it);
+      map.set(k, arr);
+    }
+    return Array.from(map.entries());
+  }, [items]);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <HistoryIcon className="h-6 w-6 text-primary" />
-            {t("history.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("history.subtitle")}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ExportMenu
-            title={t("history.title", "Transaction History")}
-            filename="history"
-            rows={filtered}
-            columns={HISTORY_EXPORT_COLUMNS}
-            orientation="landscape"
-          />
-        </div>
+    <div className="space-y-5 max-w-4xl mx-auto p-4 sm:p-6">
+      <header className="space-y-1">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <HistoryIcon className="h-6 w-6 text-primary" />
+          {t("history.title", "Activity")}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t("history.subtitleFeed", "A live feed of what's happening across your warehouses — counts, transfers, restocks and more.")}
+        </p>
       </header>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {t("common.filters")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div className="relative md:col-span-2">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("common.search")}
-              className="pl-9"
-            />
-          </div>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("history.type")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all">{t("common.all")}</SelectItem>
-              {TYPES.map((tp) => (
-                <SelectItem key={tp} value={tp}>
-                  {t(`history.types.${tp}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("history.source")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all">{t("common.all")}</SelectItem>
-              {SOURCES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {t(`history.sources.${s}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex gap-2">
-            <Input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              aria-label={t("history.from")}
-            />
-            <Input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              aria-label={t("history.to")}
-            />
-          </div>
-          {(q || type !== "__all" || source !== "__all" || from || to) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={reset}
-              className="justify-self-start md:col-span-5"
-            >
-              <X className="h-3.5 w-3.5 mr-1.5" />
-              {t("common.clear")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("history.searchPlaceholder", "Search a product, person, or location…")}
+            className="pl-9 h-9"
+          />
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("common.date")}</TableHead>
-                <TableHead>{t("history.type")}</TableHead>
-                <TableHead>{t("history.source")}</TableHead>
-                <TableHead>{t("history.product")}</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead className="text-right">{t("history.qty")}</TableHead>
-                <TableHead className="text-right">{t("history.prev")}</TableHead>
-                <TableHead className="text-right">{t("history.new")}</TableHead>
-                <TableHead>{t("common.reason")}</TableHead>
-                <TableHead>{t("history.user")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 10 }).map((__, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={10}
-                    className="text-center py-10 text-muted-foreground"
-                  >
-                    {t("common.noResults")}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap text-xs">
-                      {new Date(r.created_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={typeColor(r.type) + " text-xs"}
-                      >
-                        {t(`history.types.${r.type}`)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {t(`history.sources.${r.source}`)}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {r.product_name ?? "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {r.sku ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {r.quantity_change ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {r.previous_stock ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {r.new_stock ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate">
-                      {r.reason ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.user_email ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-1.5">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              tab === id ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {feedQ.isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-14 animate-pulse rounded-md bg-muted/40" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/60" />
+            <p className="mt-3 text-sm font-medium">{t("history.emptyTitle", "Nothing here yet")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("history.emptyBody", "Scan, receive, transfer or adjust stock and you'll see it appear here.")}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {grouped.map(([day, list]) => (
+            <section key={day} className="space-y-2">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-1">{day}</h2>
+              <ul className="space-y-1.5">
+                {list.map((it) => {
+                  const Icon = ICONS[it.category];
+                  const tone = TONES[it.category];
+                  return (
+                    <li
+                      key={it.id}
+                      className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/30"
+                    >
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", tone)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-snug">{it.title}</p>
+                        {it.subtitle && (
+                          <p className="mt-0.5 text-xs text-muted-foreground truncate">{it.subtitle}</p>
+                        )}
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {timeAgo(it.created_at)}
+                          {it.actor ? ` · ${it.actor}` : ""}
+                        </p>
+                      </div>
+                      {it.delta && (
+                        <div className={cn(
+                          "shrink-0 self-center rounded-md px-2 py-1 text-xs font-mono tabular-nums",
+                          it.delta.startsWith("+") ? "bg-success/10 text-success"
+                          : it.delta.startsWith("-") ? "bg-destructive/10 text-destructive"
+                          : "bg-muted text-muted-foreground"
+                        )}>
+                          {it.delta}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+
+          {feedQ.hasNextPage && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" size="sm" onClick={() => feedQ.fetchNextPage()} disabled={feedQ.isFetchingNextPage}>
+                {feedQ.isFetchingNextPage ? t("common.loading", "Loading…") : t("history.loadMore", "Load more")}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

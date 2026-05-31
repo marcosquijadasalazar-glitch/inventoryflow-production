@@ -1,120 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-export const SECURITY_ACTIONS = [
-  "sign_in_success",
-  "sign_in_failed",
-  "logout",
-  "session_refresh",
-  "signup_started",
-  "checkout_started",
-  "checkout_completed",
-  "checkout_abandoned",
-  "password_reset_requested",
-  "password_changed",
-  "invite_accepted",
-] as const;
-
-type SecurityAction = (typeof SECURITY_ACTIONS)[number];
-
-function parseUserAgent(ua: string | null) {
-  const agent = ua ?? "";
-  const browser = /edg/i.test(agent)
-    ? "Edge"
-    : /chrome/i.test(agent)
-      ? "Chrome"
-      : /safari/i.test(agent) && !/chrome/i.test(agent)
-        ? "Safari"
-        : /firefox/i.test(agent)
-          ? "Firefox"
-          : /opr|opera/i.test(agent)
-            ? "Opera"
-            : "Unknown";
-
-  const os = /windows/i.test(agent)
-    ? "Windows"
-    : /mac os|macintosh/i.test(agent)
-      ? "macOS"
-      : /android/i.test(agent)
-        ? "Android"
-        : /iphone|ipad|ios/i.test(agent)
-          ? "iOS"
-          : /linux/i.test(agent)
-            ? "Linux"
-            : "Unknown";
-
-  const device = /mobile|android|iphone|ipad/i.test(agent) ? "Mobile" : "Desktop";
-  return { browser, os, device };
-}
-
-export async function logSecurityEventServer(input: {
-  user_id?: string | null;
-  organization_id?: string | null;
-  email?: string | null;
-  action: SecurityAction;
-  status: "success" | "failed" | "info";
-  ip_address?: string | null;
-  user_agent?: string | null;
-  browser?: string | null;
-  device?: string | null;
-  os?: string | null;
-  country?: string | null;
-}) {
-  const ua = input.user_agent ?? null;
-  const parsed = parseUserAgent(ua);
-  await supabaseAdmin.from("login_activity" as never).insert({
-    user_id: input.user_id ?? null,
-    organization_id: input.organization_id ?? null,
-    email: input.email ?? null,
-    action: input.action,
-    status: input.status,
-    ip_address: input.ip_address ?? null,
-    user_agent: ua ?? null,
-    browser: input.browser ?? parsed.browser,
-    device: input.device ?? parsed.device,
-    os: input.os ?? parsed.os,
-    country: input.country ?? null,
-  } as never);
-}
-
-async function getMyProfile(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("user_id, email, role, organization_id, must_change_password")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error || !data) throw new Error("Profile not found");
-  return data as any;
-}
-
-async function assertSecurityViewer(userId: string) {
-  const me = await getMyProfile(userId);
-  if (!["owner", "manager", "super_admin"].includes(me.role)) {
-    throw new Error("Forbidden");
-  }
-  return me;
-}
-
-const PublicEventSchema = z.object({
-  email: z.string().email().max(254).optional().nullable(),
-  action: z.enum(SECURITY_ACTIONS),
-  status: z.enum(["success", "failed", "info"]).default("info"),
-  user_agent: z.string().max(2000).optional().nullable(),
-});
-
-export const logPublicSecurityEvent = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => PublicEventSchema.parse(input))
-  .handler(async ({ data }) => {
-    await logSecurityEventServer({
-      email: data.email ?? null,
-      action: data.action,
-      status: data.status,
-      user_agent: data.user_agent ?? null,
-    });
-    return { ok: true as const };
-  });
+import { SECURITY_ACTIONS } from "./security-constants";
 
 const AuthEventSchema = z.object({
   action: z.enum(SECURITY_ACTIONS),
@@ -123,10 +9,12 @@ const AuthEventSchema = z.object({
 });
 
 export const logAuthSecurityEvent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AuthEventSchema.parse(input))
-  .handler(async ({ context, data }) => {
-    const me = await getMyProfile(context.userId);
+  .handler(async ({ data }) => {
+    const { getAuthenticatedUserId } = await import("./security-auth.server");
+    const { getMyProfileAdmin, logSecurityEventServer } = await import("./security.server");
+    const userId = await getAuthenticatedUserId();
+    const me = await getMyProfileAdmin(userId);
     await logSecurityEventServer({
       user_id: me.user_id,
       organization_id: me.organization_id ?? null,
@@ -155,10 +43,13 @@ const PresenceSchema = z.object({
 });
 
 export const heartbeatPresence = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => PresenceSchema.parse(input))
-  .handler(async ({ context, data }) => {
-    const me = await getMyProfile(context.userId);
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getAuthenticatedUserId } = await import("./security-auth.server");
+    const { getMyProfileAdmin, parseUserAgent } = await import("./security.server");
+    const userId = await getAuthenticatedUserId();
+    const me = await getMyProfileAdmin(userId);
     const ua = data.user_agent ?? null;
     const parsed = parseUserAgent(ua);
     await supabaseAdmin.from("user_presence" as never).upsert(
@@ -177,9 +68,12 @@ export const heartbeatPresence = createServerFn({ method: "POST" })
   });
 
 export const getPresenceSnapshot = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const me = await assertSecurityViewer(context.userId);
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getAuthenticatedUserId } = await import("./security-auth.server");
+    const { assertSecurityViewer } = await import("./security.server");
+    const userId = await getAuthenticatedUserId();
+    const me = await assertSecurityViewer(userId);
     if (!me.organization_id) return { rows: [] as any[] };
     const { data, error } = await supabaseAdmin
       .from("user_presence" as never)
@@ -208,33 +102,76 @@ const ActivityFilterSchema = z.object({
   search: z.string().trim().max(200).optional().nullable(),
   user_id: z.string().uuid().optional().nullable(),
   action: z.enum(SECURITY_ACTIONS).optional().nullable(),
+  category: z.enum(["auth", "billing", "access", "security"]).optional().nullable(),
+  severity: z.enum(["info", "warning", "critical"]).optional().nullable(),
   date_from: z.string().datetime().optional().nullable(),
   date_to: z.string().datetime().optional().nullable(),
-  limit: z.number().int().min(10).max(500).default(200),
+  scope: z.enum(["org", "ecosystem"]).default("org"),
+  limit: z.number().int().min(10).max(200).default(50),
+  offset: z.number().int().min(0).max(100000).default(0),
 });
 
 export const getSecurityActivity = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ActivityFilterSchema.parse(input))
-  .handler(async ({ context, data }) => {
-    const me = await assertSecurityViewer(context.userId);
-    if (!me.organization_id) return { rows: [] as any[] };
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getAuthenticatedUserId } = await import("./security-auth.server");
+    const { assertSecurityViewer } = await import("./security.server");
+    const userId = await getAuthenticatedUserId();
+    const me = await assertSecurityViewer(userId);
+    const isSuper = me.role === "super_admin";
+    const wantEcosystem = data.scope === "ecosystem" && isSuper;
+    if (!wantEcosystem && !me.organization_id) {
+      return { rows: [] as any[], total: 0, offset: data.offset, limit: data.limit, scope: "org" as const };
+    }
+    const to = data.offset + data.limit - 1;
     let q = supabaseAdmin
       .from("login_activity" as never)
-      .select("id, user_id, organization_id, email, action, status, ip_address, browser, device, os, created_at")
-      .eq("organization_id", me.organization_id)
+      .select(
+        "id, user_id, organization_id, email, action, status, severity, category, ip_address, browser, device, os, created_at",
+        { count: "exact" },
+      )
       .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .range(data.offset, to);
+    if (!wantEcosystem) q = q.eq("organization_id", me.organization_id);
     if (data.user_id) q = q.eq("user_id", data.user_id);
     if (data.action) q = q.eq("action", data.action);
+    if (data.category) q = q.eq("category", data.category);
+    if (data.severity) q = q.eq("severity", data.severity);
     if (data.date_from) q = q.gte("created_at", data.date_from);
     if (data.date_to) q = q.lte("created_at", data.date_to);
     if (data.search) {
       const s = `%${data.search}%`;
       q = q.or(`email.ilike.${s},action.ilike.${s},browser.ilike.${s},device.ilike.${s}`);
     }
-    const { data: rows, error } = await q;
+    const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
-    return { rows: (rows ?? []) as any[] };
-  });
 
+    let orgMap = new Map<string, string>();
+    if (wantEcosystem) {
+      const orgIds = Array.from(
+        new Set(((rows ?? []) as any[]).map((r) => r.organization_id).filter(Boolean)),
+      );
+      if (orgIds.length > 0) {
+        const { data: orgs } = await supabaseAdmin
+          .from("organizations")
+          .select("id, company_name")
+          .in("id", orgIds);
+        orgMap = new Map<string, string>(
+          ((orgs ?? []) as any[]).map((o) => [o.id, o.company_name]),
+        );
+      }
+    }
+    const enriched = ((rows ?? []) as any[]).map((r) => ({
+      ...r,
+      organization_name: orgMap.get(r.organization_id) ?? null,
+    }));
+
+    return {
+      rows: enriched,
+      total: count ?? enriched.length,
+      offset: data.offset,
+      limit: data.limit,
+      scope: wantEcosystem ? ("ecosystem" as const) : ("org" as const),
+    };
+  });

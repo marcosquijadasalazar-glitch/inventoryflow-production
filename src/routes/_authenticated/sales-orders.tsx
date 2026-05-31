@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -91,8 +92,21 @@ import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput
 import { useProfile, canManageOrg } from "@/lib/profile";
 
 export const Route = createFileRoute("/_authenticated/sales-orders")({
-  component: SalesOrdersPage,
+  component: SalesOrdersRedirect,
 });
+
+function SalesOrdersRedirect() {
+  const navigate = useNavigate({ from: "/sales-orders" });
+  useEffect(() => {
+    navigate({
+      to: "/orders",
+      search: (prev: Record<string, any>) => ({ ...prev, tab: "sales" }),
+      replace: true,
+    });
+  }, [navigate]);
+  return null;
+}
+
 
 const STATUS_COLORS: Record<SOStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -111,7 +125,7 @@ const PAYMENT_COLORS: Record<PaymentStatus, string> = {
 
 const PAYMENT_METHODS = ["cash", "card", "zelle", "ach", "check", "other"] as const;
 
-function SalesOrdersPage() {
+export function SalesOrdersPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const profile = useProfile();
@@ -120,6 +134,14 @@ function SalesOrdersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [paymentSoId, setPaymentSoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!embedded) return;
+    const handler = () => setCreateOpen(true);
+    window.addEventListener("orders:create-so", handler);
+    return () => window.removeEventListener("orders:create-so", handler);
+  }, [embedded]);
+
 
   const handleFulfill = async (id: string) => {
     try {
@@ -158,19 +180,35 @@ function SalesOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            {t("so.section", "Sales")}
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("so.title", "Sales Orders")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("so.subtitle", "Sell and dispatch inventory to customers.")}
-          </p>
+      {!embedded && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
+              {t("so.section", "Sales")}
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {t("so.title", "Sales Orders")}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t("so.subtitle", "Sell and dispatch inventory to customers.")}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ExportMenu
+              title={t("so.title", "Sales Orders")}
+              filename="sales-orders"
+              rows={sos.data ?? []}
+              columns={SO_EXPORT_COLUMNS}
+              orientation="landscape"
+            />
+            <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
+              <Plus className="h-4 w-4" /> {t("so.create", "Create Sales Order")}
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+      )}
+      {embedded && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <ExportMenu
             title={t("so.title", "Sales Orders")}
             filename="sales-orders"
@@ -178,11 +216,9 @@ function SalesOrdersPage() {
             columns={SO_EXPORT_COLUMNS}
             orientation="landscape"
           />
-          <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
-            <Plus className="h-4 w-4" /> {t("so.create", "Create Sales Order")}
-          </Button>
         </div>
-      </div>
+      )}
+
 
       <Card className="border-border shadow-soft">
         <CardHeader>

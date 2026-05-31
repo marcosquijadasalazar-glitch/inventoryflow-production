@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -68,8 +69,21 @@ const PO_EXPORT_COLUMNS: ExportColumn<PurchaseOrder>[] = [
 ];
 
 export const Route = createFileRoute("/_authenticated/purchase-orders")({
-  component: PurchaseOrdersPage,
+  component: PurchaseOrdersRedirect,
 });
+
+function PurchaseOrdersRedirect() {
+  const navigate = useNavigate({ from: "/purchase-orders" });
+  useEffect(() => {
+    navigate({
+      to: "/orders",
+      search: (prev: Record<string, any>) => ({ ...prev, tab: "purchase" }),
+      replace: true,
+    });
+  }, [navigate]);
+  return null;
+}
+
 
 const STATUS_COLORS: Record<POStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -79,28 +93,51 @@ const STATUS_COLORS: Record<POStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-function PurchaseOrdersPage() {
+export function PurchaseOrdersPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const pos = useQuery({ queryKey: ["purchase_orders"], queryFn: listPurchaseOrders });
   const [createOpen, setCreateOpen] = useState(false);
   const [receiveId, setReceiveId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!embedded) return;
+    const handler = () => setCreateOpen(true);
+    window.addEventListener("orders:create-po", handler);
+    return () => window.removeEventListener("orders:create-po", handler);
+  }, [embedded]);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
-            {t("po.section", "Procurement")}
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("po.title", "Purchase Orders")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("po.subtitle", "Buy inventory from suppliers and receive stock.")}
-          </p>
+      {!embedded && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-primary mb-1.5">
+              {t("po.section", "Procurement")}
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {t("po.title", "Purchase Orders")}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t("po.subtitle", "Buy inventory from suppliers and receive stock.")}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ExportMenu
+              title={t("po.title", "Purchase Orders")}
+              filename="purchase-orders"
+              rows={pos.data ?? []}
+              columns={PO_EXPORT_COLUMNS}
+              orientation="landscape"
+            />
+            <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
+              <Plus className="h-4 w-4" /> {t("po.create", "Create Purchase Order")}
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+      )}
+      {embedded && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <ExportMenu
             title={t("po.title", "Purchase Orders")}
             filename="purchase-orders"
@@ -108,11 +145,9 @@ function PurchaseOrdersPage() {
             columns={PO_EXPORT_COLUMNS}
             orientation="landscape"
           />
-          <Button onClick={() => setCreateOpen(true)} className="shadow-soft">
-            <Plus className="h-4 w-4" /> {t("po.create", "Create Purchase Order")}
-          </Button>
         </div>
-      </div>
+      )}
+
 
       <Card className="border-border shadow-soft">
         <CardHeader>

@@ -7,8 +7,8 @@ import {
   type BillingPlan,
 } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createNotification } from "@/lib/notifications.functions";
-import { logSecurityEventServer } from "@/lib/security.functions";
+import { createNotification } from "@/lib/notifications.server";
+import { logSecurityEventServer } from "@/lib/security.server";
 
 const GRACE_PERIOD_DAYS = 3;
 
@@ -152,6 +152,7 @@ async function provisionSignupFromSession(session: Stripe.Checkout.Session) {
     .from("signup_sessions" as never)
     .update({
       status: "ready",
+      email,
       user_id: created.user.id,
       organization_id: org.id,
       temp_password: tempPassword,
@@ -189,6 +190,8 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     type: "payment_failed",
     title: "Payment failed",
     message: "We could not charge your payment method. Update your billing details to avoid service interruption.",
+    entity_type: "billing",
+    action_path: "/settings?tab=billing",
     metadata: { invoice_id: invoice.id ?? null, grace_period_ends_at: graceEnd.toISOString() },
   });
 }

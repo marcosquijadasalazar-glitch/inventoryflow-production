@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { planForPriceId } from "@/lib/stripe.server";
 import type { Database } from "@/integrations/supabase/types";

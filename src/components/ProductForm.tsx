@@ -110,7 +110,7 @@ export function ProductForm({
       setShowNewCategory(false);
       toast.success(t("categories.created"));
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed");
+      toast.error(e?.message ?? "Something went wrong. Please try again.");
     } finally {
       setCreatingCategory(false);
     }
@@ -235,7 +235,7 @@ export function ProductForm({
         const msg =
           [e?.message, e?.details, e?.hint, e?.code ? `(code: ${e.code})` : null]
             .filter(Boolean)
-            .join(" — ") || "Failed to save";
+            .join(" — ") || "We couldn't save that. Please try again.";
         setErrorMsg(msg);
         toast.error(msg);
       }
