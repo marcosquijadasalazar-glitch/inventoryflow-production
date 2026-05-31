@@ -1078,7 +1078,7 @@
   },
   "movements": {
     "title": "Inventory Movements",
-    "subtitle": "Record stock additions, removals and adjustments.",
+    "subtitle": "Record stock additions, removals, transfers, and adjustments.",
     "newMovement": "New movement",
     "history": "History",
     "product": "Product",
