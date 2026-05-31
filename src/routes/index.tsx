@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -87,7 +86,7 @@ function LandingRoute() {
 
 function LandingPage() {
   const { checkout } = Route.useSearch();
-  const logPublicEvent = useServerFn(logPublicSecurityEvent);
+  const logPublicEvent = logPublicSecurityEvent;
   useEffect(() => {
     if (checkout !== "cancelled") return;
     void logPublicEvent({

@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { heartbeatPresence, logAuthSecurityEvent } from "@/lib/security.functions";
 import "@/i18n";
@@ -17,8 +16,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const logEvent = useServerFn(logAuthSecurityEvent);
-  const heartbeat = useServerFn(heartbeatPresence);
+  const logEvent = logAuthSecurityEvent;
+  const heartbeat = heartbeatPresence;
 
   useEffect(() => {
     // Set up listener FIRST, then read existing session

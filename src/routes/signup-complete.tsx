@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { getSignupSession, type SignupStatus } from "@/lib/billing.functions";
 import { Button } from "@/components/ui/button";
 import { Loader2, Copy, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/signup-complete")({
 
 function SignupCompletePage() {
   const { session_id } = Route.useSearch();
-  const fetchStatus = useServerFn(getSignupSession);
+  const fetchStatus = getSignupSession;
   const [state, setState] = useState<SignupStatus | { status: "loading" } | { status: "error"; message: string }>({ status: "loading" });
   const triesRef = useRef(0);
 

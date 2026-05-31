@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/lib/auth";
 import { Boxes } from "lucide-react";
@@ -49,7 +48,7 @@ function AuthenticatedLayout() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const fetchAccess = useServerFn(getMyAccessStatus);
+  const fetchAccess = getMyAccessStatus;
   const access = useQuery({
     queryKey: ["access-status", session?.user?.id],
     queryFn: () => fetchAccess({}),

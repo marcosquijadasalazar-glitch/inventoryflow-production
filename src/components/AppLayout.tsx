@@ -16,7 +16,7 @@ import {
   ShoppingCart,
   Receipt,
   ArrowRightLeft,
-  Wrench,
+  
   Warehouse,
   FileBarChart,
   Users,
@@ -74,7 +74,7 @@ function useNavItems(): NavEntry[] {
     { to: "/customers", label: t("nav.customers", "Customers"), icon: Users, module: "sales_orders", permission: "manage_sales_orders" },
     { to: "/suppliers", label: t("nav.suppliers", "Suppliers"), icon: Truck, module: "purchase_orders", permission: "manage_purchase_orders" },
     { to: "/locations", label: t("nav.locations", "Locations"), icon: Warehouse, module: "location_stock", permission: "manage_locations" },
-    { to: "/internal-use", label: t("nav.internalUse", "Internal Use"), icon: Wrench, module: "internal_use", permission: "manage_internal_use" },
+    
     { to: "/history", label: t("nav.history"), icon: History, module: "history", permission: "view_transaction_history" },
     { to: "/reports", label: t("nav.reports", "Reports"), icon: FileBarChart, module: "reports", permission: "view_reports" },
     { to: "/scanner", label: t("nav.scanner"), icon: ScanLine, module: "scanner", permission: "use_barcode_scanner" },

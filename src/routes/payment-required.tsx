@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { CreditCard, LogOut, MessageCircle, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -25,8 +24,8 @@ function PaymentRequiredPage() {
   const { t } = useTranslation();
   const { session, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const fetchAccess = useServerFn(getMyAccessStatus);
-  const checkout = useServerFn(createCheckoutSession);
+  const fetchAccess = getMyAccessStatus;
+  const checkout = createCheckoutSession;
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
