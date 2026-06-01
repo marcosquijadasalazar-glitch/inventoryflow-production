@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  Download,
   Globe,
   ShieldAlert,
   ShieldCheck,
@@ -26,6 +27,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useProfile } from "@/lib/profile";
 import { getPresenceSnapshot, getSecurityActivity } from "@/lib/security.functions";
+import { orgListUsers } from "@/lib/org-users.functions";
+import { exportRowsCsv } from "@/lib/exporters";
 import {
   SECURITY_ACTIONS,
   SECURITY_CATEGORIES,
@@ -95,17 +98,26 @@ export function SecurityActivityPage() {
   const isSuper = role === "super_admin";
   const fetchActivity = useServerFn(getSecurityActivity);
   const fetchPresence = useServerFn(getPresenceSnapshot);
+  const fetchUsers = useServerFn(orgListUsers);
 
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<string>("__all");
   const [category, setCategory] = useState<string>("__all");
   const [severity, setSeverity] = useState<string>("__all");
+  const [userId, setUserId] = useState<string>("__all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [ecosystem, setEcosystem] = useState(false);
   const [page, setPage] = useState(0);
 
   const scope = ecosystem && isSuper ? "ecosystem" : "org";
+
+  const orgUsers = useQuery({
+    queryKey: ["security-org-users"],
+    queryFn: () => fetchUsers({}),
+    enabled: canView && !ecosystem,
+    staleTime: 5 * 60_000,
+  });
 
   const activity = useQuery({
     queryKey: [
@@ -114,6 +126,7 @@ export function SecurityActivityPage() {
       action,
       category,
       severity,
+      userId,
       dateFrom,
       dateTo,
       scope,
@@ -126,6 +139,7 @@ export function SecurityActivityPage() {
           action: action === "__all" ? null : (action as any),
           category: category === "__all" ? null : (category as any),
           severity: severity === "__all" ? null : (severity as any),
+          user_id: userId === "__all" ? null : userId,
           date_from: dateFrom ? new Date(`${dateFrom}T00:00:00.000Z`).toISOString() : null,
           date_to: dateTo ? new Date(`${dateTo}T23:59:59.999Z`).toISOString() : null,
           scope,
@@ -143,6 +157,21 @@ export function SecurityActivityPage() {
     refetchInterval: 45_000,
   });
 
+  const suspicious = useQuery({
+    queryKey: ["security-suspicious", scope],
+    queryFn: () =>
+      fetchActivity({
+        data: {
+          search: null, action: null, category: null,
+          severity: "critical" as any, user_id: null,
+          date_from: null, date_to: null,
+          scope, limit: 10, offset: 0,
+        },
+      }),
+    enabled: canView,
+    refetchInterval: 60_000,
+  });
+
   const onlineRows = useMemo(
     () =>
       ((presence.data?.rows ?? []) as any[]).filter((r) => {
@@ -156,6 +185,27 @@ export function SecurityActivityPage() {
   const total = activity.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const criticalCount = rows.filter((r) => r.severity === "critical").length;
+  const suspiciousRows = (suspicious.data?.rows ?? []) as any[];
+
+  const handleExportCsv = () => {
+    exportRowsCsv(
+      "security-events",
+      [
+        { key: "created_at", header: "When", get: (r: any) => r.created_at ? new Date(r.created_at).toISOString() : "" },
+        { key: "severity", header: "Severity" },
+        { key: "category", header: "Category" },
+        { key: "action", header: "Action" },
+        { key: "email", header: "User" },
+        { key: "organization_name", header: "Organization" },
+        { key: "ip_address", header: "IP" },
+        { key: "browser", header: "Browser" },
+        { key: "device", header: "Device" },
+        { key: "os", header: "OS" },
+        { key: "status", header: "Status" },
+      ],
+      rows,
+    );
+  };
 
   if (!canView) return <Navigate to="/dashboard" replace />;
 
@@ -210,6 +260,7 @@ export function SecurityActivityPage() {
                 <th className="py-2 pr-4 font-medium">Role</th>
                 <th className="py-2 pr-4 font-medium">Device</th>
                 <th className="py-2 pr-4 font-medium">Browser</th>
+                <th className="py-2 pr-4 font-medium">IP</th>
                 <th className="py-2 pr-4 font-medium">Last seen</th>
               </tr>
             </thead>
@@ -221,14 +272,15 @@ export function SecurityActivityPage() {
                     {r.full_name ?? r.email ?? "—"}
                   </td>
                   <td className="py-2 pr-4">{r.role ?? "—"}</td>
-                  <td className="py-2 pr-4">{r.device ?? "—"}</td>
+                  <td className="py-2 pr-4">{[r.device, r.os].filter(Boolean).join(" · ") || "—"}</td>
                   <td className="py-2 pr-4">{r.browser ?? "—"}</td>
+                  <td className="py-2 pr-4 text-muted-foreground">{r.ip_address ?? "—"}</td>
                   <td className="py-2 pr-4 text-muted-foreground">{ago(r.last_seen_at)}</td>
                 </tr>
               ))}
               {onlineRows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-6 text-center text-muted-foreground">
                     No one's active right now.
                   </td>
                 </tr>
@@ -239,7 +291,52 @@ export function SecurityActivityPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-destructive" />
+            Suspicious activity
+          </CardTitle>
+          <span className="text-xs text-muted-foreground">
+            Failed-login bursts, new devices, and other critical events
+          </span>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {suspiciousRows.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No suspicious activity detected.
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-muted-foreground border-b">
+                  <th className="py-2 pr-4 font-medium">When</th>
+                  <th className="py-2 pr-4 font-medium">Event</th>
+                  <th className="py-2 pr-4 font-medium">User</th>
+                  <th className="py-2 pr-4 font-medium">IP / Device</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suspiciousRows.map((r) => (
+                  <tr key={r.id} className="border-b last:border-0 bg-destructive/5">
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">
+                      <div>{r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</div>
+                      <div className="text-xs">{ago(r.created_at)}</div>
+                    </td>
+                    <td className="py-2 pr-4 font-medium capitalize">{prettyAction(r.action)}</td>
+                    <td className="py-2 pr-4">{r.email ?? "—"}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      {[r.ip_address, r.browser, r.device].filter(Boolean).join(" · ") || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             Event log
@@ -249,8 +346,13 @@ export function SecurityActivityPage() {
               </Badge>
             )}
           </CardTitle>
+          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-1.5" />
+            Export CSV
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
+
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2">
             <Input
               className="lg:col-span-2"
@@ -318,7 +420,29 @@ export function SecurityActivityPage() {
                 ))}
               </SelectContent>
             </Select>
+            {!ecosystem && (
+              <Select
+                value={userId}
+                onValueChange={(v) => {
+                  setUserId(v);
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="User" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">All users</SelectItem>
+                  {((orgUsers.data?.users ?? []) as any[]).map((u) => (
+                    <SelectItem key={u.user_id} value={u.user_id}>
+                      {u.full_name ?? u.email ?? u.user_id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <div className="grid grid-cols-2 gap-2 md:col-span-3 lg:col-span-6">
+
               <Input
                 type="date"
                 value={dateFrom}
