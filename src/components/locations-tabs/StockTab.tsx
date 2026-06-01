@@ -201,66 +201,33 @@ function LocationStockPage() {
     }
   }, [selectedAisleId, nodes, selectedBinId]);
 
-  // ── Per-location stock (kept identical math to prior version) ──────────
+  // ── Per-location stock (Phase 1: read from product_location_stock view) ──
+  // The DB view encapsulates the prior client-side math (products.stock by
+  // bin_id / legacy location name + completed transfer deltas) so this
+  // component no longer reconstructs inventory in React. Shape kept identical
+  // to the previous in-memory map: { [locationId]: { [productId]: qty } }.
   const perLocQ = useQuery({
-    queryKey: ["location_stock", nodes.length, products.length],
-    enabled: nodes.length > 0 && !!productsQ.data,
+    queryKey: ["product_location_stock"],
     queryFn: async () => {
+      const { data, error } = await sb
+        .from("product_location_stock")
+        .select("product_id, location_id, on_hand");
+      if (error) throw error;
       const map: Record<string, Record<string, number>> = {};
-      const nameToId = new Map<string, string>();
-      for (const l of nodes) {
-        if (l.node_level === "location")
-          nameToId.set((l.name ?? "").trim().toLowerCase(), l.id);
-      }
-      for (const p of products) {
-        // Prefer bin_id (more specific) when present, otherwise fall back to
-        // the legacy location-name mapping. Counting BOTH double-inflates
-        // stock whenever bin_id and the resolved location id are the same
-        // node (e.g. a product placed directly at a top-level warehouse,
-        // which ProductForm writes as location="Main Warehouse" AND
-        // bin_id=<Main Warehouse node id>).
-        const binId = (p as any).bin_id as string | null | undefined;
-        const locName = (p as any).location?.trim().toLowerCase();
-        const targetId =
-          binId ?? (locName ? nameToId.get(locName) ?? null : null);
-        if (targetId) {
-          map[targetId] ??= {};
-          map[targetId][p.id] =
-            (map[targetId][p.id] ?? 0) + (p.stock ?? 0);
-        }
-      }
-      const { data: transfers } = await sb
-        .from("transfer_orders")
-        .select("id, from_location_id, to_location_id, status")
-        .eq("status", "completed");
-      const ids = (transfers ?? []).map((t: any) => t.id);
-      if (ids.length > 0) {
-        const { data: items } = await sb
-          .from("transfer_order_items")
-          .select("transfer_order_id, product_id, quantity")
-          .in("transfer_order_id", ids);
-        const tMap = new Map<string, any>(
-          (transfers ?? []).map((t: any) => [t.id, t]),
-        );
-        for (const it of items ?? []) {
-          if (!it.product_id) continue;
-          const tr = tMap.get(it.transfer_order_id);
-          if (!tr) continue;
-          if (tr.to_location_id) {
-            map[tr.to_location_id] ??= {};
-            map[tr.to_location_id][it.product_id] =
-              (map[tr.to_location_id][it.product_id] ?? 0) + it.quantity;
-          }
-          if (tr.from_location_id) {
-            map[tr.from_location_id] ??= {};
-            map[tr.from_location_id][it.product_id] =
-              (map[tr.from_location_id][it.product_id] ?? 0) - it.quantity;
-          }
-        }
+      for (const r of (data ?? []) as Array<{
+        product_id: string;
+        location_id: string | null;
+        on_hand: number | null;
+      }>) {
+        if (!r.location_id || !r.product_id) continue;
+        map[r.location_id] ??= {};
+        map[r.location_id][r.product_id] =
+          (map[r.location_id][r.product_id] ?? 0) + (r.on_hand ?? 0);
       }
       return map;
     },
   });
+
 
   const lastMovesQ = useQuery({
     queryKey: ["last_movements_by_product"],
