@@ -259,6 +259,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_balances: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          on_hand: number
+          organization_id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          on_hand?: number
+          organization_id: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          on_hand?: number
+          organization_id?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_balances_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_balances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_movements: {
         Row: {
           created_at: string
@@ -364,7 +409,9 @@ export type Database = {
           category: string
           country: string | null
           created_at: string
+          details: Json
           device: string | null
+          device_fingerprint: string | null
           email: string | null
           id: string
           ip_address: string | null
@@ -381,7 +428,9 @@ export type Database = {
           category?: string
           country?: string | null
           created_at?: string
+          details?: Json
           device?: string | null
+          device_fingerprint?: string | null
           email?: string | null
           id?: string
           ip_address?: string | null
@@ -398,7 +447,9 @@ export type Database = {
           category?: string
           country?: string | null
           created_at?: string
+          details?: Json
           device?: string | null
+          device_fingerprint?: string | null
           email?: string | null
           id?: string
           ip_address?: string | null
@@ -1356,6 +1407,9 @@ export type Database = {
       }
       transfer_orders: {
         Row: {
+          approval_request_id: string | null
+          approved_at: string | null
+          approved_by: string | null
           completed_date: string | null
           created_at: string
           created_by: string | null
@@ -1364,6 +1418,9 @@ export type Database = {
           id: string
           notes: string | null
           organization_id: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          requested_by: string | null
           status: Database["public"]["Enums"]["transfer_status"]
           to_location: string | null
           to_location_id: string | null
@@ -1371,6 +1428,9 @@ export type Database = {
           transfer_number: string
         }
         Insert: {
+          approval_request_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           completed_date?: string | null
           created_at?: string
           created_by?: string | null
@@ -1379,6 +1439,9 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
           to_location?: string | null
           to_location_id?: string | null
@@ -1386,6 +1449,9 @@ export type Database = {
           transfer_number: string
         }
         Update: {
+          approval_request_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           completed_date?: string | null
           created_at?: string
           created_by?: string | null
@@ -1394,6 +1460,9 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
           to_location?: string | null
           to_location_id?: string | null
@@ -1452,37 +1521,79 @@ export type Database = {
           browser: string | null
           current_page: string | null
           device: string | null
+          device_fingerprint: string | null
+          ip_address: string | null
           is_online: boolean
           last_seen_at: string
           organization_id: string | null
+          os: string | null
           updated_at: string
+          user_agent: string | null
           user_id: string
         }
         Insert: {
           browser?: string | null
           current_page?: string | null
           device?: string | null
+          device_fingerprint?: string | null
+          ip_address?: string | null
           is_online?: boolean
           last_seen_at?: string
           organization_id?: string | null
+          os?: string | null
           updated_at?: string
+          user_agent?: string | null
           user_id: string
         }
         Update: {
           browser?: string | null
           current_page?: string | null
           device?: string | null
+          device_fingerprint?: string | null
+          ip_address?: string | null
           is_online?: boolean
           last_seen_at?: string
           organization_id?: string | null
+          os?: string | null
           updated_at?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      product_location_stock: {
+        Row: {
+          available: number | null
+          location_id: string | null
+          location_name: string | null
+          on_hand: number | null
+          organization_id: string | null
+          product_id: string | null
+          product_name: string | null
+          reserved: number | null
+          sku: string | null
+        }
+        Relationships: []
+      }
+      product_reservations: {
+        Row: {
+          from_location_id: string | null
+          organization_id: string | null
+          product_id: string | null
+          reserved_qty: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_orders_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_manage_permissions: { Args: { _org_id: string }; Returns: boolean }
@@ -1602,7 +1713,14 @@ export type Database = {
         | "stock_removed"
         | "stock_adjusted"
         | "low_stock"
-      transfer_status: "draft" | "in_transit" | "completed" | "cancelled"
+      transfer_status:
+        | "draft"
+        | "in_transit"
+        | "completed"
+        | "cancelled"
+        | "pending_approval"
+        | "approved"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1813,7 +1931,15 @@ export const Constants = {
         "stock_adjusted",
         "low_stock",
       ],
-      transfer_status: ["draft", "in_transit", "completed", "cancelled"],
+      transfer_status: [
+        "draft",
+        "in_transit",
+        "completed",
+        "cancelled",
+        "pending_approval",
+        "approved",
+        "rejected",
+      ],
     },
   },
 } as const
