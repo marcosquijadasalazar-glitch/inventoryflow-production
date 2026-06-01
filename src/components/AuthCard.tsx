@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/lib/auth";
 import { logPublicSecurityEvent } from "@/lib/security-public.functions";
+import { getDeviceFingerprint } from "@/lib/device-fingerprint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,6 +87,7 @@ export function AuthCard() {
             action: "password_reset_requested",
             status: "success",
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            device_fingerprint: getDeviceFingerprint(),
           },
         }).catch(() => {});
       }
@@ -115,12 +117,23 @@ export function AuthCard() {
       if (err) throw err;
       toast.success("Welcome back");
     } catch (e: any) {
+      const msg: string = e?.message ?? "";
+      const status: number | undefined = e?.status;
+      const safeReason =
+        /invalid login credentials/i.test(msg) ? "invalid_credentials"
+        : /email not confirmed/i.test(msg) ? "email_not_confirmed"
+        : /rate limit|too many/i.test(msg) ? "rate_limited"
+        : /user not found/i.test(msg) ? "user_not_found"
+        : status ? `http_${status}`
+        : "unknown";
       void logPublicEvent({
         data: {
           email: email.trim().toLowerCase(),
           action: "sign_in_failed",
           status: "failed",
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+          device_fingerprint: getDeviceFingerprint(),
+          reason: safeReason,
         },
       }).catch(() => {});
       setError(e?.message ?? "Authentication failed");
@@ -143,6 +156,7 @@ export function AuthCard() {
             action: "sign_in_failed",
             status: "failed",
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            device_fingerprint: getDeviceFingerprint(),
           },
         }).catch(() => {});
         setError((result.error as any)?.message ?? "Google sign-in failed");

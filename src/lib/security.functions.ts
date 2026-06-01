@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { SECURITY_ACTIONS } from "./security-constants";
 
@@ -6,15 +7,19 @@ const AuthEventSchema = z.object({
   action: z.enum(SECURITY_ACTIONS),
   status: z.enum(["success", "failed", "info"]).default("info"),
   user_agent: z.string().max(2000).optional().nullable(),
+  device_fingerprint: z.string().max(128).optional().nullable(),
 });
 
 export const logAuthSecurityEvent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => AuthEventSchema.parse(input))
   .handler(async ({ data }) => {
     const { getAuthenticatedUserId } = await import("./security-auth.server");
-    const { getMyProfileAdmin, logSecurityEventServer } = await import("./security.server");
+    const { getMyProfileAdmin, logSecurityEventServer, getClientIp } = await import(
+      "./security.server"
+    );
     const userId = await getAuthenticatedUserId();
     const me = await getMyProfileAdmin(userId);
+    const ip = getClientIp(getRequest()?.headers ?? null);
     await logSecurityEventServer({
       user_id: me.user_id,
       organization_id: me.organization_id ?? null,
@@ -22,6 +27,8 @@ export const logAuthSecurityEvent = createServerFn({ method: "POST" })
       action: data.action,
       status: data.status,
       user_agent: data.user_agent ?? null,
+      ip_address: ip,
+      device_fingerprint: data.device_fingerprint ?? null,
     });
     if (data.action === "sign_in_success" && me.role !== "owner" && me.must_change_password) {
       await logSecurityEventServer({
@@ -31,6 +38,8 @@ export const logAuthSecurityEvent = createServerFn({ method: "POST" })
         action: "invite_accepted",
         status: "success",
         user_agent: data.user_agent ?? null,
+        ip_address: ip,
+        device_fingerprint: data.device_fingerprint ?? null,
       });
     }
     return { ok: true as const };
@@ -40,6 +49,7 @@ const PresenceSchema = z.object({
   is_online: z.boolean().default(true),
   current_page: z.string().trim().max(300).optional().nullable(),
   user_agent: z.string().max(2000).optional().nullable(),
+  device_fingerprint: z.string().max(128).optional().nullable(),
 });
 
 export const heartbeatPresence = createServerFn({ method: "POST" })
@@ -47,11 +57,14 @@ export const heartbeatPresence = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getAuthenticatedUserId } = await import("./security-auth.server");
-    const { getMyProfileAdmin, parseUserAgent } = await import("./security.server");
+    const { getMyProfileAdmin, parseUserAgent, getClientIp } = await import(
+      "./security.server"
+    );
     const userId = await getAuthenticatedUserId();
     const me = await getMyProfileAdmin(userId);
     const ua = data.user_agent ?? null;
     const parsed = parseUserAgent(ua);
+    const ip = getClientIp(getRequest()?.headers ?? null);
     await supabaseAdmin.from("user_presence" as never).upsert(
       {
         user_id: me.user_id,
@@ -61,6 +74,10 @@ export const heartbeatPresence = createServerFn({ method: "POST" })
         last_seen_at: new Date().toISOString(),
         browser: parsed.browser,
         device: parsed.device,
+        os: parsed.os,
+        user_agent: ua,
+        ip_address: ip,
+        device_fingerprint: data.device_fingerprint ?? null,
       } as never,
       { onConflict: "user_id" },
     );
@@ -77,7 +94,9 @@ export const getPresenceSnapshot = createServerFn({ method: "GET" })
     if (!me.organization_id) return { rows: [] as any[] };
     const { data, error } = await supabaseAdmin
       .from("user_presence" as never)
-      .select("user_id, organization_id, last_seen_at, is_online, current_page, browser, device")
+      .select(
+        "user_id, organization_id, last_seen_at, is_online, current_page, browser, device, os, ip_address, device_fingerprint",
+      )
       .eq("organization_id", me.organization_id)
       .order("last_seen_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -128,7 +147,7 @@ export const getSecurityActivity = createServerFn({ method: "POST" })
     let q = supabaseAdmin
       .from("login_activity" as never)
       .select(
-        "id, user_id, organization_id, email, action, status, severity, category, ip_address, browser, device, os, created_at",
+        "id, user_id, organization_id, email, action, status, severity, category, ip_address, browser, device, os, device_fingerprint, details, created_at",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -142,7 +161,9 @@ export const getSecurityActivity = createServerFn({ method: "POST" })
     if (data.date_to) q = q.lte("created_at", data.date_to);
     if (data.search) {
       const s = `%${data.search}%`;
-      q = q.or(`email.ilike.${s},action.ilike.${s},browser.ilike.${s},device.ilike.${s}`);
+      q = q.or(
+        `email.ilike.${s},action.ilike.${s},browser.ilike.${s},device.ilike.${s},ip_address.ilike.${s}`,
+      );
     }
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);

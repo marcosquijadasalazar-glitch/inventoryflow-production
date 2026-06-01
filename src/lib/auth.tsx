@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { heartbeatPresence, logAuthSecurityEvent } from "@/lib/security.functions";
+import { getDeviceFingerprint } from "@/lib/device-fingerprint";
 import "@/i18n";
 
 type AuthContextValue = {
@@ -26,18 +27,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setLoading(false);
+      const fingerprint = getDeviceFingerprint();
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
       if (event === "SIGNED_IN" && newSession) {
         void logEvent({
           data: {
             action: "sign_in_success",
             status: "success",
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            user_agent: ua,
+            device_fingerprint: fingerprint,
           },
         }).catch(() => {});
         void heartbeat({
           data: {
             is_online: true,
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            user_agent: ua,
+            device_fingerprint: fingerprint,
           },
         }).catch(() => {});
       }
@@ -46,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             action: "session_refresh",
             status: "success",
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            user_agent: ua,
+            device_fingerprint: fingerprint,
           },
         }).catch(() => {});
       }
@@ -68,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           is_online: true,
           current_page: typeof window !== "undefined" ? window.location.pathname : null,
           user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+          device_fingerprint: getDeviceFingerprint(),
         },
       }).catch(() => {});
     tick();
@@ -90,17 +97,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signOut: async () => {
       try {
+        const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
+        const fingerprint = getDeviceFingerprint();
         await logEvent({
           data: {
             action: "logout",
             status: "success",
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            user_agent: ua,
+            device_fingerprint: fingerprint,
           },
         });
         await heartbeat({
           data: {
             is_online: false,
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            user_agent: ua,
+            device_fingerprint: fingerprint,
           },
         });
       } catch {
