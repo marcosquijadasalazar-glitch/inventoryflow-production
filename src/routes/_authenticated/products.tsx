@@ -68,6 +68,7 @@ import {
   upsertProduct,
   type Product,
 } from "@/lib/inventory";
+import { listReservations } from "@/lib/transfers.functions";
 import { ProductForm } from "@/components/ProductForm";
 import { QuickMovementDialog } from "@/components/QuickMovementDialog";
 import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
@@ -182,6 +183,12 @@ function ProductsPage() {
     queryKey: ["products"],
     queryFn: listProducts,
   });
+  const reservationsFn = useServerFn(listReservations);
+  const reservationsQ = useQuery({
+    queryKey: ["product-reservations"],
+    queryFn: () => reservationsFn(),
+  });
+  const reservedMap = (reservationsQ.data as any)?.reserved ?? {};
   const perms = usePermissions();
   const canCost = perms.can("view_costs");
   const canPrice = perms.can("view_prices");
@@ -860,6 +867,12 @@ function ProductsPage() {
                             {t("products.table.minSuffix", { min: p.min_stock })}
                           </span>
                         </div>
+                        {(reservedMap[p.id] ?? 0) > 0 && (
+                          <div className="text-[11px] text-muted-foreground tabular-nums">
+                            {t("products.table.reserved", "Reserved")}: {reservedMap[p.id]} ·{" "}
+                            {t("products.table.available", "Available")}: {Math.max(0, p.stock - reservedMap[p.id])}
+                          </div>
+                        )}
                         <StockHealthBar stock={p.stock} min={p.min_stock} />
                       </div>
                     </TableCell>

@@ -70,7 +70,12 @@ import { LocationFormDialog } from "@/components/LocationFormDialog";
 import { TransferDetailsDrawer } from "@/components/TransferDetailsDrawer";
 import { ExportMenu } from "@/components/ExportMenu";
 import type { ExportColumn } from "@/lib/exporters";
-import { useApprovalGate } from "@/components/approvals/useApprovalGate";
+import { useApprovalGate, useApprovalPolicies, policyFor } from "@/components/approvals/useApprovalGate";
+import { useServerFn } from "@tanstack/react-start";
+import { submitTransferForApproval, completeApprovedTransfer } from "@/lib/transfers.functions";
+import { evaluatePolicy, type ApprovalPolicy } from "@/lib/approvals";
+import { useProfile } from "@/lib/profile";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const TRANSFER_EXPORT_COLUMNS: ExportColumn<TransferOrder>[] = [
@@ -85,6 +90,9 @@ const TRANSFER_EXPORT_COLUMNS: ExportColumn<TransferOrder>[] = [
 
 const STATUS_COLORS: Record<TransferStatus, string> = {
   draft: "bg-muted text-muted-foreground",
+  pending_approval: "bg-warning/15 text-[oklch(0.5_0.14_70)]",
+  approved: "bg-primary/10 text-primary",
+  rejected: "bg-destructive/10 text-destructive",
   in_transit: "bg-warning/15 text-[oklch(0.5_0.14_70)]",
   completed: "bg-success/10 text-[oklch(0.4_0.12_155)]",
   cancelled: "bg-destructive/10 text-destructive",
@@ -101,6 +109,7 @@ export function TransfersTab() {
   const [newLocOpen, setNewLocOpen] = useState(false);
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const { guard, modal } = useApprovalGate();
+  const completeApprovedTransferFn = useServerFn(completeApprovedTransfer);
 
   // Search + filters
   const [search, setSearch] = useState("");
@@ -395,7 +404,27 @@ export function TransfersTab() {
                               <FileDown className="h-3.5 w-3.5" />
                               {t("common.exportPdf", "Export PDF")}
                             </DropdownMenuItem>
-                            {tr.status !== "completed" && tr.status !== "cancelled" && (
+                            {tr.status === "approved" && (
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    await completeApprovedTransferFn({ data: { transfer_id: tr.id } });
+                                    toast.success(t("tr.completed", "Transfer completed"));
+                                    qc.invalidateQueries({ queryKey: ["transfer_orders"] });
+                                    qc.invalidateQueries({ queryKey: ["products"] });
+                                    qc.invalidateQueries({ queryKey: ["movements"] });
+                                    qc.invalidateQueries({ queryKey: ["product-reservations"] });
+                                    invalidateDerived(qc);
+                                  } catch (e: any) {
+                                    toast.error(e.message);
+                                  }
+                                }}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />{" "}
+                                {t("tr.complete", "Complete Transfer")}
+                              </DropdownMenuItem>
+                            )}
+                            {(tr.status === "draft" || tr.status === "in_transit") && (
                               <DropdownMenuItem
                                 onClick={() => {
                                   const totalQty = (tr as any).items?.reduce((s: number, i: any) => s + (i.quantity ?? 0), 0) ?? 0;
@@ -479,7 +508,12 @@ function CreateTransferDialog({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
-  const { guard, modal } = useApprovalGate();
+  const policies = useApprovalPolicies();
+  const submitForApprovalFn = useServerFn(submitTransferForApproval);
+  const profile = useProfile();
+  const role = profile.data?.role;
+  const bypassApproval =
+    role === "owner" || role === "manager" || role === "super_admin";
 
   const [fromLoc, setFromLoc] = useState<Location | null>(null);
   const [toLoc, setToLoc] = useState<Location | null>(null);
@@ -487,6 +521,28 @@ function CreateTransferDialog({
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<TransferItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [pendingPolicy, setPendingPolicy] = useState<ApprovalPolicy | null>(null);
+
+  // Reservations at the selected source location, keyed by product_id.
+  const reservationsAtSource = useQuery({
+    queryKey: ["product-reservations", "by-location", fromLoc?.id ?? null],
+    enabled: !!fromLoc?.id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("product_reservations")
+        .select("product_id, reserved_qty")
+        .eq("from_location_id", fromLoc!.id);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const r of (data ?? []) as any[]) {
+        map[r.product_id] = (map[r.product_id] ?? 0) + Number(r.reserved_qty ?? 0);
+      }
+      return map;
+    },
+  });
+  const resAtSrc = reservationsAtSource.data ?? {};
 
   const addItem = (p: ProductLite) => {
     setItems((prev) => [
@@ -501,6 +557,15 @@ function CreateTransferDialog({
     ]);
   };
 
+  const reset = () => {
+    setItems([]);
+    setFromLoc(null);
+    setToLoc(null);
+    setNotes("");
+    setReason("");
+    setPendingPolicy(null);
+  };
+
   const submit = async (status: "draft" | "completed") => {
     if (!fromLoc || !toLoc)
       return toast.error(t("tr.need_locs", "Select from and to locations"));
@@ -509,18 +574,28 @@ function CreateTransferDialog({
     if (items.length === 0)
       return toast.error(t("po.need_items", "Add at least one item"));
 
-    // Client-side stock check using cached products
     const productMap = new Map(products.data?.map((p) => [p.id, p]) ?? []);
     for (const it of items) {
       if (!it.product_id) continue;
       const p = productMap.get(it.product_id);
-      if (p && (p.stock ?? 0) < it.quantity) {
+      if (!p) continue;
+      const onHand = p.stock ?? 0;
+      const reserved = resAtSrc[it.product_id] ?? 0;
+      const available = onHand - reserved;
+      if (available < it.quantity) {
         return toast.error(
-          t("tr.insufficient", "Insufficient stock for {{name}} (have {{have}}, need {{need}})", {
-            name: p.name,
-            have: p.stock ?? 0,
-            need: it.quantity,
-          }),
+          t(
+            "tr.insufficient_at_source",
+            "Insufficient available stock for {{name}} at {{loc}} (on-hand {{have}}, reserved {{reserved}}, available {{avail}}, need {{need}})",
+            {
+              name: p.name,
+              loc: fromLoc.name,
+              have: onHand,
+              reserved,
+              avail: Math.max(available, 0),
+              need: it.quantity,
+            },
+          ),
         );
       }
     }
@@ -531,41 +606,86 @@ function CreateTransferDialog({
       return s + (i.quantity ?? 0) * ((p as any)?.cost ?? (p as any)?.price ?? 0);
     }, 0);
 
-    const performCreate = async () => {
-      setSaving(true);
-      try {
-        await createTransferOrder({
+    // Owners, managers, and super_admins bypass the approval workflow entirely
+    // and execute the transfer directly through the standard path.
+    const policy = bypassApproval
+      ? undefined
+      : policyFor(policies.data?.policies as ApprovalPolicy[] | undefined, "transfer_order");
+    const evalRes = bypassApproval
+      ? { required: false, blocked: false }
+      : evaluatePolicy(policy, { quantity: totalQty, value: totalValue });
+
+    if (status === "completed" && evalRes.required) {
+      if (evalRes.blocked) {
+        return toast.error("Transfers are blocked by company policy. Contact an owner or manager.");
+      }
+      setPendingPolicy(policy!);
+      setReasonOpen(true);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await createTransferOrder({
+        from_location_id: fromLoc.id,
+        to_location_id: toLoc.id,
+        from_location: fromLoc.name,
+        to_location: toLoc.name,
+        transfer_date: transferDate || null,
+        notes: notes || null,
+        items,
+        status,
+      });
+      toast.success(t("tr.created", "Transfer created"));
+      qc.invalidateQueries({ queryKey: ["transfer_orders"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["movements"] });
+      invalidateDerived(qc);
+      onClose();
+      reset();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitApproval = async () => {
+    if (!fromLoc || !toLoc || !pendingPolicy) return;
+    if (reason.trim().length < 3) return toast.error("Please enter a reason (3+ chars).");
+    setSaving(true);
+    try {
+      await submitForApprovalFn({
+        data: {
           from_location_id: fromLoc.id,
           to_location_id: toLoc.id,
           from_location: fromLoc.name,
           to_location: toLoc.name,
           transfer_date: transferDate || null,
           notes: notes || null,
-          items,
-          status,
-        });
-        toast.success(t("tr.created", "Transfer created"));
-        qc.invalidateQueries({ queryKey: ["transfer_orders"] });
-        qc.invalidateQueries({ queryKey: ["products"] });
-        qc.invalidateQueries({ queryKey: ["movements"] });
-        invalidateDerived(qc);
-        onClose();
-        setItems([]);
-        setFromLoc(null);
-        setToLoc(null);
-      } catch (e: any) {
-        toast.error(e.message);
-      } finally {
-        setSaving(false);
-      }
-    };
-
-    guard({
-      action: "transfer_order",
-      measurements: { quantity: totalQty, value: totalValue },
-      entityLabel: `${fromLoc.name} → ${toLoc.name}`,
-      onApproved: performCreate,
-    });
+          items: items.map((i) => ({
+            product_id: i.product_id!,
+            sku: i.sku ?? null,
+            barcode: i.barcode ?? null,
+            product_name: i.product_name ?? null,
+            quantity: i.quantity,
+          })),
+          reason: reason.trim(),
+          required_role: pendingPolicy.required_role,
+        },
+      });
+      toast.success("Transfer submitted for approval. Stock reserved.");
+      qc.invalidateQueries({ queryKey: ["transfer_orders"] });
+      qc.invalidateQueries({ queryKey: ["approval-requests"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      setReasonOpen(false);
+      onClose();
+      reset();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -619,25 +739,43 @@ function CreateTransferDialog({
                   <TableBody>
                     {items.map((it, idx) => {
                       const p = products.data?.find((x) => x.id === it.product_id);
-                      const over = p ? it.quantity > (p.stock ?? 0) : false;
+                      const onHand = p?.stock ?? 0;
+                      const reserved = it.product_id ? (resAtSrc[it.product_id] ?? 0) : 0;
+                      const available = Math.max(onHand - reserved, 0);
+                      const over = it.quantity > available;
                       return (
                         <TableRow key={idx}>
                           <TableCell>
                             <p className="text-sm">{it.product_name}</p>
                             <p className="text-xs text-muted-foreground font-mono">
                               {it.sku}
-                              {p && (
-                                <span className="ml-2">
-                                  · {t("tr.available", "Available")}: {p.stock ?? 0}
-                                </span>
-                              )}
                             </p>
+                            {p && (
+                              <p className="text-xs mt-0.5">
+                                {fromLoc ? (
+                                  <>
+                                    <span className="text-muted-foreground">
+                                      {fromLoc.name}:
+                                    </span>{" "}
+                                    <span>On hand {onHand}</span>
+                                    <span className="text-muted-foreground"> · Reserved {reserved}</span>
+                                    <span className={over ? "text-destructive font-medium" : "text-success"}>
+                                      {" "}· Available {available}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    Select a source location to see availability
+                                  </span>
+                                )}
+                              </p>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
                               min={1}
-                              max={p?.stock ?? undefined}
+                              max={available || undefined}
                               value={it.quantity}
                               className={over ? "border-destructive" : ""}
                               onChange={(e) => {
@@ -689,7 +827,24 @@ function CreateTransferDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    {modal}
+
+    <Dialog open={reasonOpen} onOpenChange={(v) => !v && setReasonOpen(false)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Submit Transfer For Approval</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            This transfer requires <strong>{pendingPolicy?.required_role}</strong> approval. Stock will be reserved while pending. Provide a reason:
+          </p>
+          <Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is this transfer needed?" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setReasonOpen(false)} disabled={saving}>Cancel</Button>
+          <Button onClick={submitApproval} disabled={saving}>Submit Request</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

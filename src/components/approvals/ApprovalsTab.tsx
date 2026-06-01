@@ -19,6 +19,7 @@ import {
   decideApprovalRequest,
   approvalAnalytics,
 } from "@/lib/approvals.functions";
+import { getTransferPackage } from "@/lib/transfers.functions";
 import {
   APPROVAL_ACTIONS,
   APPROVAL_ACTION_LABELS,
@@ -214,6 +215,9 @@ function QueueCard() {
               </div>
               <Badge variant="outline">{r.status}</Badge>
             </div>
+            {r.action_type === "transfer_order" && r.payload?.transfer_id && (
+              <TransferPackagePreview transferId={r.payload.transfer_id} />
+            )}
             {r.status === "pending" && data?.canDecide && (
               <div className="flex flex-wrap items-end gap-2">
                 <div className="flex-1 min-w-[160px]">
@@ -228,6 +232,66 @@ function QueueCard() {
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+function TransferPackagePreview({ transferId }: { transferId: string }) {
+  const fetch = useServerFn(getTransferPackage);
+  const { data, isLoading } = useQuery({
+    queryKey: ["transfer-package", transferId],
+    queryFn: () => fetch({ data: { transfer_id: transferId } }),
+  });
+  if (isLoading) return <div className="text-xs text-muted-foreground border-t border-border pt-2">Loading transfer details…</div>;
+  const t = (data as any)?.transfer;
+  const items = ((data as any)?.items ?? []) as any[];
+  const snapshot = ((data as any)?.items_snapshot ?? []) as any[];
+  if (!t) return <div className="text-xs text-muted-foreground border-t border-border pt-2">Transfer no longer available.</div>;
+  const totalQty = items.reduce((s, i) => s + (i.quantity ?? 0), 0);
+  const snapById = new Map(snapshot.map((s) => [s.product_id, s]));
+  return (
+    <div className="border-t border-border pt-2 space-y-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div><div className="text-muted-foreground">Transfer #</div><div className="font-medium">{t.transfer_number}</div></div>
+        <div><div className="text-muted-foreground">Source</div><div className="font-medium">{t.from_location}</div></div>
+        <div><div className="text-muted-foreground">Destination</div><div className="font-medium">{t.to_location}</div></div>
+        <div><div className="text-muted-foreground">Status</div><div className="font-medium">{t.status}</div></div>
+      </div>
+      <div className="rounded-md border border-border overflow-hidden">
+        <table className="w-full text-xs">
+          <thead className="bg-muted/40">
+            <tr>
+              <th className="text-left px-2 py-1">Product</th>
+              <th className="text-left px-2 py-1">SKU</th>
+              <th className="text-right px-2 py-1">Qty</th>
+              <th className="text-right px-2 py-1">On hand @ source</th>
+              <th className="text-right px-2 py-1">Reserved @ source</th>
+              <th className="text-right px-2 py-1">Available @ source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((i) => {
+              const s = i.product_id ? snapById.get(i.product_id) : null;
+              return (
+                <tr key={i.id} className="border-t border-border">
+                  <td className="px-2 py-1">{i.product_name ?? "—"}</td>
+                  <td className="px-2 py-1 text-muted-foreground">{i.sku ?? "—"}</td>
+                  <td className="px-2 py-1 text-right">{i.quantity}</td>
+                  <td className="px-2 py-1 text-right">{s ? s.on_hand : "—"}</td>
+                  <td className="px-2 py-1 text-right">{s ? s.reserved_at_source : "—"}</td>
+                  <td className="px-2 py-1 text-right">{s ? s.available_at_source : "—"}</td>
+                </tr>
+              );
+            })}
+            <tr className="border-t border-border bg-muted/20">
+              <td className="px-2 py-1 font-medium" colSpan={2}>Total</td>
+              <td className="px-2 py-1 text-right font-medium">{totalQty}</td>
+              <td colSpan={3}></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {t.notes && <div className="text-xs"><span className="font-medium">Notes:</span> {t.notes}</div>}
+    </div>
   );
 }
 
