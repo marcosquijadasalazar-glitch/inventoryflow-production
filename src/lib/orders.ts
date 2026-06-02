@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { createMovement } from "./inventory";
 
 const sb = supabase as any;
 
@@ -751,18 +752,20 @@ export async function createInternalUse(input: {
   department: string;
   reason: string;
   notes: string | null;
+  location_id: string;
 }) {
   if (input.quantity <= 0) throw new Error("Quantity must be greater than 0");
+  if (!input.location_id) throw new Error("Source location is required");
   const note = `[internal_use] dept=${input.department} | reason=${input.reason}${
     input.notes ? ` | ${input.notes}` : ""
   }`;
-  const { error } = await sb.from("inventory_movements").insert({
+  await createMovement({
     product_id: input.product_id,
     type: "remove",
     quantity: input.quantity,
+    location_id: input.location_id,
     note,
   });
-  if (error) throw error;
 }
 
 export async function listInternalUse() {

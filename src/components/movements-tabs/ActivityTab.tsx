@@ -39,7 +39,18 @@ import type { MovementWithProduct } from "@/lib/inventory";
 import { ScanBarcodeButton } from "@/components/ScanBarcodeButton";
 import { LocationPath } from "@/components/LocationPath";
 import { listAllNodes } from "@/lib/location-tree";
-import { ScanFieldButton } from "@/components/ScanFieldButton";
+import { LocationSelect } from "@/components/LocationSelect";
+import { ProductPicker } from "@/components/ProductPickerInput";
+import {
+  useProductLocationStock,
+  getOnHandAtLocation,
+  validateLocationQuantity,
+} from "@/lib/product-location-stock";
+import {
+  LocationAvailabilityHint,
+  LocationAdjustmentHint,
+  LocationStockValidationAlert,
+} from "@/components/LocationAvailabilityHint";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -91,9 +102,12 @@ type ActivityMode = "full" | "form-only" | "history-only";
 export function ActivityTab({
   presetType,
   mode = "full",
+  lockType = false,
 }: {
   presetType?: "add" | "remove";
   mode?: ActivityMode;
+  /** When true with presetType, hide the movement type picker */
+  lockType?: boolean;
 }) {
   const showForm = mode === "full" || mode === "form-only";
   const showHistory = mode === "full" || mode === "history-only";
@@ -103,8 +117,11 @@ export function ActivityTab({
   const movements = useQuery({ queryKey: ["movements"], queryFn: listMovements });
   const settings = useQuery({ queryKey: ["settings"], queryFn: getCompanySettings });
   const nodesQ = useQuery({ queryKey: ["location-nodes-all"], queryFn: listAllNodes, staleTime: 60_000 });
+  const stockQ = useProductLocationStock();
 
   const [productId, setProductId] = useState<string>("");
+  const [locationId, setLocationId] = useState<string | null>(null);
+  const [locationName, setLocationName] = useState<string | null>(null);
   const [type, setType] = useState<MovementType>(presetType ?? "add");
   const [quantity, setQuantity] = useState<string>("1");
   const [adjustReason, setAdjustReason] = useState<string>("physical_count");
@@ -115,22 +132,33 @@ export function ActivityTab({
     () => products.data?.find((p) => p.id === productId) ?? null,
     [products.data, productId],
   );
-  const currentStock = selectedProduct?.stock ?? 0;
-  const adjustDiff =
-    type === "adjustment" && quantity !== ""
-      ? (parseInt(quantity, 10) || 0) - currentStock
-      : 0;
+  const onHandAtLocation = getOnHandAtLocation(
+    productId || null,
+    locationId,
+    stockQ.data,
+  );
 
-  // Prefill quantity with current stock when switching to adjustment, so the input
-  // represents the NEW absolute quantity (not a delta).
+  const qtyNum = parseInt(quantity, 10) || 0;
+  const stockValidation = validateLocationQuantity({
+    movementType: type,
+    quantity: qtyNum,
+    productId: productId || null,
+    locationId,
+    locationName,
+    stockData: stockQ.data,
+    requireLocation: type === "remove" || type === "adjustment",
+  });
+
+  // Prefill quantity with on-hand at selected location when switching to adjustment.
   useEffect(() => {
-    if (type === "adjustment" && selectedProduct) {
-      setQuantity(String(selectedProduct.stock));
+    if (type === "adjustment" && selectedProduct && locationId && stockQ.data) {
+      const onHand = getOnHandAtLocation(selectedProduct.id, locationId, stockQ.data);
+      if (onHand != null) setQuantity(String(onHand));
     } else if (type !== "adjustment") {
       setQuantity("1");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, productId]);
+  }, [type, productId, locationId]);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -178,7 +206,10 @@ export function ActivityTab({
     if (isNaN(q) || q < 0) return toast.error("Enter a valid quantity");
     if (type !== "adjustment" && q <= 0)
       return toast.error("Enter a valid quantity");
-    if (type === "adjustment" && q === currentStock) {
+    if (stockValidation.blocked) {
+      return toast.error(stockValidation.message?.split("\n")[0] ?? "Invalid quantity");
+    }
+    if (type === "adjustment" && onHandAtLocation != null && q === onHandAtLocation) {
       toast.info(t("movements.noChange", "New quantity matches current stock"));
       return;
     }
@@ -193,6 +224,7 @@ export function ActivityTab({
         type,
         quantity: q,
         note: finalNote,
+        ...(locationId ? { location_id: locationId } : {}),
       });
       toast.success(
         type === "adjustment"
@@ -204,6 +236,7 @@ export function ActivityTab({
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["history"] });
+      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -352,6 +385,7 @@ export function ActivityTab({
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={submit} className="space-y-5">
+            {!lockType && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {typeOptions.map((opt) => {
                 const Icon = opt.icon;
@@ -388,37 +422,17 @@ export function ActivityTab({
                 );
               })}
             </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 md:col-span-2">
                 <Label>{t("movements.product")}</Label>
-                <div className="flex gap-2">
-                  <Select value={productId} onValueChange={setProductId}>
-                    <SelectTrigger className="bg-surface">
-                      <SelectValue placeholder={t("movements.selectProduct")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.data?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} ({p.sku}) · {p.stock}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <ScanFieldButton
-                    onScan={(code) => {
-                      const found = products.data?.find(
-                        (p) => (p.barcode ?? "").trim() === code.trim(),
-                      );
-                      if (found) {
-                        setProductId(found.id);
-                        toast.success(`${found.name}`);
-                      } else {
-                        toast.error(t("scanner.productNotFound"));
-                      }
-                    }}
-                  />
-                </div>
+                <ProductPicker
+                  value={selectedProduct}
+                  onSelect={(p) => setProductId(p.id)}
+                  showGlobalStock={false}
+                  locationStock={stockQ.data}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>
@@ -434,29 +448,33 @@ export function ActivityTab({
                   className="bg-surface"
                 />
                 {type === "adjustment" && selectedProduct && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("movements.current", "Current")}:{" "}
-                    <span className="font-medium text-foreground">
-                      {currentStock}
-                    </span>
-                    {" · "}
-                    {t("sa.diff", "Difference")}:{" "}
-                    <span
-                      className={
-                        adjustDiff > 0
-                          ? "font-semibold text-success"
-                          : adjustDiff < 0
-                            ? "font-semibold text-destructive"
-                            : "font-medium"
-                      }
-                    >
-                      {adjustDiff > 0 ? "+" : ""}
-                      {adjustDiff}
-                    </span>
-                  </p>
+                  <LocationAdjustmentHint
+                    productId={productId || null}
+                    locationId={locationId}
+                    stockData={stockQ.data}
+                    newQuantity={parseInt(quantity, 10)}
+                  />
                 )}
               </div>
             </div>
+
+            <div className="space-y-1.5">
+              <Label>{t("common.location", "Location")}</Label>
+              <LocationSelect
+                value={locationId}
+                onChange={(id, loc) => {
+                  setLocationId(id);
+                  setLocationName(loc?.name ?? null);
+                }}
+              />
+              <LocationAvailabilityHint
+                productId={productId || null}
+                locationId={locationId}
+                stockData={stockQ.data}
+              />
+            </div>
+
+            <LocationStockValidationAlert message={stockValidation.message} />
 
             {type === "adjustment" && (
               <div className="space-y-1.5">
@@ -509,7 +527,11 @@ export function ActivityTab({
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={saving} className="shadow-soft">
+              <Button
+                type="submit"
+                disabled={saving || stockValidation.blocked}
+                className="shadow-soft"
+              >
                 {saving ? (
                   <>
                     <span className="h-3.5 w-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />

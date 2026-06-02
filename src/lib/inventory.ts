@@ -68,6 +68,10 @@ export type MovementWithProduct = Movement & {
   > | null;
 };
 
+export type CreateMovementInput = TablesInsert<"inventory_movements"> & {
+  location_id?: string | null;
+};
+
 export async function listMovements(): Promise<MovementWithProduct[]> {
   const { data, error } = await supabase
     .from("inventory_movements")
@@ -80,8 +84,24 @@ export async function listMovements(): Promise<MovementWithProduct[]> {
   return (data as any) ?? [];
 }
 
+/** Map UI location selection to movement row location columns. */
+function movementLocationFields(
+  type: TablesInsert<"inventory_movements">["type"],
+  locationId: string | null | undefined,
+): Record<string, string> {
+  if (!locationId) return {};
+  const fields: Record<string, string> = { location_id: locationId };
+  if (type === "add") fields.to_location_id = locationId;
+  else if (type === "remove") fields.from_location_id = locationId;
+  return fields;
+}
 
-export async function createMovement(values: TablesInsert<"inventory_movements">) {
-  const { error } = await supabase.from("inventory_movements").insert(values);
+export async function createMovement(values: CreateMovementInput) {
+  const { location_id, ...rest } = values;
+  const payload = {
+    ...rest,
+    ...movementLocationFields(rest.type, location_id),
+  };
+  const { error } = await supabase.from("inventory_movements").insert(payload as never);
   if (error) throw error;
 }
