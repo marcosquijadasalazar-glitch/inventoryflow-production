@@ -66,6 +66,10 @@ import {
 } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
 import { LocationSelect } from "@/components/LocationSelect";
+import {
+  getAvailableAtLocation,
+  useProductLocationStock,
+} from "@/lib/product-location-stock";
 import { LocationFormDialog } from "@/components/LocationFormDialog";
 import { TransferDetailsDrawer } from "@/components/TransferDetailsDrawer";
 import { ExportMenu } from "@/components/ExportMenu";
@@ -75,8 +79,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { submitTransferForApproval, completeApprovedTransfer } from "@/lib/transfers.functions";
 import { evaluatePolicy, type ApprovalPolicy } from "@/lib/approvals";
 import { useProfile } from "@/lib/profile";
-import { supabase } from "@/integrations/supabase/client";
-
 
 const TRANSFER_EXPORT_COLUMNS: ExportColumn<TransferOrder>[] = [
   { key: "transfer_number", header: "Transfer #" },
@@ -508,6 +510,7 @@ function CreateTransferDialog({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
+  const stockQ = useProductLocationStock();
   const policies = useApprovalPolicies();
   const submitForApprovalFn = useServerFn(submitTransferForApproval);
   const profile = useProfile();
@@ -524,25 +527,6 @@ function CreateTransferDialog({
   const [reasonOpen, setReasonOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [pendingPolicy, setPendingPolicy] = useState<ApprovalPolicy | null>(null);
-
-  // Reservations at the selected source location, keyed by product_id.
-  const reservationsAtSource = useQuery({
-    queryKey: ["product-reservations", "by-location", fromLoc?.id ?? null],
-    enabled: !!fromLoc?.id,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("product_reservations")
-        .select("product_id, reserved_qty")
-        .eq("from_location_id", fromLoc!.id);
-      if (error) throw error;
-      const map: Record<string, number> = {};
-      for (const r of (data ?? []) as any[]) {
-        map[r.product_id] = (map[r.product_id] ?? 0) + Number(r.reserved_qty ?? 0);
-      }
-      return map;
-    },
-  });
-  const resAtSrc = reservationsAtSource.data ?? {};
 
   const addItem = (p: ProductLite) => {
     setItems((prev) => [
@@ -576,23 +560,20 @@ function CreateTransferDialog({
 
     const productMap = new Map(products.data?.map((p) => [p.id, p]) ?? []);
     for (const it of items) {
-      if (!it.product_id) continue;
+      if (!it.product_id || !fromLoc) continue;
       const p = productMap.get(it.product_id);
       if (!p) continue;
-      const onHand = p.stock ?? 0;
-      const reserved = resAtSrc[it.product_id] ?? 0;
-      const available = onHand - reserved;
+      const available =
+        getAvailableAtLocation(it.product_id, fromLoc.id, stockQ.data) ?? 0;
       if (available < it.quantity) {
         return toast.error(
           t(
             "tr.insufficient_at_source",
-            "Insufficient available stock for {{name}} at {{loc}} (on-hand {{have}}, reserved {{reserved}}, available {{avail}}, need {{need}})",
+            "Insufficient stock at {{loc}} for {{name}}: have {{have}} need {{need}}",
             {
               name: p.name,
               loc: fromLoc.name,
-              have: onHand,
-              reserved,
-              avail: Math.max(available, 0),
+              have: Math.max(available, 0),
               need: it.quantity,
             },
           ),
@@ -725,7 +706,13 @@ function CreateTransferDialog({
 
           <div className="space-y-2">
             <Label>{t("po.items", "Items")}</Label>
-            <ProductPicker value={null} onSelect={addItem} />
+            <ProductPicker
+              value={null}
+              onSelect={addItem}
+              showGlobalStock={false}
+              locationStock={stockQ.data}
+              filterLocationId={fromLoc?.id ?? null}
+            />
             {items.length > 0 && (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
@@ -738,11 +725,15 @@ function CreateTransferDialog({
                   </TableHeader>
                   <TableBody>
                     {items.map((it, idx) => {
-                      const p = products.data?.find((x) => x.id === it.product_id);
-                      const onHand = p?.stock ?? 0;
-                      const reserved = it.product_id ? (resAtSrc[it.product_id] ?? 0) : 0;
-                      const available = Math.max(onHand - reserved, 0);
-                      const over = it.quantity > available;
+                      const available = fromLoc
+                        ? (getAvailableAtLocation(
+                            it.product_id ?? "",
+                            fromLoc.id,
+                            stockQ.data,
+                          ) ?? 0)
+                        : null;
+                      const over =
+                        available != null && it.quantity > available;
                       return (
                         <TableRow key={idx}>
                           <TableCell>
@@ -750,32 +741,34 @@ function CreateTransferDialog({
                             <p className="text-xs text-muted-foreground font-mono">
                               {it.sku}
                             </p>
-                            {p && (
-                              <p className="text-xs mt-0.5">
-                                {fromLoc ? (
-                                  <>
-                                    <span className="text-muted-foreground">
-                                      {fromLoc.name}:
-                                    </span>{" "}
-                                    <span>On hand {onHand}</span>
-                                    <span className="text-muted-foreground"> · Reserved {reserved}</span>
-                                    <span className={over ? "text-destructive font-medium" : "text-success"}>
-                                      {" "}· Available {available}
-                                    </span>
-                                  </>
-                                ) : (
+                            <p className="text-xs mt-0.5">
+                              {fromLoc ? (
+                                <>
                                   <span className="text-muted-foreground">
-                                    Select a source location to see availability
+                                    {fromLoc.name}:
+                                  </span>{" "}
+                                  <span
+                                    className={
+                                      over
+                                        ? "text-destructive font-medium"
+                                        : "text-success"
+                                    }
+                                  >
+                                    Available {available ?? 0}
                                   </span>
-                                )}
-                              </p>
-                            )}
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  Select a source location to see availability
+                                </span>
+                              )}
+                            </p>
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
                               min={1}
-                              max={available || undefined}
+                              max={available != null ? available : undefined}
                               value={it.quantity}
                               className={over ? "border-destructive" : ""}
                               onChange={(e) => {

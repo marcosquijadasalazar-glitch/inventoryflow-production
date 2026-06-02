@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getBreadcrumb, getDescendantIds, type LocationNode } from "@/lib/location-tree";
 
 const sb = supabase as any;
 
@@ -99,19 +100,81 @@ export function getAvailableAtLocation(
   return row?.available ?? 0;
 }
 
+export function formatLocationPath(
+  locationId: string,
+  nodes: LocationNode[] | undefined,
+  fallbackName?: string | null,
+): string {
+  if (nodes?.length) {
+    const path = getBreadcrumb(nodes, locationId);
+    if (path.length > 0) {
+      return path.map((n) => n.code || n.name).join(" → ");
+    }
+  }
+  return fallbackName ?? "Location";
+}
+
+export function formatStockRowLabel(
+  row: ProductLocationStockRow,
+  nodes?: LocationNode[],
+): string {
+  const path = formatLocationPath(row.location_id, nodes, row.location_name);
+  return `${path}: ${row.available}`;
+}
+
+/** Rows with available > 0, optionally scoped to one location_id. */
+export function getAvailableStockRows(
+  productId: string,
+  data: ProductLocationStockData | undefined,
+  opts?: { locationId?: string | null },
+): ProductLocationStockRow[] {
+  const rows = getStockRowsForProduct(productId, data).filter((r) => r.available > 0);
+  if (opts?.locationId) {
+    return rows.filter((r) => r.location_id === opts.locationId);
+  }
+  return rows;
+}
+
+export function descendantHasStock(
+  productId: string,
+  locationId: string,
+  nodes: LocationNode[],
+  data: ProductLocationStockData | undefined,
+): boolean {
+  const descendantIds = getDescendantIds(nodes, locationId).filter(
+    (id) => id !== locationId,
+  );
+  return descendantIds.some(
+    (id) => (getAvailableAtLocation(productId, id, data) ?? 0) > 0,
+  );
+}
+
 export function formatProductLocationBreakdown(
   productId: string,
   data: ProductLocationStockData | undefined,
   style: "inline" | "multiline" = "inline",
+  opts?: { locationId?: string | null; nodes?: LocationNode[] },
 ): string {
-  const rows = getStockRowsForProduct(productId, data).filter(
-    (r) => r.on_hand > 0 || r.available > 0,
-  );
-  if (rows.length === 0) return "No location stock";
-  const parts = rows.map(
-    (r) => `${r.location_name ?? "Location"}: ${r.available}`,
-  );
+  const rows = getAvailableStockRows(productId, data, {
+    locationId: opts?.locationId,
+  });
+  if (rows.length === 0) {
+    if (opts?.locationId) return "No stock at selected location";
+    return "No location stock";
+  }
+  const parts = rows.map((r) => formatStockRowLabel(r, opts?.nodes));
   return style === "multiline" ? parts.join("\n") : parts.join(" | ");
+}
+
+export function formatInsufficientStockMessage(
+  available: number,
+  needed: number,
+  locationLabel?: string,
+): string {
+  const prefix = locationLabel
+    ? `Insufficient stock at ${locationLabel}`
+    : "Insufficient stock at selected location";
+  return `${prefix}: have ${available} need ${needed}`;
 }
 
 export function validateLocationQuantity(opts: {
@@ -138,27 +201,29 @@ export function validateLocationQuantity(opts: {
   }
   if (!productId || !locationId) return { blocked: false };
 
-  const available = getAvailableAtLocation(productId, locationId, stockData);
-  const onHand = getOnHandAtLocation(productId, locationId, stockData);
+  const available = getAvailableAtLocation(productId, locationId, stockData) ?? 0;
+  const onHand = getOnHandAtLocation(productId, locationId, stockData) ?? 0;
   const locLabel = locationName ?? "selected location";
 
-  if (movementType === "remove" && available != null && quantity > available) {
+  if (movementType === "remove" && quantity > available) {
     return {
       blocked: true,
-      message: `Available at ${locLabel}: ${available}\nRequested: ${quantity}`,
+      message: formatInsufficientStockMessage(available, quantity, locLabel),
     };
   }
 
   if (
     movementType === "adjustment" &&
-    onHand != null &&
-    available != null &&
     quantity < onHand &&
     onHand - quantity > available
   ) {
     return {
       blocked: true,
-      message: `Available at ${locLabel}: ${available}\nRequested reduction: ${onHand - quantity}`,
+      message: formatInsufficientStockMessage(
+        available,
+        onHand - quantity,
+        locLabel,
+      ),
     };
   }
 

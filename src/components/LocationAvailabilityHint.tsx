@@ -31,15 +31,10 @@ export function LocationStockValidationAlert({
   message?: string;
 }) {
   if (!message) return null;
-  const lines = message.split("\n");
   return (
     <div className="flex items-start gap-2 rounded-lg bg-destructive/5 border border-destructive/20 p-3 text-sm">
       <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-      <div>
-        {lines.map((line, i) => (
-          <p key={i}>{line}</p>
-        ))}
-      </div>
+      <p>{message}</p>
     </div>
   );
 }
