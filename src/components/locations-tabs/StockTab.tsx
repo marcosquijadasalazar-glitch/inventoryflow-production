@@ -63,6 +63,7 @@ import { ProductDetailsDialog } from "@/components/ProductDetailsDialog";
 import { usePermissions } from "@/lib/use-permissions";
 import { cn } from "@/lib/utils";
 import { getStockStatus } from "@/lib/stock";
+import { fetchProductLocationStock } from "@/lib/product-location-stock";
 import { Upload } from "lucide-react";
 
 const sb = supabase as any;
@@ -131,6 +132,7 @@ function LocationStockPage() {
   const [action, setAction] = useState<{
     product: Product;
     mode: "add" | "remove" | "adjust" | "move";
+    locationId: string | null;
   } | null>(null);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -209,22 +211,8 @@ function LocationStockPage() {
   const perLocQ = useQuery({
     queryKey: ["product_location_stock"],
     queryFn: async () => {
-      const { data, error } = await sb
-        .from("product_location_stock")
-        .select("product_id, location_id, on_hand");
-      if (error) throw error;
-      const map: Record<string, Record<string, number>> = {};
-      for (const r of (data ?? []) as Array<{
-        product_id: string;
-        location_id: string | null;
-        on_hand: number | null;
-      }>) {
-        if (!r.location_id || !r.product_id) continue;
-        map[r.location_id] ??= {};
-        map[r.location_id][r.product_id] =
-          (map[r.location_id][r.product_id] ?? 0) + (r.on_hand ?? 0);
-      }
-      return map;
+      const data = await fetchProductLocationStock();
+      return data.byLocation;
     },
   });
 
@@ -1009,22 +997,22 @@ function LocationStockPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 {canMovements && (
-                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "add" })}>
+                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "add", locationId: rowNodeId })}>
                                     {t("sa.add_title", "Add stock")}
                                   </DropdownMenuItem>
                                 )}
                                 {canMovements && (
-                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "remove" })}>
+                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "remove", locationId: rowNodeId })}>
                                     {t("sa.remove_title", "Remove stock")}
                                   </DropdownMenuItem>
                                 )}
                                 {canAdjust && (
-                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "adjust" })}>
+                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "adjust", locationId: rowNodeId })}>
                                     {t("sa.adjust_title", "Adjust quantity")}
                                   </DropdownMenuItem>
                                 )}
                                 {canMove && (
-                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "move" })}>
+                                  <DropdownMenuItem onClick={() => setAction({ product: p, mode: "move", locationId: rowNodeId })}>
                                     {t("sa.move_title", "Move product")}
                                   </DropdownMenuItem>
                                 )}
@@ -1099,10 +1087,13 @@ function LocationStockPage() {
       <StockActionDialog
         product={action?.product ?? null}
         mode={action?.mode ?? null}
+        contextLocationId={action?.locationId ?? null}
         contextLocationLabel={
-          [selectedLocation?.name, selectedAisle?.name, selectedBin?.code || selectedBin?.name]
-            .filter(Boolean)
-            .join(" / ") || undefined
+          action?.locationId
+            ? getBreadcrumb(nodes, action.locationId)
+                .map((n) => n.code || n.name)
+                .join(" / ")
+            : undefined
         }
         onClose={() => setAction(null)}
       />

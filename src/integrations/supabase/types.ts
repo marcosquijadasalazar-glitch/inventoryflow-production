@@ -313,29 +313,38 @@ export type Database = {
       inventory_movements: {
         Row: {
           created_at: string
+          from_location_id: string | null
           id: string
+          location_id: string | null
           note: string | null
           organization_id: string | null
           product_id: string
           quantity: number
+          to_location_id: string | null
           type: Database["public"]["Enums"]["movement_type"]
         }
         Insert: {
           created_at?: string
+          from_location_id?: string | null
           id?: string
+          location_id?: string | null
           note?: string | null
           organization_id?: string | null
           product_id: string
           quantity: number
+          to_location_id?: string | null
           type: Database["public"]["Enums"]["movement_type"]
         }
         Update: {
           created_at?: string
+          from_location_id?: string | null
           id?: string
+          location_id?: string | null
           note?: string | null
           organization_id?: string | null
           product_id?: string
           quantity?: number
+          to_location_id?: string | null
           type?: Database["public"]["Enums"]["movement_type"]
         }
         Relationships: [

@@ -28,6 +28,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { listAllNodes, getBreadcrumb, type LocationNode } from "@/lib/location-tree";
 import { useQuery } from "@tanstack/react-query";
 import { useApprovalGate } from "@/components/approvals/useApprovalGate";
+import {
+  useProductLocationStock,
+  getOnHandAtLocation,
+  getAvailableAtLocation,
+  validateLocationQuantity,
+} from "@/lib/product-location-stock";
+import {
+  LocationAdjustmentHint,
+  LocationStockValidationAlert,
+} from "@/components/LocationAvailabilityHint";
 
 const sb = supabase as any;
 
@@ -44,34 +54,42 @@ export function StockActionDialog({
   product,
   mode,
   contextLocationLabel,
+  contextLocationId,
   onClose,
 }: {
   product: Product | null;
   mode: Mode | null;
   contextLocationLabel?: string;
+  contextLocationId?: string | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [qty, setQty] = useState(
-    mode === "adjust" && product ? String(product.stock) : "1",
+    mode === "adjust" && product ? "0" : "1",
   );
   const [reason, setReason] = useState<string>("damaged");
   const [adjustReason, setAdjustReason] = useState<string>("physical_count");
   const [note, setNote] = useState("");
   const [toNodeId, setToNodeId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const stockQ = useProductLocationStock();
 
   useEffect(() => {
-    if (mode === "adjust" && product) {
-      setQty(String(product.stock));
+    if (mode === "adjust" && product && contextLocationId && stockQ.data) {
+      const onHand = getOnHandAtLocation(product.id, contextLocationId, stockQ.data);
+      setQty(String(onHand ?? 0));
+      setAdjustReason("physical_count");
+      setNote("");
+    } else if (mode === "adjust" && product) {
+      setQty("0");
       setAdjustReason("physical_count");
       setNote("");
     } else if (mode) {
       setQty("1");
       setNote("");
     }
-  }, [mode, product?.id, product?.stock]);
+  }, [mode, product?.id, contextLocationId, stockQ.data]);
 
   const nodesQ = useQuery({
     queryKey: ["location-nodes-all"],
@@ -83,6 +101,29 @@ export function StockActionDialog({
 
   const { guard, modal } = useApprovalGate();
 
+  const onHandAtLocation = getOnHandAtLocation(
+    product.id,
+    contextLocationId ?? null,
+    stockQ.data,
+  );
+  const availableAtLocation = getAvailableAtLocation(
+    product.id,
+    contextLocationId ?? null,
+    stockQ.data,
+  );
+  const qNum = parseInt(qty, 10);
+  const movementType =
+    mode === "add" ? "add" : mode === "remove" ? "remove" : "adjustment";
+  const stockValidation = validateLocationQuantity({
+    movementType,
+    quantity: qNum,
+    productId: product.id,
+    locationId: contextLocationId ?? null,
+    locationName: contextLocationLabel ?? null,
+    stockData: stockQ.data,
+    requireLocation: mode === "remove" || mode === "adjust" || mode === "move",
+  });
+
   const performAction = async (q: number) => {
     setSaving(true);
     try {
@@ -92,29 +133,34 @@ export function StockActionDialog({
           type: "add",
           quantity: q,
           note: note || null,
+          ...(contextLocationId ? { location_id: contextLocationId } : {}),
         });
         toast.success(t("sa.added", "Stock added"));
       } else if (mode === "remove") {
-        if (q > product.stock)
-          throw new Error(t("sa.insufficient", "Insufficient stock"));
+        if (stockValidation.blocked)
+          throw new Error(stockValidation.message?.split("\n")[0] ?? t("sa.insufficient", "Insufficient stock"));
         await createMovement({
           product_id: product.id,
           type: "remove",
           quantity: q,
           note: `[${reason}] ${note || ""}`.trim(),
+          ...(contextLocationId ? { location_id: contextLocationId } : {}),
         });
         toast.success(t("sa.removed", "Stock removed"));
       } else if (mode === "adjust") {
-        if (q === product.stock) {
+        if (onHandAtLocation != null && q === onHandAtLocation) {
           toast.info(t("sa.no_change", "Quantity unchanged"));
           setSaving(false);
           return;
         }
+        if (stockValidation.blocked)
+          throw new Error(stockValidation.message?.split("\n")[0] ?? t("sa.insufficient", "Insufficient stock"));
         await createMovement({
           product_id: product.id,
           type: "adjustment",
           quantity: q,
           note: `[${adjustReason}] ${note || ""}`.trim(),
+          ...(contextLocationId ? { location_id: contextLocationId } : {}),
         });
         toast.success(
           t("sa.adjusted_to", "Stock set to {{qty}}", { qty: q }),
@@ -122,8 +168,8 @@ export function StockActionDialog({
       } else if (mode === "move") {
         if (!toNodeId)
           throw new Error(t("sa.select_dest", "Select a destination"));
-        if (q > product.stock)
-          throw new Error(t("sa.insufficient", "Insufficient stock"));
+        if (stockValidation.blocked)
+          throw new Error(stockValidation.message?.split("\n")[0] ?? t("sa.insufficient", "Insufficient stock"));
         const { data: to, error: tErr } = await sb
           .from("transfer_orders")
           .insert({
@@ -152,6 +198,7 @@ export function StockActionDialog({
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["location_stock"] });
+      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
       invalidateDerived(qc);
       onClose();
     } catch (err: any) {
@@ -168,6 +215,8 @@ export function StockActionDialog({
       return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
     if (mode !== "adjust" && q <= 0)
       return toast.error(t("sa.invalid_qty", "Enter a valid quantity"));
+    if (stockValidation.blocked)
+      return toast.error(stockValidation.message?.split("\n")[0] ?? "Invalid quantity");
     const value = q * (product.cost ?? product.price ?? 0);
     guard({
       action: mode === "move" ? "transfer_order" : "stock_adjustment",
@@ -196,7 +245,9 @@ export function StockActionDialog({
           : ArrowRightLeft;
 
   const adjustDiff =
-    mode === "adjust" ? parseInt(qty, 10) - product.stock : 0;
+    mode === "adjust" && onHandAtLocation != null
+      ? parseInt(qty, 10) - onHandAtLocation
+      : 0;
 
   return (
     <>
@@ -209,12 +260,14 @@ export function StockActionDialog({
           <DialogDescription>
             {product.name}{" "}
             <span className="font-mono text-xs">({product.sku})</span>
-            <span className="ml-2 text-xs">
-              · {t("sa.current", "Current")}: {product.stock}
-            </span>
             {contextLocationLabel && (
               <span className="block text-xs mt-0.5">
                 {t("sa.at", "At")}: {contextLocationLabel}
+              </span>
+            )}
+            {contextLocationId && availableAtLocation != null && (
+              <span className="block text-xs mt-0.5">
+                Available at selected location: {availableAtLocation}
               </span>
             )}
           </DialogDescription>
@@ -233,14 +286,16 @@ export function StockActionDialog({
               onChange={(e) => setQty(e.target.value)}
               autoFocus
             />
-            {mode === "adjust" && !isNaN(adjustDiff) && (
+            {mode === "adjust" && contextLocationId && (
+              <LocationAdjustmentHint
+                productId={product.id}
+                locationId={contextLocationId}
+                stockData={stockQ.data}
+                newQuantity={parseInt(qty, 10)}
+              />
+            )}
+            {mode === "adjust" && !contextLocationId && !isNaN(adjustDiff) && (
               <div className="rounded-md border border-border bg-surface-muted/40 p-2.5 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {t("sa.current", "Current")}
-                  </span>
-                  <span className="font-medium">{product.stock}</span>
-                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     {t("sa.new_qty", "New quantity")}
@@ -266,7 +321,14 @@ export function StockActionDialog({
                 </div>
               </div>
             )}
+            {mode === "adjust" && contextLocationId && (
+              <LocationStockValidationAlert message={stockValidation.message} />
+            )}
           </div>
+
+          {mode === "remove" && contextLocationId && (
+            <LocationStockValidationAlert message={stockValidation.message} />
+          )}
 
           {mode === "adjust" && (
             <div className="space-y-1.5">
@@ -372,7 +434,7 @@ export function StockActionDialog({
             >
               {t("common.cancel", "Cancel")}
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || stockValidation.blocked}>
               {saving ? t("common.saving", "Saving…") : title}
             </Button>
           </DialogFooter>

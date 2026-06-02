@@ -182,6 +182,7 @@ export function ProductDetailsDialog({
       <StockActionDialog
         product={action ? product : null}
         mode={action}
+        contextLocationId={(product as any)?.bin_id ?? null}
         contextLocationLabel={
           breadcrumb.length
             ? breadcrumb.map((n) => n.code || n.name).join(" / ")

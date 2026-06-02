@@ -20,17 +20,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Wrench, AlertTriangle } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
 import { LocationSelect } from "@/components/LocationSelect";
 import { useProfile, canManageOrg } from "@/lib/profile";
 import { MovementsHistoryStandard } from "@/components/movements-tabs/MovementsHistoryStandard";
+import {
+  useProductLocationStock,
+  validateLocationQuantity,
+} from "@/lib/product-location-stock";
+import {
+  LocationAvailabilityHint,
+  LocationStockValidationAlert,
+} from "@/components/LocationAvailabilityHint";
 
 export function InternalUseTab() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const profile = useProfile();
   const history = useQuery({ queryKey: ["internal_use"], queryFn: listInternalUse });
+  const stockQ = useProductLocationStock();
 
   const [product, setProduct] = useState<ProductLite | null>(null);
   const [quantity, setQuantity] = useState("1");
@@ -40,19 +49,29 @@ export function InternalUseTab() {
   const [customReason, setCustomReason] = useState("");
   const [notes, setNotes] = useState("");
   const [locationId, setLocationId] = useState<string | null>(null);
+  const [locationName, setLocationName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const canOverride = canManageOrg(profile.data?.role);
   const q = parseInt(quantity) || 0;
-  const over = product != null && q > product.stock;
+  const stockValidation = validateLocationQuantity({
+    movementType: "remove",
+    quantity: q,
+    productId: product?.id ?? null,
+    locationId,
+    locationName,
+    stockData: stockQ.data,
+    requireLocation: true,
+  });
+  const over = stockValidation.blocked && !canOverride;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return toast.error(t("iu.need_product", "Select a product"));
     if (q <= 0) return toast.error(t("iu.invalid_qty", "Enter a valid quantity"));
     if (!locationId) return toast.error(t("iu.need_location", "Select a source location"));
-    if (over && !canOverride)
-      return toast.error(t("iu.overstock", "Quantity exceeds available stock"));
+    if (over)
+      return toast.error(stockValidation.message?.split("\n")[0] ?? t("iu.overstock", "Quantity exceeds available stock"));
     setSaving(true);
     try {
       await createInternalUse({
@@ -67,10 +86,13 @@ export function InternalUseTab() {
       setProduct(null);
       setQuantity("1");
       setNotes("");
+      setLocationId(null);
+      setLocationName(null);
       qc.invalidateQueries({ queryKey: ["internal_use"] });
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["movements"] });
       qc.invalidateQueries({ queryKey: ["history"] });
+      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -120,13 +142,12 @@ export function InternalUseTab() {
             <div className="grid md:grid-cols-3 gap-3">
               <div className="md:col-span-2 space-y-1.5">
                 <Label>{t("iu.product", "Product (or scan)")}</Label>
-                <ProductPicker value={product} onSelect={setProduct} />
-                {product && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("iu.current_stock", "Current stock")}: {product.stock} ·{" "}
-                    {product.location ?? "—"}
-                  </p>
-                )}
+                <ProductPicker
+                  value={product}
+                  onSelect={setProduct}
+                  showGlobalStock={false}
+                  locationStock={stockQ.data}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>{t("iu.qty_used", "Quantity used")}</Label>
@@ -141,19 +162,23 @@ export function InternalUseTab() {
 
             <div className="space-y-1.5">
               <Label>{t("iu.location", "Source location")}</Label>
-              <LocationSelect value={locationId} onChange={setLocationId} />
+              <LocationSelect
+                value={locationId}
+                onChange={(id, loc) => {
+                  setLocationId(id);
+                  setLocationName(loc?.name ?? null);
+                }}
+              />
+              <LocationAvailabilityHint
+                productId={product?.id ?? null}
+                locationId={locationId}
+                stockData={stockQ.data}
+              />
             </div>
 
-
-            {over && (
-              <div className="flex items-start gap-2 rounded-lg bg-destructive/5 border border-destructive/20 p-3 text-sm">
-                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                <p>
-                  {t("iu.overstock", "Quantity exceeds available stock")}
-                  {canOverride && ` — ${t("iu.override", "manager override available")}`}
-                </p>
-              </div>
-            )}
+            <LocationStockValidationAlert
+              message={over ? stockValidation.message : undefined}
+            />
 
             <div className="grid md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -212,7 +237,7 @@ export function InternalUseTab() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={saving} className="shadow-soft">
+              <Button type="submit" disabled={saving || over} className="shadow-soft">
                 {saving ? t("common.loading") : t("common.submit")}
               </Button>
             </div>

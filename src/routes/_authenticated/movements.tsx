@@ -87,10 +87,12 @@ function MovementsPage() {
         <TabsContent value="adjustments" className="mt-4">
           <AdjustmentsTab />
         </TabsContent>
-        <TabsContent value="receiving" className="mt-4">
+        <TabsContent value="receiving" className="mt-4 space-y-6">
+          <ActivityTab mode="form-only" presetType="add" lockType />
           <MovementsHistoryStandard module="receiving" />
         </TabsContent>
-        <TabsContent value="stock-out" className="mt-4">
+        <TabsContent value="stock-out" className="mt-4 space-y-6">
+          <ActivityTab mode="form-only" presetType="remove" lockType />
           <MovementsHistoryStandard module="stock-out" />
         </TabsContent>
         <TabsContent value="internal-use" className="mt-4">
