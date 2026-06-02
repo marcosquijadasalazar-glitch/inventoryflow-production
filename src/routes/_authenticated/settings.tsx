@@ -209,20 +209,55 @@ const EMPTY_PROFILE: ProfileForm = {
   website: "", footer_notes: "",
 };
 
+const TIMEZONES = [
+  "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Sao_Paulo", "America/Mexico_City", "Europe/London", "Europe/Paris", "Europe/Berlin",
+  "Europe/Madrid", "Europe/Rome", "Africa/Johannesburg", "Asia/Dubai", "Asia/Kolkata",
+  "Asia/Singapore", "Asia/Tokyo", "Asia/Shanghai", "Australia/Sydney",
+];
+const CURRENCIES = ["USD", "EUR", "GBP", "BRL", "MXN", "CAD", "AUD", "JPY", "INR", "AED", "SGD", "ZAR"];
+
+// TODO: persist when organization_preferences columns exist
+type LocalOrgPrefs = {
+  showProductImages: boolean;
+  compactListView: boolean;
+  requireNotesOnAdjustments: boolean;
+};
+const DEFAULT_LOCAL_ORG_PREFS: LocalOrgPrefs = {
+  showProductImages: true,
+  compactListView: false,
+  requireNotesOnAdjustments: false,
+};
+
+function ReadOnlyBadge() {
+  return (
+    <span className="ml-auto inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+      <Lock className="h-3 w-3" /> Read-only
+    </span>
+  );
+}
+
 function OrganizationTab() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const fetchProfile = useServerFn(getCompanyProfile);
   const saveProfile = useServerFn(updateCompanyProfile);
+  const savePrefs = useServerFn(updateOrganizationPreferences);
   const { data, isLoading } = useQuery({
     queryKey: ["company-profile"],
     queryFn: () => fetchProfile({ data: {} }),
   });
+  const { data: prefsData, isLoading: prefsLoading, error: prefsError } = useOrgPrefs();
   const [form, setForm] = useState<ProfileForm>(EMPTY_PROFILE);
-  const [saving, setSaving] = useState(false);
+  const [regional, setRegional] = useState({ timezone: "", currency: "" });
+  const [localPrefs, setLocalPrefs] = useState<LocalOrgPrefs>(DEFAULT_LOCAL_ORG_PREFS);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingRegional, setSavingRegional] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const canEdit = !!data?.canEdit;
+  const canEditProfile = !!data?.canEdit;
   const canEditRestricted = !!(data as any)?.canEditRestricted;
+  const canEditRegional = !!prefsData?.canEdit;
+  const regionalReadOnly = !canEditRegional || prefsLoading;
 
   useEffect(() => {
     if (data?.profile) {
@@ -238,23 +273,57 @@ function OrganizationTab() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (prefsData?.preferences) {
+      const p = prefsData.preferences as OrgPrefs;
+      setRegional({
+        timezone: p.timezone ?? "",
+        currency: p.currency ?? "",
+      });
+    } else if (data?.profile) {
+      const p = data.profile as any;
+      setRegional({
+        timezone: p.timezone ?? "",
+        currency: p.currency ?? "",
+      });
+    }
+  }, [prefsData, data]);
+
   const set = <K extends keyof ProfileForm>(k: K, v: ProfileForm[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const save = async () => {
-    if (!canEdit) return;
-    setSaving(true);
+  const saveProfileChanges = async () => {
+    if (!canEditProfile) return;
+    setSavingProfile(true);
     try {
       await saveProfile({ data: { values: form as any } });
       toast.success(t("settings.saved", "Saved"));
       qc.invalidateQueries({ queryKey: ["company-profile"] });
     } catch (e: any) { toast.error(e.message); }
-    finally { setSaving(false); }
+    finally { setSavingProfile(false); }
+  };
+
+  const saveRegionalChanges = async () => {
+    if (!canEditRegional) return;
+    setSavingRegional(true);
+    try {
+      await savePrefs({
+        data: {
+          values: {
+            timezone: regional.timezone || null,
+            currency: regional.currency || null,
+          },
+        },
+      });
+      toast.success(t("settings.saved", "Saved"));
+      qc.invalidateQueries({ queryKey: ["org-preferences"] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSavingRegional(false); }
   };
 
   const onLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !canEdit) return;
+    if (!file || !canEditProfile) return;
     setUploading(true);
     try {
       const orgId = (data?.profile as any)?.organization_id as string | undefined;
@@ -263,13 +332,13 @@ function OrganizationTab() {
       set("logo_url", url);
       await saveProfile({ data: { values: { ...form, logo_url: url } as any } });
       qc.invalidateQueries({ queryKey: ["company-profile"] });
-      toast.success("Saved");
+      toast.success(t("settings.saved", "Saved"));
     } catch (err: any) { toast.error(err.message); }
     finally { setUploading(false); }
   };
 
   const removeLogo = async () => {
-    if (!canEdit) return;
+    if (!canEditProfile) return;
     set("logo_url", null);
     try {
       await saveProfile({ data: { values: { ...form, logo_url: null } as any } });
@@ -277,93 +346,208 @@ function OrganizationTab() {
     } catch (err: any) { toast.error(err.message); }
   };
 
-  const disabled = !canEdit || isLoading;
+  const profileDisabled = !canEditProfile || isLoading;
+
+  if (isLoading) return <LoadingBlock />;
 
   return (
     <div className="space-y-6">
+      {/* Organization Profile */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> Company profile
-            {!canEdit && (
-              <span className="ml-auto inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
-                <Lock className="h-3 w-3" /> Read-only
-              </span>
-            )}
+            <Building2 className="h-4 w-4" /> Organization profile
+            {!canEditProfile && <ReadOnlyBadge />}
           </CardTitle>
-          <CardDescription>Branding and contact information shown across the app.</CardDescription>
+          <CardDescription>Your organization name and logo appear across reports, PDFs, and the app header.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            <div className="flex items-center gap-4">
-              {form.logo_url ? (
-                <img src={form.logo_url} alt="logo" className="h-16 w-16 object-contain rounded border border-border bg-white p-1" />
-              ) : (
-                <div className="h-16 w-16 rounded border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground">—</div>
-              )}
-              <div className="flex gap-2">
-                <Button asChild variant="outline" size="sm" disabled={disabled || uploading}>
-                  <label className={canEdit ? "cursor-pointer" : "cursor-not-allowed opacity-60"}>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-6 items-start">
+            <div className="space-y-2">
+              <Label>{t("settings.logo", "Logo")}</Label>
+              <div
+                className={`relative h-24 w-24 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden ${
+                  form.logo_url ? "border-border bg-white" : "border-muted-foreground/30 bg-muted/30"
+                }`}
+              >
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="Organization logo" className="h-full w-full object-contain p-2" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground px-2 text-center">
+                    <Building2 className="h-6 w-6 opacity-50" />
+                    <span className="text-[10px] leading-tight">No logo uploaded</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Button asChild variant="outline" size="sm" disabled={profileDisabled || uploading} className="w-full">
+                  <label className={canEditProfile ? "cursor-pointer" : "cursor-not-allowed opacity-60"}>
                     <Upload className="h-3.5 w-3.5 mr-1.5" />
-                    {uploading ? "Uploading…" : "Upload logo"}
-                    <input type="file" accept="image/*" className="hidden" onChange={onLogo} disabled={disabled} />
+                    {uploading ? "Uploading…" : t("settings.uploadLogo", "Upload logo")}
+                    <input type="file" accept="image/*" className="hidden" onChange={onLogo} disabled={profileDisabled} />
                   </label>
                 </Button>
-                {form.logo_url && canEdit && (
-                  <Button variant="ghost" size="sm" onClick={removeLogo}>
-                    <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Remove
+                {form.logo_url && canEditProfile && (
+                  <Button variant="ghost" size="sm" onClick={removeLogo} className="w-full">
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t("settings.removeLogo", "Remove logo")}
                   </Button>
                 )}
               </div>
             </div>
+
+            <div className="space-y-4">
+              <Field label={t("settings.companyName", "Organization name")} locked={!canEditRestricted}>
+                <Input
+                  value={form.company_name}
+                  onChange={(e) => set("company_name", e.target.value)}
+                  disabled={profileDisabled || !canEditRestricted}
+                  placeholder="Your organization name"
+                />
+              </Field>
+              <Field label={t("settings.businessType", "Business type")} locked={!canEditRestricted}>
+                <Input
+                  value={form.business_type}
+                  onChange={(e) => set("business_type", e.target.value)}
+                  disabled={profileDisabled || !canEditRestricted}
+                  placeholder="e.g. Retail, Wholesale, Manufacturing"
+                />
+              </Field>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Company name" locked={!canEditRestricted}>
-              <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} disabled={disabled || !canEditRestricted} />
-            </Field>
-            <Field label="Business type" locked={!canEditRestricted}>
-              <Input value={form.business_type} onChange={(e) => set("business_type", e.target.value)} disabled={disabled || !canEditRestricted} />
-            </Field>
-            <Field label="Phone">
-              <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} disabled={disabled} />
-            </Field>
-            <Field label="Email">
-              <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} disabled={disabled} />
-            </Field>
-            <Field label="Website">
-              <Input value={form.website} onChange={(e) => set("website", e.target.value)} disabled={disabled} placeholder="https://" />
-            </Field>
-            <Field label="Tax ID" locked={!canEditRestricted}>
-              <Input value={form.tax_id} onChange={(e) => set("tax_id", e.target.value)} disabled={disabled || !canEditRestricted} />
-            </Field>
-            <Field label="Address" className="sm:col-span-2">
-              <Input value={form.address} onChange={(e) => set("address", e.target.value)} disabled={disabled} />
-            </Field>
-            <Field label="City">
-              <Input value={form.city} onChange={(e) => set("city", e.target.value)} disabled={disabled} />
-            </Field>
-            <Field label="Country">
-              <Input value={form.country} onChange={(e) => set("country", e.target.value)} disabled={disabled} />
-            </Field>
-            <Field label="Footer notes" className="sm:col-span-2">
-              <Textarea rows={2} value={form.footer_notes} onChange={(e) => set("footer_notes", e.target.value)} disabled={disabled} />
-            </Field>
+          <div className="border-t pt-4">
+            <p className="text-sm font-medium mb-3">Contact &amp; billing details</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label={t("settings.phone", "Phone")}>
+                <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} disabled={profileDisabled} />
+              </Field>
+              <Field label="Email">
+                <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} disabled={profileDisabled} />
+              </Field>
+              <Field label={t("settings.website", "Website")}>
+                <Input value={form.website} onChange={(e) => set("website", e.target.value)} disabled={profileDisabled} placeholder="https://" />
+              </Field>
+              <Field label={t("settings.taxId", "Tax ID")} locked={!canEditRestricted}>
+                <Input value={form.tax_id} onChange={(e) => set("tax_id", e.target.value)} disabled={profileDisabled || !canEditRestricted} />
+              </Field>
+              <Field label={t("settings.address", "Address")} className="sm:col-span-2">
+                <Input value={form.address} onChange={(e) => set("address", e.target.value)} disabled={profileDisabled} />
+              </Field>
+              <Field label={t("settings.city", "City")}>
+                <Input value={form.city} onChange={(e) => set("city", e.target.value)} disabled={profileDisabled} />
+              </Field>
+              <Field label={t("settings.country", "Country")}>
+                <Input value={form.country} onChange={(e) => set("country", e.target.value)} disabled={profileDisabled} />
+              </Field>
+              <Field label={t("settings.footerNotes", "PDF footer notes")} className="sm:col-span-2">
+                <Textarea rows={2} value={form.footer_notes} onChange={(e) => set("footer_notes", e.target.value)} disabled={profileDisabled} />
+              </Field>
+            </div>
           </div>
 
-          {canEdit && !canEditRestricted && (
+          {canEditProfile && !canEditRestricted && (
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Lock className="h-3 w-3" /> Some fields can only be changed by the organization owner.
+              <Lock className="h-3 w-3" /> {t("settings.ownerLockedHint", "Some fields can only be changed by an administrator.")}
             </p>
           )}
 
-          {canEdit && (
+          {canEditProfile && (
             <div className="flex justify-end pt-2">
-              <Button onClick={save} disabled={saving || isLoading}>
-                {saving ? "Saving…" : "Save changes"}
+              <Button onClick={saveProfileChanges} disabled={savingProfile}>
+                {savingProfile ? "Saving…" : "Save profile"}
               </Button>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Regional Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4" /> Regional settings
+            {regionalReadOnly && <ReadOnlyBadge />}
+          </CardTitle>
+          <CardDescription>Timezone and currency used for reports, timestamps, and monetary values.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {prefsError && (
+            <p className="text-xs text-muted-foreground">
+              Showing saved regional values. Only owners and managers can change these settings.
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+            <div className="space-y-1.5">
+              <Label>{t("settings.timezone", "Timezone")}</Label>
+              <Select
+                value={regional.timezone}
+                onValueChange={(v) => setRegional((r) => ({ ...r, timezone: v }))}
+                disabled={regionalReadOnly}
+              >
+                <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                <SelectContent>{TIMEZONES.map((tz) => (<SelectItem key={tz} value={tz}>{tz}</SelectItem>))}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("settings.currency", "Currency")}</Label>
+              <Select
+                value={regional.currency}
+                onValueChange={(v) => setRegional((r) => ({ ...r, currency: v }))}
+                disabled={regionalReadOnly}
+              >
+                <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
+                <SelectContent>{CURRENCIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          {canEditRegional && (
+            <div className="flex justify-end pt-2">
+              <Button onClick={saveRegionalChanges} disabled={savingRegional || prefsLoading}>
+                {savingRegional ? "Saving…" : "Save regional settings"}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Preferences (placeholders) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4" /> Preferences
+            {!canEditProfile && <ReadOnlyBadge />}
+          </CardTitle>
+          <CardDescription>Organization-wide defaults and display options.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* TODO: persist show_product_images when organization_preferences column exists */}
+          <ToggleRow
+            label="Show product images in lists"
+            hint="Display thumbnail previews in inventory and product tables."
+            checked={localPrefs.showProductImages}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, showProductImages: v }))}
+            disabled={!canEditProfile}
+          />
+          {/* TODO: persist compact_list_view when organization_preferences column exists */}
+          <ToggleRow
+            label="Compact list view"
+            hint="Use denser rows to fit more items on screen."
+            checked={localPrefs.compactListView}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, compactListView: v }))}
+            disabled={!canEditProfile}
+          />
+          {/* TODO: persist require_notes_on_adjustments when organization_preferences column exists */}
+          <ToggleRow
+            label="Require notes on stock adjustments"
+            hint="Team members must enter a reason when adjusting inventory."
+            checked={localPrefs.requireNotesOnAdjustments}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, requireNotesOnAdjustments: v }))}
+            disabled={!canEditProfile}
+          />
+          {canEditProfile && (
+            <p className="text-xs text-muted-foreground pt-1">
+              These preferences are preview-only and will be saved once backend support is added.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -501,13 +685,6 @@ function BillingTab() {
 }
 
 /* ---------- Preferences ---------- */
-const TIMEZONES = [
-  "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
-  "America/Sao_Paulo", "America/Mexico_City", "Europe/London", "Europe/Paris", "Europe/Berlin",
-  "Europe/Madrid", "Europe/Rome", "Africa/Johannesburg", "Asia/Dubai", "Asia/Kolkata",
-  "Asia/Singapore", "Asia/Tokyo", "Asia/Shanghai", "Australia/Sydney",
-];
-const CURRENCIES = ["USD", "EUR", "GBP", "BRL", "MXN", "CAD", "AUD", "JPY", "INR", "AED", "SGD", "ZAR"];
 const LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Español" },
   { code: "pt", label: "Português" }, { code: "fr", label: "Français" },
