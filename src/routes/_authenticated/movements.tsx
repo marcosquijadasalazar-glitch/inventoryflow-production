@@ -5,6 +5,7 @@ import { ActivityTab } from "@/components/movements-tabs/ActivityTab";
 import { AdjustmentsTab } from "@/components/movements-tabs/AdjustmentsTab";
 import { TransfersTab } from "@/components/movements-tabs/TransfersTab";
 import { InternalUseTab } from "@/components/movements-tabs/InternalUseTab";
+import { MovementsHistoryStandard } from "@/components/movements-tabs/MovementsHistoryStandard";
 import {
   ArrowLeftRight,
   Package,
@@ -87,10 +88,10 @@ function MovementsPage() {
           <AdjustmentsTab />
         </TabsContent>
         <TabsContent value="receiving" className="mt-4">
-          <ActivityTab mode="history-only" presetType="add" />
+          <MovementsHistoryStandard module="receiving" />
         </TabsContent>
         <TabsContent value="stock-out" className="mt-4">
-          <ActivityTab mode="history-only" presetType="remove" />
+          <MovementsHistoryStandard module="stock-out" />
         </TabsContent>
         <TabsContent value="internal-use" className="mt-4">
           <InternalUseTab />

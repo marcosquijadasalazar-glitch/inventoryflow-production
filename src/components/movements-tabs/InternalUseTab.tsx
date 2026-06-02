@@ -20,30 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Wrench, AlertTriangle } from "lucide-react";
 import { ProductPicker, type ProductLite } from "@/components/ProductPickerInput";
+import { LocationSelect } from "@/components/LocationSelect";
 import { useProfile, canManageOrg } from "@/lib/profile";
-import { format } from "date-fns";
-import { ExportMenu } from "@/components/ExportMenu";
-import type { ExportColumn } from "@/lib/exporters";
-
-const IU_EXPORT_COLUMNS: ExportColumn<any>[] = [
-  { key: "date", header: "Date", get: (r) => new Date(r.created_at).toLocaleString() },
-  { key: "product_name", header: "Product" },
-  { key: "sku", header: "SKU" },
-  { key: "barcode", header: "Barcode" },
-  { key: "quantity_change", header: "Qty", align: "right" },
-  { key: "reason", header: "Reason / Department" },
-  { key: "user_email", header: "User" },
-];
+import { MovementsHistoryStandard } from "@/components/movements-tabs/MovementsHistoryStandard";
 
 export function InternalUseTab() {
   const { t } = useTranslation();
@@ -58,6 +39,7 @@ export function InternalUseTab() {
   const [reason, setReason] = useState("Internal Use");
   const [customReason, setCustomReason] = useState("");
   const [notes, setNotes] = useState("");
+  const [locationId, setLocationId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const canOverride = canManageOrg(profile.data?.role);
@@ -68,6 +50,7 @@ export function InternalUseTab() {
     e.preventDefault();
     if (!product) return toast.error(t("iu.need_product", "Select a product"));
     if (q <= 0) return toast.error(t("iu.invalid_qty", "Enter a valid quantity"));
+    if (!locationId) return toast.error(t("iu.need_location", "Select a source location"));
     if (over && !canOverride)
       return toast.error(t("iu.overstock", "Quantity exceeds available stock"));
     setSaving(true);
@@ -78,6 +61,7 @@ export function InternalUseTab() {
         department: department === "Other" ? customDept || "Other" : department,
         reason: reason === "Other" ? customReason || "Other" : reason,
         notes: notes || null,
+        location_id: locationId,
       });
       toast.success(t("iu.saved", "Internal use recorded"));
       setProduct(null);
@@ -155,6 +139,12 @@ export function InternalUseTab() {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <Label>{t("iu.location", "Source location")}</Label>
+              <LocationSelect value={locationId} onChange={setLocationId} />
+            </div>
+
+
             {over && (
               <div className="flex items-start gap-2 rounded-lg bg-destructive/5 border border-destructive/20 p-3 text-sm">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
@@ -230,58 +220,7 @@ export function InternalUseTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-border shadow-soft">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">{t("iu.history", "Internal use history")}</CardTitle>
-          <ExportMenu
-            title={t("iu.title", "Internal Use")}
-            filename="internal-use"
-            rows={history.data ?? []}
-            columns={IU_EXPORT_COLUMNS}
-          />
-        </CardHeader>
-        <CardContent>
-          {history.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-          ) : !history.data?.length ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              {t("iu.empty", "No internal use records yet.")}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("common.date")}</TableHead>
-                    <TableHead>{t("po.product", "Product")}</TableHead>
-                    <TableHead className="text-right">{t("common.quantity")}</TableHead>
-                    <TableHead>{t("common.reason")}</TableHead>
-                    <TableHead>{t("history.user")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {history.data.map((h: any) => (
-                    <TableRow key={h.id}>
-                      <TableCell className="text-xs">
-                        {format(new Date(h.created_at), "yyyy-MM-dd HH:mm")}
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm">{h.product_name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{h.sku}</p>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {h.quantity_change}
-                      </TableCell>
-                      <TableCell className="text-xs">{h.reason ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{h.user_email ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <MovementsHistoryStandard module="internal-use" />
     </div>
   );
 }

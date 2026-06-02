@@ -9,6 +9,7 @@ import {
   GuidanceCard,
 } from "@/components/AdjustmentsImporter";
 import { ActivityTab } from "@/components/movements-tabs/ActivityTab";
+import { MovementsHistoryStandard } from "@/components/movements-tabs/MovementsHistoryStandard";
 
 export function AdjustmentsTab() {
   const { t } = useTranslation();
@@ -53,8 +54,9 @@ export function AdjustmentsTab() {
         </div>
       </div>
 
-      {/* 5. Adjustment history */}
-      <ActivityTab mode="history-only" />
+      {/* 5. Adjustment history (standardized) */}
+      <MovementsHistoryStandard module="adjustments" />
+
     </div>
   );
 }
