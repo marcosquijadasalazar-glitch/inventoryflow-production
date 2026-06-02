@@ -106,6 +106,8 @@ export type Database = {
           created_at: string
           decided_at: string | null
           decision_note: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           entity_label: string | null
           expires_at: string
           id: string
@@ -125,6 +127,8 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_note?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           entity_label?: string | null
           expires_at?: string
           id?: string
@@ -144,6 +148,8 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_note?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           entity_label?: string | null
           expires_at?: string
           id?: string
@@ -1676,7 +1682,7 @@ export type Database = {
         | "product_deletion"
         | "role_change"
         | "large_import"
-      approval_request_status: "pending" | "approved" | "rejected" | "expired"
+      approval_request_status: "pending" | "approved" | "rejected" | "expired" | "cancelled"
       approval_required_role: "manager" | "owner"
       location_type: "warehouse" | "store" | "shelf" | "bin" | "truck" | "other"
       movement_type: "add" | "remove" | "adjustment"
@@ -1890,7 +1896,7 @@ export const Constants = {
         "role_change",
         "large_import",
       ],
-      approval_request_status: ["pending", "approved", "rejected", "expired"],
+      approval_request_status: ["pending", "approved", "rejected", "expired", "cancelled"],
       approval_required_role: ["manager", "owner"],
       location_type: ["warehouse", "store", "shelf", "bin", "truck", "other"],
       movement_type: ["add", "remove", "adjustment"],

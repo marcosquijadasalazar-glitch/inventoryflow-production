@@ -42,6 +42,58 @@ function canDecide(role: string | null | undefined, required: "manager" | "owner
   return false;
 }
 
+/** Sync linked transfer when an approval is decided, cancelled, or deleted. */
+async function syncLinkedTransfer(
+  req: { action_type: string; payload?: { transfer_id?: string } | null },
+  outcome: "approved" | "rejected" | "cancelled",
+  meta?: { actorUserId?: string; decisionNote?: string | null; now?: string },
+) {
+  if (req.action_type !== "transfer_order") return;
+  const transferId = req.payload?.transfer_id;
+  if (!transferId) return;
+
+  const { data: tr } = await supabaseAdmin
+    .from("transfer_orders" as never)
+    .select("id, status")
+    .eq("id", transferId)
+    .maybeSingle();
+  if (!tr) return;
+  const t = tr as { id: string; status: string };
+  const now = meta?.now ?? new Date().toISOString();
+
+  if (outcome === "approved") {
+    if (t.status !== "pending_approval") return;
+    await supabaseAdmin
+      .from("transfer_orders" as never)
+      .update({
+        status: "approved",
+        approved_by: meta?.actorUserId ?? null,
+        approved_at: now,
+      } as never)
+      .eq("id", transferId);
+    return;
+  }
+
+  if (!["pending_approval", "approved"].includes(t.status)) return;
+
+  if (outcome === "rejected") {
+    await supabaseAdmin
+      .from("transfer_orders" as never)
+      .update({
+        status: "rejected",
+        rejected_at: now,
+        rejection_reason: meta?.decisionNote ?? null,
+      } as never)
+      .eq("id", transferId);
+    return;
+  }
+
+  await supabaseAdmin
+    .from("transfer_orders" as never)
+    .update({ status: "cancelled" } as never)
+    .eq("id", transferId);
+}
+
 // ---------------- Policies ----------------
 
 export const listApprovalPolicies = createServerFn({ method: "GET" })
@@ -282,6 +334,7 @@ export const decideApprovalRequest = createServerFn({ method: "POST" })
       .maybeSingle();
     if (rErr) throw new Error(rErr.message);
     if (!req) throw new Error("Request not found");
+    if ((req as any).deleted_at) throw new Error("Request not found");
     if ((req as any).organization_id !== me.organization_id && me.role !== "super_admin") {
       throw new Error("Forbidden");
     }
@@ -291,6 +344,19 @@ export const decideApprovalRequest = createServerFn({ method: "POST" })
     }
 
     const now = new Date().toISOString();
+
+    if (data.decision === "approved") {
+      await syncLinkedTransfer(req as any, "approved", {
+        actorUserId: me.user_id,
+        now,
+      });
+    } else {
+      await syncLinkedTransfer(req as any, "rejected", {
+        decisionNote: data.decision_note ?? null,
+        now,
+      });
+    }
+
     const { error: uErr } = await supabaseAdmin
       .from("approval_requests" as never)
       .update({
@@ -336,12 +402,121 @@ export const decideApprovalRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const cancelApprovalRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ request_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const me = await getCaller(context.userId);
+
+    const { data: req, error: rErr } = await supabaseAdmin
+      .from("approval_requests" as never)
+      .select("*")
+      .eq("id", data.request_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (rErr) throw new Error(rErr.message);
+    if (!req) throw new Error("Request not found");
+    if ((req as any).organization_id !== me.organization_id && me.role !== "super_admin") {
+      throw new Error("Forbidden");
+    }
+    if ((req as any).status !== "pending") throw new Error("Only pending requests can be cancelled");
+    if ((req as any).requested_by !== me.user_id) {
+      throw new Error("Only the requester can cancel this request");
+    }
+
+    await syncLinkedTransfer(req as any, "cancelled");
+
+    const now = new Date().toISOString();
+    const { error: uErr } = await supabaseAdmin
+      .from("approval_requests" as never)
+      .update({
+        status: "cancelled",
+        decided_at: now,
+        decision_note: "Cancelled by requester",
+      } as never)
+      .eq("id", data.request_id);
+    if (uErr) throw new Error(uErr.message);
+
+    await recordOperationalEvent({
+      organization_id: (req as any).organization_id,
+      action_type: "approval_cancelled",
+      entity_type: "approval_request",
+      entity_id: data.request_id,
+      entity_label: (req as any).entity_label ?? (req as any).action_type,
+      summary: `${me.email} cancelled ${(req as any).action_type} approval request`,
+      metadata: {
+        action_type: (req as any).action_type,
+        requested_by: (req as any).requested_by_email,
+        transfer_id: (req as any).payload?.transfer_id ?? null,
+      },
+      actor_user_id: me.user_id,
+      actor_email: me.email ?? undefined,
+    });
+
+    return { ok: true };
+  });
+
+export const deleteApprovalRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ request_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const me = await getCaller(context.userId);
+    if (!canConfigure(me.role)) throw new Error("Forbidden");
+
+    const { data: req, error: rErr } = await supabaseAdmin
+      .from("approval_requests" as never)
+      .select("*")
+      .eq("id", data.request_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (rErr) throw new Error(rErr.message);
+    if (!req) throw new Error("Request not found");
+    if ((req as any).organization_id !== me.organization_id && me.role !== "super_admin") {
+      throw new Error("Forbidden");
+    }
+    if ((req as any).status !== "pending") throw new Error("Only pending requests can be deleted");
+
+    await syncLinkedTransfer(req as any, "cancelled");
+
+    const now = new Date().toISOString();
+    const { error: uErr } = await supabaseAdmin
+      .from("approval_requests" as never)
+      .update({
+        deleted_at: now,
+        deleted_by: me.user_id,
+      } as never)
+      .eq("id", data.request_id);
+    if (uErr) throw new Error(uErr.message);
+
+    await recordOperationalEvent({
+      organization_id: (req as any).organization_id,
+      action_type: "approval_deleted",
+      entity_type: "approval_request",
+      entity_id: data.request_id,
+      entity_label: (req as any).entity_label ?? (req as any).action_type,
+      summary: `${me.email} deleted ${(req as any).action_type} approval request from queue`,
+      metadata: {
+        action_type: (req as any).action_type,
+        requested_by: (req as any).requested_by_email,
+        transfer_id: (req as any).payload?.transfer_id ?? null,
+      },
+      actor_user_id: me.user_id,
+      actor_email: me.email ?? undefined,
+    });
+
+    return { ok: true };
+  });
+
 export const listApprovalRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
-        status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("pending"),
+        status: z.enum(["pending", "approved", "rejected", "expired", "cancelled", "all"]).default("pending"),
         limit: z.number().int().min(1).max(200).default(50),
       })
       .parse(input ?? {}),
@@ -361,12 +536,18 @@ export const listApprovalRequests = createServerFn({ method: "POST" })
       .from("approval_requests" as never)
       .select("*")
       .eq("organization_id", me.organization_id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
-    return { requests: rows ?? [], canDecide: canConfigure(me.role) };
+    return {
+      requests: rows ?? [],
+      canDecide: canConfigure(me.role),
+      canDelete: canConfigure(me.role),
+      currentUserId: me.user_id,
+    };
   });
 
 // ---------------- Analytics ----------------
@@ -379,6 +560,7 @@ export const approvalAnalytics = createServerFn({ method: "GET" })
       .from("approval_requests" as never)
       .select("action_type, status, created_at, threshold_snapshot, entity_label, requested_by_email")
       .eq("organization_id", me.organization_id)
+      .is("deleted_at", null)
       .gte("created_at", new Date(Date.now() - 90 * 86400_000).toISOString())
       .limit(1000);
     if (error) throw new Error(error.message);
@@ -386,7 +568,7 @@ export const approvalAnalytics = createServerFn({ method: "GET" })
     const list = (rows ?? []) as any[];
     const byActionApproved: Record<string, number> = {};
     const byActionRejected: Record<string, number> = {};
-    let total = 0, approved = 0, rejected = 0, pending = 0, expired = 0;
+    let total = 0, approved = 0, rejected = 0, pending = 0, expired = 0, cancelled = 0;
     const highRisk: any[] = [];
 
     for (const r of list) {
@@ -399,6 +581,7 @@ export const approvalAnalytics = createServerFn({ method: "GET" })
         byActionRejected[r.action_type] = (byActionRejected[r.action_type] ?? 0) + 1;
       } else if (r.status === "pending") pending++;
       else if (r.status === "expired") expired++;
+      else if (r.status === "cancelled") cancelled++;
 
       const v = Number(r.threshold_snapshot?.value ?? 0);
       const q = Number(r.threshold_snapshot?.quantity ?? 0);
@@ -406,7 +589,7 @@ export const approvalAnalytics = createServerFn({ method: "GET" })
     }
 
     return {
-      totals: { total, approved, rejected, pending, expired },
+      totals: { total, approved, rejected, pending, expired, cancelled },
       mostApproved: Object.entries(byActionApproved).sort((a, b) => b[1] - a[1]).slice(0, 5),
       mostRejected: Object.entries(byActionRejected).sort((a, b) => b[1] - a[1]).slice(0, 5),
       highRisk: highRisk.slice(0, 10),

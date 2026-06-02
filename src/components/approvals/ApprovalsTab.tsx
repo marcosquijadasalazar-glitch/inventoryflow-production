@@ -17,6 +17,8 @@ import {
   upsertApprovalPolicy,
   listApprovalRequests,
   decideApprovalRequest,
+  cancelApprovalRequest,
+  deleteApprovalRequest,
   approvalAnalytics,
 } from "@/lib/approvals.functions";
 import { getTransferPackage } from "@/lib/transfers.functions";
@@ -158,19 +160,42 @@ function PoliciesCard() {
 function QueueCard() {
   const fetch = useServerFn(listApprovalRequests);
   const decide = useServerFn(decideApprovalRequest);
+  const cancel = useServerFn(cancelApprovalRequest);
+  const remove = useServerFn(deleteApprovalRequest);
   const qc = useQueryClient();
-  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "expired" | "all">("pending");
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "expired" | "cancelled" | "all">("pending");
   const { data, isLoading } = useQuery({
     queryKey: ["approval-requests", status],
     queryFn: () => fetch({ data: { status, limit: 50 } }),
   });
   const [noteByReq, setNoteByReq] = useState<Record<string, string>>({});
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["approval-requests"] });
+    qc.invalidateQueries({ queryKey: ["product-reservations"] });
+  };
+
   const act = async (id: string, decision: "approved" | "rejected") => {
     try {
       await decide({ data: { request_id: id, decision, decision_note: noteByReq[id] } });
       toast.success(`Request ${decision}`);
-      qc.invalidateQueries({ queryKey: ["approval-requests"] });
+      invalidate();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const actCancel = async (id: string) => {
+    try {
+      await cancel({ data: { request_id: id } });
+      toast.success("Request cancelled");
+      invalidate();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const actDelete = async (id: string) => {
+    try {
+      await remove({ data: { request_id: id } });
+      toast.success("Request deleted");
+      invalidate();
     } catch (e: any) { toast.error(e.message); }
   };
 
@@ -185,7 +210,7 @@ function QueueCard() {
           <Select value={status} onValueChange={(v) => setStatus(v as any)}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {["pending", "approved", "rejected", "expired", "all"].map((s) => (
+              {["pending", "approved", "rejected", "expired", "cancelled", "all"].map((s) => (
                 <SelectItem key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</SelectItem>
               ))}
             </SelectContent>
@@ -218,14 +243,24 @@ function QueueCard() {
             {r.action_type === "transfer_order" && r.payload?.transfer_id && (
               <TransferPackagePreview transferId={r.payload.transfer_id} />
             )}
-            {r.status === "pending" && data?.canDecide && (
+            {r.status === "pending" && (data?.canDecide || r.requested_by === data?.currentUserId || data?.canDelete) && (
               <div className="flex flex-wrap items-end gap-2">
-                <div className="flex-1 min-w-[160px]">
-                  <Label className="text-xs">Decision note (optional)</Label>
-                  <Input value={noteByReq[r.id] ?? ""} onChange={(e) => setNoteByReq((m) => ({ ...m, [r.id]: e.target.value }))} />
-                </div>
-                <Button size="sm" variant="outline" onClick={() => act(r.id, "rejected")}>Reject</Button>
-                <Button size="sm" onClick={() => act(r.id, "approved")}>Approve</Button>
+                {data?.canDecide && (
+                  <>
+                    <div className="flex-1 min-w-[160px]">
+                      <Label className="text-xs">Decision note (optional)</Label>
+                      <Input value={noteByReq[r.id] ?? ""} onChange={(e) => setNoteByReq((m) => ({ ...m, [r.id]: e.target.value }))} />
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => act(r.id, "rejected")}>Reject</Button>
+                    <Button size="sm" onClick={() => act(r.id, "approved")}>Approve</Button>
+                  </>
+                )}
+                {r.requested_by === data?.currentUserId && (
+                  <Button size="sm" variant="outline" onClick={() => actCancel(r.id)}>Cancel</Button>
+                )}
+                {data?.canDelete && (
+                  <Button size="sm" variant="destructive" onClick={() => actDelete(r.id)}>Delete</Button>
+                )}
               </div>
             )}
           </div>
@@ -303,13 +338,14 @@ function AnalyticsCard() {
   const t = data?.totals;
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         {[
           ["Total", t?.total ?? 0],
           ["Approved", t?.approved ?? 0],
           ["Rejected", t?.rejected ?? 0],
           ["Pending", t?.pending ?? 0],
           ["Expired", t?.expired ?? 0],
+          ["Cancelled", t?.cancelled ?? 0],
         ].map(([k, v]) => (
           <Card key={k as string}><CardContent className="py-4">
             <div className="text-xs text-muted-foreground">{k}</div>
