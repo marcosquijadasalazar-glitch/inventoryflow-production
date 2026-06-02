@@ -24,6 +24,7 @@ import {
   LocationAvailabilityHint,
   LocationStockValidationAlert,
 } from "@/components/LocationAvailabilityHint";
+import { invalidateInventoryCaches } from "@/lib/invalidate-after-write";
 
 export function QuickMovementDialog({
   product,
@@ -75,9 +76,7 @@ export function QuickMovementDialog({
           ? `Added ${q} ${q === 1 ? "unit" : "units"} to ${product.name}.`
           : `Removed ${q} ${q === 1 ? "unit" : "units"} from ${product.name}.`,
       );
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["movements"] });
-      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
+      invalidateInventoryCaches(qc);
       onClose();
     } catch (err: any) {
       toast.error(err.message);

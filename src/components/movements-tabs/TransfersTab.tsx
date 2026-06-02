@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { invalidateDerived } from "@/lib/invalidate-after-write";
+import { invalidateDerived, invalidateInventoryCaches } from "@/lib/invalidate-after-write";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -412,10 +412,7 @@ export function TransfersTab() {
                                   try {
                                     await completeApprovedTransferFn({ data: { transfer_id: tr.id } });
                                     toast.success(t("tr.completed", "Transfer completed"));
-                                    qc.invalidateQueries({ queryKey: ["transfer_orders"] });
-                                    qc.invalidateQueries({ queryKey: ["products"] });
-                                    qc.invalidateQueries({ queryKey: ["movements"] });
-                                    qc.invalidateQueries({ queryKey: ["product-reservations"] });
+                                    invalidateInventoryCaches(qc);
                                     invalidateDerived(qc);
                                   } catch (e: any) {
                                     toast.error(e.message);
@@ -438,9 +435,7 @@ export function TransfersTab() {
                                       try {
                                         await completeTransferOrder(tr.id);
                                         toast.success(t("tr.completed", "Transfer completed"));
-                                        qc.invalidateQueries({ queryKey: ["transfer_orders"] });
-                                        qc.invalidateQueries({ queryKey: ["products"] });
-                                        qc.invalidateQueries({ queryKey: ["movements"] });
+                                        invalidateInventoryCaches(qc);
                                         invalidateDerived(qc);
                                       } catch (e: any) {
                                         toast.error(e.message);
@@ -618,9 +613,7 @@ function CreateTransferDialog({
         status,
       });
       toast.success(t("tr.created", "Transfer created"));
-      qc.invalidateQueries({ queryKey: ["transfer_orders"] });
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["movements"] });
+      invalidateInventoryCaches(qc);
       invalidateDerived(qc);
       onClose();
       reset();

@@ -68,6 +68,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { invalidateInventoryCaches } from "@/lib/invalidate-after-write";
 
 const MOVEMENT_EXPORT_COLUMNS: ExportColumn<MovementWithProduct>[] = [
   { key: "date", header: "Date", get: (m) => new Date(m.created_at).toLocaleString() },
@@ -233,10 +234,8 @@ export function ActivityTab({
       );
       setQuantity(type === "adjustment" ? String(q) : "1");
       setNote("");
-      qc.invalidateQueries({ queryKey: ["movements"] });
-      qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["history"] });
-      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
+      invalidateInventoryCaches(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {

@@ -33,6 +33,7 @@ import {
   LocationAvailabilityHint,
   LocationStockValidationAlert,
 } from "@/components/LocationAvailabilityHint";
+import { invalidateInventoryCaches } from "@/lib/invalidate-after-write";
 
 export function InternalUseTab() {
   const { t } = useTranslation();
@@ -89,10 +90,7 @@ export function InternalUseTab() {
       setLocationId(null);
       setLocationName(null);
       qc.invalidateQueries({ queryKey: ["internal_use"] });
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["movements"] });
-      qc.invalidateQueries({ queryKey: ["history"] });
-      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
+      invalidateInventoryCaches(qc);
     } catch (err: any) {
       toast.error(err.message);
     } finally {

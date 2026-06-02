@@ -9,6 +9,16 @@ import type { QueryClient } from "@tanstack/react-query";
  * dependent panels that admin/owner accounts watch and that previously
  * went stale after writes because no one invalidated them.
  */
+/** Invalidate caches that reflect on-hand / per-location stock after inventory writes. */
+export function invalidateInventoryCaches(qc: QueryClient) {
+  qc.invalidateQueries({ queryKey: ["product_location_stock"] });
+  qc.invalidateQueries({ queryKey: ["products"] });
+  qc.invalidateQueries({ queryKey: ["movements"] });
+  qc.invalidateQueries({ queryKey: ["transfer_orders"] });
+  qc.invalidateQueries({ queryKey: ["product-reservations"] });
+  qc.invalidateQueries({ queryKey: ["location_stock"] });
+}
+
 export function invalidateDerived(qc: QueryClient) {
   // Audit Logs (Settings → Audit)
   qc.invalidateQueries({ queryKey: ["op-audit"] });
