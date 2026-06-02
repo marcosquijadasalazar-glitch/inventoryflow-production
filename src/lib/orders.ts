@@ -693,21 +693,26 @@ export async function completeTransferOrder(id: string) {
   const t = await getTransferOrder(id);
   if (!t) throw new Error("Transfer not found");
   if (t.status === "completed") return;
+  if (!t.from_location_id || !t.to_location_id) {
+    throw new Error("Source and destination locations are required to complete transfer");
+  }
   for (const it of t.items ?? []) {
     if (!it.product_id || it.quantity <= 0) continue;
-    // Remove from source
-    await sb.from("inventory_movements").insert({
+    const noteOut = `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+    const noteIn = `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+    await createMovement({
       product_id: it.product_id,
       type: "remove",
       quantity: it.quantity,
-      note: `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
+      note: noteOut,
+      location_id: t.from_location_id,
     });
-    // Add to destination
-    await sb.from("inventory_movements").insert({
+    await createMovement({
       product_id: it.product_id,
       type: "add",
       quantity: it.quantity,
-      note: `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
+      note: noteIn,
+      location_id: t.to_location_id,
     });
   }
   await sb

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { invalidateDerived } from "@/lib/invalidate-after-write";
+import { invalidateDerived, invalidateInventoryCaches } from "@/lib/invalidate-after-write";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -195,10 +195,7 @@ export function StockActionDialog({
         if (iErr) throw iErr;
         toast.success(t("sa.moved", "Product moved"));
       }
-      qc.invalidateQueries({ queryKey: ["products"] });
-      qc.invalidateQueries({ queryKey: ["movements"] });
-      qc.invalidateQueries({ queryKey: ["location_stock"] });
-      qc.invalidateQueries({ queryKey: ["product_location_stock"] });
+      invalidateInventoryCaches(qc);
       invalidateDerived(qc);
       onClose();
     } catch (err: any) {

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { recordOperationalEvent } from "@/lib/audit.server";
 import { createNotification } from "@/lib/notifications.server";
+import { buildTransferMovementRows } from "@/lib/transfer-movements";
 
 const ItemSchema = z.object({
   product_id: z.string().uuid(),
@@ -283,6 +284,10 @@ export const completeApprovedTransfer = createServerFn({ method: "POST" })
     const isPriv = ["owner", "manager", "super_admin"].includes(me.role);
     if (!isRequester && !isPriv) throw new Error("Only the requester or a manager/owner can complete this transfer");
 
+    if (!t.from_location_id || !t.to_location_id) {
+      throw new Error("Source and destination locations are required to complete transfer");
+    }
+
     const { data: items } = await supabaseAdmin
       .from("transfer_order_items")
       .select("*")
@@ -290,20 +295,25 @@ export const completeApprovedTransfer = createServerFn({ method: "POST" })
 
     for (const it of (items ?? []) as any[]) {
       if (!it.product_id || !it.quantity) continue;
-      await supabaseAdmin.from("inventory_movements").insert({
+      const noteOut = `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+      const noteIn = `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+      const [removeRow, addRow] = buildTransferMovementRows({
         product_id: it.product_id,
-        type: "remove",
         quantity: it.quantity,
-        note: `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
+        from_location_id: t.from_location_id,
+        to_location_id: t.to_location_id,
+        noteOut,
+        noteIn,
         organization_id: me.organization_id,
-      } as never);
-      await supabaseAdmin.from("inventory_movements").insert({
-        product_id: it.product_id,
-        type: "add",
-        quantity: it.quantity,
-        note: `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
-        organization_id: me.organization_id,
-      } as never);
+      });
+      const { error: outErr } = await supabaseAdmin
+        .from("inventory_movements")
+        .insert(removeRow as never);
+      if (outErr) throw new Error(outErr.message);
+      const { error: inErr } = await supabaseAdmin
+        .from("inventory_movements")
+        .insert(addRow as never);
+      if (inErr) throw new Error(inErr.message);
     }
 
     await supabaseAdmin
