@@ -147,6 +147,7 @@ export function InternalUseTab() {
                   onSelect={setProduct}
                   showGlobalStock={false}
                   locationStock={stockQ.data}
+                  filterLocationId={locationId}
                 />
               </div>
               <div className="space-y-1.5">
@@ -168,6 +169,9 @@ export function InternalUseTab() {
                   setLocationId(id);
                   setLocationName(loc?.name ?? null);
                 }}
+                productId={product?.id ?? null}
+                stockData={stockQ.data}
+                requireDirectStock={!!product}
               />
               <LocationAvailabilityHint
                 productId={product?.id ?? null}
@@ -177,7 +181,7 @@ export function InternalUseTab() {
             </div>
 
             <LocationStockValidationAlert
-              message={over ? stockValidation.message : undefined}
+              message={stockValidation.blocked ? stockValidation.message : undefined}
             />
 
             <div className="grid md:grid-cols-2 gap-3">

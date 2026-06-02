@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Input } from "@/components/ui/input";
 import {
   Command,
   CommandEmpty,
@@ -18,10 +17,13 @@ import { ScanFieldButton } from "./ScanFieldButton";
 import { Package, ChevronsUpDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listProducts } from "@/lib/inventory";
+import { listAllNodes } from "@/lib/location-tree";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   formatProductLocationBreakdown,
-  getStockRowsForProduct,
+  getAvailableStockRows,
+  formatStockRowLabel,
+  getAvailableAtLocation,
   useProductLocationStock,
   type ProductLocationStockData,
 } from "@/lib/product-location-stock";
@@ -34,6 +36,8 @@ export function ProductPicker({
   showStock = true,
   showGlobalStock = false,
   locationStock: locationStockProp,
+  /** When set, selected-product stock line reflects this location only. */
+  filterLocationId = null,
 }: {
   value: ProductLite | null;
   onSelect: (p: ProductLite) => void;
@@ -41,20 +45,43 @@ export function ProductPicker({
   /** @deprecated Use location-aware stock from product_location_stock */
   showGlobalStock?: boolean;
   locationStock?: ProductLocationStockData;
+  filterLocationId?: string | null;
 }) {
   const products = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const stockQ = useProductLocationStock();
+  const nodesQ = useQuery({
+    queryKey: ["location-nodes-all"],
+    queryFn: listAllNodes,
+    staleTime: 60_000,
+  });
   const locationStock = locationStockProp ?? stockQ.data;
+  const nodes = nodesQ.data ?? [];
   const [open, setOpen] = useState(false);
   const list = products.data ?? [];
 
-  const selectedBreakdown = useMemo(
-    () =>
-      value && showStock && !showGlobalStock
-        ? formatProductLocationBreakdown(value.id, locationStock, "inline")
-        : null,
-    [value, showStock, showGlobalStock, locationStock],
-  );
+  const selectedBreakdown = useMemo(() => {
+    if (!value || !showStock || showGlobalStock) return null;
+    if (filterLocationId) {
+      const available = getAvailableAtLocation(
+        value.id,
+        filterLocationId,
+        locationStock,
+      );
+      const rows = getAvailableStockRows(value.id, locationStock, {
+        locationId: filterLocationId,
+      });
+      if (rows.length > 0) {
+        return formatProductLocationBreakdown(value.id, locationStock, "inline", {
+          locationId: filterLocationId,
+          nodes,
+        });
+      }
+      return `Available at selected location: ${available ?? 0}`;
+    }
+    return formatProductLocationBreakdown(value.id, locationStock, "inline", {
+      nodes,
+    });
+  }, [value, showStock, showGlobalStock, locationStock, filterLocationId, nodes]);
 
   return (
     <div className="flex gap-2">
@@ -94,9 +121,7 @@ export function ProductPicker({
               <CommandEmpty>No product</CommandEmpty>
               <CommandGroup>
                 {list.map((p) => {
-                  const locRows = getStockRowsForProduct(p.id, locationStock).filter(
-                    (r) => r.on_hand > 0 || r.available > 0,
-                  );
+                  const locRows = getAvailableStockRows(p.id, locationStock);
                   return (
                     <CommandItem
                       key={p.id}
@@ -115,7 +140,7 @@ export function ProductPicker({
                                 key={r.location_id}
                                 className="text-xs text-muted-foreground"
                               >
-                                {r.location_name ?? "Location"}: {r.available}
+                                {formatStockRowLabel(r, nodes)}
                               </span>
                             ))
                           ) : (

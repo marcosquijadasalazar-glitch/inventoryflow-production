@@ -432,6 +432,7 @@ export function ActivityTab({
                   onSelect={(p) => setProductId(p.id)}
                   showGlobalStock={false}
                   locationStock={stockQ.data}
+                  filterLocationId={locationId}
                 />
               </div>
               <div className="space-y-1.5">
@@ -466,6 +467,11 @@ export function ActivityTab({
                   setLocationId(id);
                   setLocationName(loc?.name ?? null);
                 }}
+                productId={productId || null}
+                stockData={stockQ.data}
+                requireDirectStock={
+                  !!productId && (type === "remove" || type === "adjustment")
+                }
               />
               <LocationAvailabilityHint
                 productId={productId || null}

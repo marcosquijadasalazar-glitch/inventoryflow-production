@@ -110,6 +110,9 @@ export function QuickMovementDialog({
                 setLocationId(id);
                 setLocationName(loc?.name ?? null);
               }}
+              productId={product.id}
+              stockData={stockQ.data}
+              requireDirectStock={type === "remove"}
             />
             <LocationAvailabilityHint
               productId={product.id}
