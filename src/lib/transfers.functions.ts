@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "./security-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { recordOperationalEvent } from "@/lib/audit.server";
 import { createNotification } from "@/lib/notifications.server";
+
+type MovementInsert = TablesInsert<"inventory_movements">;
 
 const ItemSchema = z.object({
   product_id: z.string().uuid(),
@@ -283,27 +286,63 @@ export const completeApprovedTransfer = createServerFn({ method: "POST" })
     const isPriv = ["owner", "manager", "super_admin"].includes(me.role);
     if (!isRequester && !isPriv) throw new Error("Only the requester or a manager/owner can complete this transfer");
 
+    const fromLocationId = t.from_location_id as string | null | undefined;
+    const toLocationId = t.to_location_id as string | null | undefined;
+    if (!fromLocationId) {
+      throw new Error("Transfer is missing source location (from_location_id)");
+    }
+    if (!toLocationId) {
+      throw new Error("Transfer is missing destination location (to_location_id)");
+    }
+
     const { data: items } = await supabaseAdmin
       .from("transfer_order_items")
       .select("*")
       .eq("transfer_order_id", t.id);
 
-    for (const it of (items ?? []) as any[]) {
-      if (!it.product_id || !it.quantity) continue;
-      await supabaseAdmin.from("inventory_movements").insert({
+    for (const it of (items ?? []) as Array<{ product_id: string | null; quantity: number | null }>) {
+      if (!it.product_id) {
+        throw new Error("Transfer line item is missing product_id");
+      }
+      const qty = Number(it.quantity ?? 0);
+      if (!(qty > 0)) {
+        throw new Error("Transfer line item quantity must be greater than 0");
+      }
+
+      const transferNoteBase = `${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+      const outPayload: MovementInsert = {
         product_id: it.product_id,
         type: "remove",
-        quantity: it.quantity,
-        note: `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
-        organization_id: me.organization_id,
-      } as never);
-      await supabaseAdmin.from("inventory_movements").insert({
+        quantity: qty,
+        location_id: fromLocationId,
+        from_location_id: fromLocationId,
+        to_location_id: toLocationId,
+        note: `[transfer-out] ${transferNoteBase}`,
+        organization_id: t.organization_id ?? me.organization_id,
+      };
+      const { error: outErr } = await supabaseAdmin
+        .from("inventory_movements")
+        .insert(outPayload);
+      if (outErr) {
+        throw new Error(`Transfer OUT movement failed: ${outErr.message}`);
+      }
+
+      const inPayload: MovementInsert = {
         product_id: it.product_id,
         type: "add",
-        quantity: it.quantity,
-        note: `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
-        organization_id: me.organization_id,
-      } as never);
+        quantity: qty,
+        location_id: toLocationId,
+        from_location_id: fromLocationId,
+        to_location_id: toLocationId,
+        note: `[transfer-in] ${transferNoteBase}`,
+        organization_id: t.organization_id ?? me.organization_id,
+      };
+      const { error: inErr } = await supabaseAdmin
+        .from("inventory_movements")
+        .insert(inPayload);
+      if (inErr) {
+        throw new Error(`Transfer IN movement failed: ${inErr.message}`);
+      }
     }
 
     await supabaseAdmin
