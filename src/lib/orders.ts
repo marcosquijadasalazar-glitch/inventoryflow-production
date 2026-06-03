@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { createMovement } from "./inventory";
+
+type MovementInsert = TablesInsert<"inventory_movements">;
 
 const sb = supabase as any;
 
@@ -693,30 +696,69 @@ export async function completeTransferOrder(id: string) {
   const t = await getTransferOrder(id);
   if (!t) throw new Error("Transfer not found");
   if (t.status === "completed") return;
+
+  const fromLocationId = t.from_location_id;
+  const toLocationId = t.to_location_id;
+  if (!fromLocationId) {
+    throw new Error("Transfer is missing source location (from_location_id)");
+  }
+  if (!toLocationId) {
+    throw new Error("Transfer is missing destination location (to_location_id)");
+  }
+
+  const transferNoteBase = `${t.transfer_number} ${t.from_location} → ${t.to_location}`;
+  const orgId = t.organization_id ?? null;
+
   for (const it of t.items ?? []) {
-    if (!it.product_id || it.quantity <= 0) continue;
-    // Remove from source
-    await sb.from("inventory_movements").insert({
+    if (!it.product_id) {
+      throw new Error("Transfer line item is missing product_id");
+    }
+    const qty = Number(it.quantity ?? 0);
+    if (!(qty > 0)) {
+      throw new Error("Transfer line item quantity must be greater than 0");
+    }
+
+    const outPayload: MovementInsert = {
       product_id: it.product_id,
       type: "remove",
-      quantity: it.quantity,
-      note: `[transfer-out] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
-    });
-    // Add to destination
-    await sb.from("inventory_movements").insert({
+      quantity: qty,
+      location_id: fromLocationId,
+      from_location_id: fromLocationId,
+      to_location_id: toLocationId,
+      note: `[transfer-out] ${transferNoteBase}`,
+      organization_id: orgId,
+    };
+    const { error: outErr } = await sb.from("inventory_movements").insert(outPayload);
+    if (outErr) {
+      throw new Error(`Transfer OUT movement failed: ${outErr.message}`);
+    }
+
+    const inPayload: MovementInsert = {
       product_id: it.product_id,
       type: "add",
-      quantity: it.quantity,
-      note: `[transfer-in] ${t.transfer_number} ${t.from_location} → ${t.to_location}`,
-    });
+      quantity: qty,
+      location_id: toLocationId,
+      from_location_id: fromLocationId,
+      to_location_id: toLocationId,
+      note: `[transfer-in] ${transferNoteBase}`,
+      organization_id: orgId,
+    };
+    const { error: inErr } = await sb.from("inventory_movements").insert(inPayload);
+    if (inErr) {
+      throw new Error(`Transfer IN movement failed: ${inErr.message}`);
+    }
   }
-  await sb
+
+  const { error: updateErr } = await sb
     .from("transfer_orders")
     .update({
       status: "completed",
       completed_date: new Date().toISOString().slice(0, 10),
     })
     .eq("id", id);
+  if (updateErr) {
+    throw new Error(`Failed to mark transfer completed: ${updateErr.message}`);
+  }
 }
 
 export async function updateTransferStatus(id: string, status: TransferStatus) {
